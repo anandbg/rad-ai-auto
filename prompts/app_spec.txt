@@ -1,0 +1,1155 @@
+<project_specification>
+  <project_name>AI Radiologist</project_name>
+
+  <overview>
+    AI-powered radiology report generation application that helps radiologists create detailed medical reports through voice transcription and AI-assisted report generation. Features custom brand templates, professional PDF export, and a streamlined workflow designed for minimum clicks. Built with scalability, cost-effectiveness, and HIPAA-compliant privacy-by-design principles.
+  </overview>
+
+  <target_audience>Radiologists</target_audience>
+
+  <phases>
+    <phase number="1" name="Core MVP" feature_count="140">
+      Core functionality with basic brand templates, Stripe billing, professional PDF export, and essential E2E tests
+    </phase>
+    <phase number="2" name="Advanced Features" feature_count="140">
+      YOLO mode, advanced brand templates, institution features, template versioning, enhanced macros, onboarding, and comprehensive E2E tests
+    </phase>
+  </phases>
+
+  <total_feature_count>280</total_feature_count>
+
+  <technology_stack>
+    <frontend>
+      <framework>Next.js 14 (App Router)</framework>
+      <language>TypeScript (strict mode)</language>
+      <styling>Tailwind CSS with design tokens (CSS variables)</styling>
+      <ui_primitives>Radix UI (checkbox, dialog, switch, tabs, tooltip, select)</ui_primitives>
+      <icons>Lucide React</icons>
+      <animations>Framer Motion</animations>
+      <state_management>React Context + SWR for data fetching</state_management>
+      <pdf_generation>React-PDF or Puppeteer (print-ready quality)</pdf_generation>
+    </frontend>
+    <backend>
+      <runtime>Vercel (Edge functions + Node.js)</runtime>
+      <edge_routes>AI flows (generate, transcribe, templates) for low latency</edge_routes>
+      <node_routes>Stripe webhooks (require crypto/SDK)</node_routes>
+      <language>TypeScript</language>
+      <database>Supabase PostgreSQL with Row-Level Security (RLS)</database>
+      <authentication>Supabase Auth (Email/Password + Google OAuth)</authentication>
+      <api_style>RESTful with Server-Sent Events (SSE) for streaming</api_style>
+    </backend>
+    <ai_integration>
+      <text_generation>OpenAI GPT-4o (low temperature 0.2 for deterministic outputs)</text_generation>
+      <transcription>OpenAI Whisper API (file uploads + chunked recording)</transcription>
+    </ai_integration>
+    <infrastructure>
+      <hosting>Vercel (Edge + Node runtimes)</hosting>
+      <database_hosting>Supabase (Auth + PostgreSQL)</database_hosting>
+      <payments>Stripe (subscriptions)</payments>
+      <caching>Upstash Redis (free tier - rate limiting, template cache)</caching>
+      <storage>Supabase Storage (temporary encrypted audio files, TTL 5 minutes)</storage>
+      <package_manager>pnpm</package_manager>
+    </infrastructure>
+    <testing>
+      <unit_tests>Vitest</unit_tests>
+      <e2e_tests>Playwright (headless by default)</e2e_tests>
+      <test_id_format>E2E-XXX (sequential numbering)</test_id_format>
+    </testing>
+  </technology_stack>
+
+  <capacity_and_scale>
+    <target_users>50-75 concurrent users (small scale, optimized)</target_users>
+    <optimizations_included>
+      <optimization>Connection pooling (Supabase PgBouncer)</optimization>
+      <optimization>Request timeouts (30s generate, 120s transcribe)</optimization>
+      <optimization>OpenAI retry with exponential backoff</optimization>
+      <optimization>Optimistic locking for credits</optimization>
+      <optimization>Template caching (Redis)</optimization>
+      <optimization>Distributed rate limiting</optimization>
+    </optimizations_included>
+  </capacity_and_scale>
+
+  <baseline_code_reuse>
+    <source_folder>/Users/anand/rad-ai-auto/AI-RADIOLOGIST</source_folder>
+    <reuse_components>
+      <component path="types/templates.ts">Template schemas (extend for brand styling)</component>
+      <component path="lib/shared/auth.ts">Auth system (add Google OAuth)</component>
+      <component path="lib/edge/">Edge Supabase client</component>
+      <component path="lib/server/">Node Supabase + Stripe clients</component>
+      <component path="components/ui/">All 14 UI primitives (Button, Card, Dialog, etc.)</component>
+      <component path="lib/server/stripe*.ts">Stripe integration patterns</component>
+      <component path="supabase/migrations/">Database schema patterns</component>
+      <component path="vitest.config.ts">Test configuration</component>
+      <component path="tailwind.config.ts">Design token patterns</component>
+    </reuse_components>
+  </baseline_code_reuse>
+
+  <security_and_access_control>
+    <user_roles>
+      <role name="radiologist">
+        <permissions>
+          - Create, read, update, delete own personal templates
+          - Read published global templates
+          - Clone global templates to personal
+          - Generate reports
+          - Transcribe audio
+          - Manage own macros
+          - Manage own brand templates
+          - View own usage and billing
+        </permissions>
+        <protected_routes>
+          - /dashboard (authenticated users)
+          - /transcribe (authenticated users)
+          - /generate (authenticated users)
+          - /templates (authenticated users)
+          - /billing (authenticated users)
+          - /settings (authenticated users)
+        </protected_routes>
+      </role>
+      <role name="admin">
+        <permissions>
+          - All radiologist permissions
+          - Create, update, publish global templates
+          - View all users
+          - View system-wide usage metrics
+          - Manage global macros
+        </permissions>
+        <protected_routes>
+          - /admin/* (admin only)
+        </protected_routes>
+      </role>
+    </user_roles>
+    <authentication>
+      <methods>
+        <method>Email/Password</method>
+        <method>Google OAuth (Gmail)</method>
+      </methods>
+      <session_timeout>30 minutes inactivity auto-logout</session_timeout>
+      <password_requirements>Minimum 8 characters</password_requirements>
+    </authentication>
+    <phi_handling>Zero PHI storage (privacy by design - reports not saved server-side)</phi_handling>
+    <encryption>Temporary audio files encrypted, deleted after processing (TTL 5 min)</encryption>
+    <log_redaction>Medical content redacted from logs</log_redaction>
+  </security_and_access_control>
+
+  <core_features>
+    <!-- ==================== PHASE 1: CORE MVP (~140 features) ==================== -->
+
+    <phase_1_authentication feature_count="12">
+      <category name="Authentication and Users">
+        - Sign up with email/password
+        - Sign in with email/password
+        - Sign in with Google OAuth (Gmail)
+        - Sign out with session cleanup
+        - Auto-logout after 30 minutes inactivity
+        - Password reset flow via email
+        - Email verification for new accounts
+        - User profile creation (name, specialty, institution)
+        - User profile editing
+        - Protected route redirection (unauthenticated to login)
+        - Session persistence across page refreshes
+        - Secure cookie handling
+      </category>
+    </phase_1_authentication>
+
+    <phase_1_transcription feature_count="18">
+      <category name="Transcription System">
+        - Microphone recording with visual feedback
+        - Audio file upload (drag and drop)
+        - Audio file upload (file picker)
+        - Chunked recording with progressive display
+        - Recording pause and resume
+        - Recording cancel
+        - Whisper API transcription (batch processing)
+        - Macro expansion (abbreviations to full terms)
+        - Medical term normalization
+        - Transcription progress indicator
+        - Transcription error handling with retry
+        - Transcription result display
+        - Edit transcription text before using
+        - Copy transcription to clipboard
+        - Clear transcription
+        - Audio playback of recorded file
+        - Estimated processing time display
+        - Transcription history (session only, not persisted)
+      </category>
+    </phase_1_transcription>
+
+    <phase_1_report_generation feature_count="16">
+      <category name="Report Generation">
+        - Template selection from library
+        - Template search by name
+        - Template filter by modality
+        - Template filter by body part
+        - Patient context input (exam type, indication)
+        - Findings text input (from transcription or manual)
+        - AI report generation with streaming output
+        - Generation progress with status messages
+        - Report section display
+        - Report editing (full text)
+        - Report section copy to clipboard
+        - Full report copy to clipboard
+        - Generation cancel mid-stream
+        - Generation retry on failure
+        - Generation options (temperature, detail level)
+        - Credit check before generation (block if insufficient)
+      </category>
+    </phase_1_report_generation>
+
+    <phase_1_templates feature_count="15">
+      <category name="Template Management">
+        - List personal templates
+        - List global templates (published)
+        - View template details
+        - Create personal template from scratch
+        - Edit personal template
+        - Delete personal template
+        - Clone global template to personal
+        - Set default personal template
+        - Template validation (Zod schema)
+        - Template sections management
+        - Template normal findings library
+        - Template style defaults
+        - Template search
+        - Template sorting (name, date, modality)
+        - Template pagination
+      </category>
+    </phase_1_templates>
+
+    <phase_1_brand_templates feature_count="12">
+      <category name="Basic Brand Templates">
+        - Logo upload for letterhead
+        - Logo preview in template
+        - Institution name field
+        - Institution address field
+        - Basic font selection (preset list)
+        - Primary brand color picker
+        - Secondary brand color picker
+        - Footer text (static disclaimer)
+        - Footer radiologist name (dynamic)
+        - Footer date (dynamic)
+        - Brand template save
+        - Brand template preview
+      </category>
+    </phase_1_brand_templates>
+
+    <phase_1_export feature_count="10">
+      <category name="Export System">
+        - PDF export (professional quality)
+        - PDF with letterhead/branding
+        - PDF with footer
+        - Copy report to clipboard (plain text)
+        - Copy report to clipboard (formatted)
+        - Export loading state
+        - Export error handling
+        - Download PDF to device
+        - PDF filename generation (date + exam type)
+        - Configurable export metadata toggle
+      </category>
+    </phase_1_export>
+
+    <phase_1_billing feature_count="15">
+      <category name="Stripe Billing">
+        - Free tier (10 reports/month, 15 transcription mins)
+        - Plus tier ($15/month - 100 reports, 150 mins)
+        - Pro tier ($35/month - unlimited)
+        - Stripe checkout flow
+        - Stripe billing portal
+        - Subscription status display
+        - Current plan display
+        - Usage display (reports used, mins used)
+        - Credit balance display
+        - Upgrade plan flow
+        - Downgrade plan flow
+        - Cancel subscription flow
+        - Invoice history display
+        - Payment method management
+        - Webhook handling (subscription events)
+      </category>
+    </phase_1_billing>
+
+    <phase_1_ui feature_count="18">
+      <category name="UI Foundation">
+        - Light mode theme
+        - Dark mode theme
+        - Theme toggle (light/dark)
+        - Theme persistence (localStorage)
+        - Responsive layout (desktop-first)
+        - Mobile-friendly navigation
+        - Sidebar navigation
+        - Header with user menu
+        - Loading skeletons
+        - Loading spinners
+        - Toast notifications (success)
+        - Toast notifications (error)
+        - Toast auto-dismiss
+        - Form validation feedback
+        - Button loading states
+        - Disabled states
+        - Focus ring accessibility
+        - Keyboard navigation support
+      </category>
+    </phase_1_ui>
+
+    <phase_1_dashboard feature_count="8">
+      <category name="Dashboard">
+        - Quick action: New transcription
+        - Quick action: Generate report
+        - Quick action: Browse templates
+        - Usage stats: Reports this month
+        - Usage stats: Transcription minutes used
+        - Credit balance display
+        - Current subscription plan
+        - Recent activity summary (session only)
+      </category>
+    </phase_1_dashboard>
+
+    <phase_1_security feature_count="6">
+      <category name="Security">
+        - Row-level security (RLS) on all tables
+        - Secure session handling
+        - Auto-logout implementation
+        - Protected API routes
+        - CSRF protection
+        - XSS prevention
+      </category>
+    </phase_1_security>
+
+    <phase_1_macros feature_count="8">
+      <category name="Basic Macro System">
+        - List personal macros
+        - Create personal macro
+        - Edit personal macro
+        - Delete personal macro
+        - Macro expansion in transcription
+        - Global macros (admin-created, read-only for users)
+        - Macro toggle (enable/disable)
+        - Macro preview
+      </category>
+    </phase_1_macros>
+
+    <phase_1_e2e_tests feature_count="12">
+      <category name="Phase 1 E2E Tests">
+        - E2E: Sign up with email/password
+        - E2E: Sign in with email/password
+        - E2E: Sign in with Google OAuth
+        - E2E: Complete transcription flow (upload file)
+        - E2E: Generate report with template
+        - E2E: Export report to PDF
+        - E2E: Clone template from global to personal
+        - E2E: Create personal template
+        - E2E: Stripe checkout flow
+        - E2E: Theme toggle light/dark
+        - E2E: Macro creation and expansion
+        - E2E: Auto-logout after inactivity
+      </category>
+    </phase_1_e2e_tests>
+
+    <!-- ==================== PHASE 2: ADVANCED FEATURES (~140 features) ==================== -->
+
+    <phase_2_yolo_mode feature_count="12">
+      <category name="YOLO Mode (Auto-Everything)">
+        - YOLO mode toggle on dashboard
+        - Auto-detect modality from transcript
+        - Auto-detect body part from transcript
+        - Auto-select best matching template
+        - YOLO confidence display
+        - YOLO template override option
+        - YOLO one-click start recording
+        - YOLO auto-generate after transcription
+        - YOLO results review screen
+        - YOLO mode preferences save
+        - YOLO mode tutorial/tooltip
+        - YOLO mode keyboard shortcut
+      </category>
+    </phase_2_yolo_mode>
+
+    <phase_2_advanced_brand feature_count="20">
+      <category name="Advanced Brand Templates">
+        - Full letterhead image upload (PNG, JPG, PDF)
+        - Letterhead position (top/left/right)
+        - Letterhead size control
+        - Advanced typography: font family selection
+        - Advanced typography: font sizes (h1, h2, body)
+        - Advanced typography: font weights
+        - Advanced typography: line spacing
+        - Advanced typography: letter spacing
+        - Section title styling
+        - Section content styling
+        - Dynamic field: Report ID
+        - Dynamic field: Current date/time
+        - Dynamic field: Radiologist credentials
+        - Dynamic field: Institution details
+        - Brand template duplicate
+        - Brand template import/export
+        - Brand template preview (live)
+        - Brand template preview (PDF)
+        - Multiple brand templates per user
+        - Default brand template selection
+      </category>
+    </phase_2_advanced_brand>
+
+    <phase_2_template_versioning feature_count="12">
+      <category name="Template Versioning">
+        - Version history list
+        - Version diff view (side-by-side)
+        - Version diff view (inline)
+        - Rollback to previous version
+        - Version comparison
+        - Version notes/comments
+        - Auto-save version on edit
+        - Version timestamp display
+        - Version author display
+        - Version restore confirmation
+        - Version delete (admin only for global)
+        - Version export
+      </category>
+    </phase_2_template_versioning>
+
+    <phase_2_institutions feature_count="15">
+      <category name="Institution Features">
+        - Institution creation (admin)
+        - Institution profile (name, logo, address)
+        - Associate user with institution
+        - Institution-wide templates (shared)
+        - Template sharing within institution
+        - Clone shared template to personal
+        - Institution admin role
+        - Institution member list
+        - Institution usage statistics
+        - Institution billing consolidation
+        - Institution branding defaults
+        - Leave institution
+        - Institution invite (by email)
+        - Institution invite acceptance
+        - Multi-institution support (user can be in multiple)
+      </category>
+    </phase_2_institutions>
+
+    <phase_2_enhanced_macros feature_count="12">
+      <category name="Enhanced Macro System">
+        - Macro categories/folders
+        - Create macro category
+        - Move macro to category
+        - Smart macros (context-aware expansion)
+        - Smart macro: body part context
+        - Smart macro: modality context
+        - Macro import from file
+        - Macro export to file
+        - Macro library sharing (within institution)
+        - Macro search
+        - Macro usage statistics
+        - Bulk macro operations (delete, move)
+      </category>
+    </phase_2_enhanced_macros>
+
+    <phase_2_advanced_export feature_count="10">
+      <category name="Advanced Export">
+        - Print-ready PDF (exact formatting)
+        - Word/DOCX export
+        - Export with full metadata
+        - Export without metadata
+        - Export metadata configuration
+        - Batch export (multiple reports)
+        - Export to email (direct send)
+        - Export filename customization
+        - Export format preferences (save default)
+        - Export history (session only)
+      </category>
+    </phase_2_advanced_export>
+
+    <phase_2_section_regeneration feature_count="8">
+      <category name="Section Regeneration">
+        - Regenerate single section
+        - Section regeneration prompt customization
+        - Section feedback: too verbose
+        - Section feedback: too brief
+        - Section feedback: incorrect terminology
+        - Section feedback: custom instruction
+        - Section edit inline
+        - Section reset to original
+      </category>
+    </phase_2_section_regeneration>
+
+    <phase_2_productivity feature_count="8">
+      <category name="Productivity Insights">
+        - Reports per day chart
+        - Reports per week chart
+        - Average report time
+        - Most used templates
+        - Transcription usage over time
+        - Productivity score
+        - Time saved estimate
+        - Export productivity report
+      </category>
+    </phase_2_productivity>
+
+    <phase_2_onboarding feature_count="10">
+      <category name="Onboarding and Help">
+        - Welcome screen for new users
+        - Interactive tutorial: transcription
+        - Interactive tutorial: report generation
+        - Interactive tutorial: template customization
+        - Sample report generation (demo mode)
+        - Contextual help (? icons)
+        - Keyboard shortcuts guide
+        - Keyboard shortcuts modal
+        - Feature tooltips
+        - Help center link
+      </category>
+    </phase_2_onboarding>
+
+    <phase_2_error_handling feature_count="8">
+      <category name="Advanced Error Handling">
+        - Auto-retry on network failure
+        - Local draft save (IndexedDB)
+        - Resume from local draft
+        - Offline detection
+        - Offline mode indicator
+        - Sync when back online
+        - Error recovery suggestions
+        - Error reporting (optional, anonymized)
+      </category>
+    </phase_2_error_handling>
+
+    <phase_2_confidence feature_count="5">
+      <category name="Confidence Highlighting">
+        - Flag uncertain transcription terms
+        - Highlight uncertain words
+        - Click to see alternatives
+        - Accept alternative
+        - Dismiss uncertainty flag
+      </category>
+    </phase_2_confidence>
+
+    <phase_2_e2e_tests feature_count="20">
+      <category name="Phase 2 E2E Tests">
+        - E2E: YOLO mode complete flow
+        - E2E: Auto-detect template selection
+        - E2E: Advanced brand template creation
+        - E2E: Letterhead upload and preview
+        - E2E: Template version rollback
+        - E2E: Template diff view
+        - E2E: Institution creation and member invite
+        - E2E: Template sharing within institution
+        - E2E: Macro category creation
+        - E2E: Macro import/export
+        - E2E: Smart macro expansion
+        - E2E: Word/DOCX export
+        - E2E: Section regeneration
+        - E2E: Interactive onboarding tutorial
+        - E2E: Keyboard shortcuts
+        - E2E: Offline draft save and resume
+        - E2E: Confidence highlighting
+        - E2E: Productivity dashboard
+        - E2E: Institution billing
+        - E2E: Multi-institution user
+      </category>
+    </phase_2_e2e_tests>
+  </core_features>
+
+  <database_schema>
+    <tables>
+      <profiles>
+        - user_id (uuid, pk, refs auth.users)
+        - name (text)
+        - specialty (text)
+        - institution (text, deprecated - use institution_id)
+        - institution_id (uuid, refs institutions, nullable)
+        - role (enum: radiologist, admin)
+        - style_preferences (jsonb)
+        - created_at (timestamptz)
+      </profiles>
+
+      <institutions>
+        - id (uuid, pk)
+        - name (text)
+        - logo_url (text, nullable)
+        - address (text, nullable)
+        - branding_defaults (jsonb)
+        - billing_email (text)
+        - created_by (uuid, refs profiles)
+        - created_at (timestamptz)
+        - updated_at (timestamptz)
+      </institutions>
+
+      <institution_members>
+        - institution_id (uuid, refs institutions)
+        - user_id (uuid, refs profiles)
+        - role (enum: member, admin)
+        - joined_at (timestamptz)
+        - PRIMARY KEY (institution_id, user_id)
+      </institution_members>
+
+      <templates_global>
+        - id (uuid, pk)
+        - name (text)
+        - modality (text)
+        - body_part (text)
+        - description (text)
+        - version (int)
+        - content (jsonb)
+        - tags (text[])
+        - is_published (boolean)
+        - created_by (uuid, refs profiles)
+        - created_at (timestamptz)
+        - updated_at (timestamptz)
+      </templates_global>
+
+      <templates_personal>
+        - id (uuid, pk)
+        - user_id (uuid, refs profiles)
+        - origin_global_id (uuid, nullable, refs templates_global)
+        - institution_id (uuid, nullable, refs institutions)
+        - is_shared (boolean, default false)
+        - name (text)
+        - modality (text)
+        - body_part (text)
+        - description (text)
+        - version (int)
+        - content (jsonb)
+        - tags (text[])
+        - is_default (boolean)
+        - created_at (timestamptz)
+        - updated_at (timestamptz)
+      </templates_personal>
+
+      <template_versions>
+        - id (uuid, pk)
+        - template_id (uuid)
+        - template_type (enum: global, personal)
+        - version_number (int)
+        - content (jsonb)
+        - notes (text, nullable)
+        - created_by (uuid, refs profiles)
+        - created_at (timestamptz)
+      </template_versions>
+
+      <brand_templates>
+        - id (uuid, pk)
+        - user_id (uuid, refs profiles)
+        - name (text)
+        - is_default (boolean)
+        - letterhead_url (text, nullable)
+        - letterhead_position (enum: top, left, right)
+        - letterhead_size (jsonb: width, height)
+        - typography (jsonb: fonts, sizes, weights, spacing)
+        - colors (jsonb: primary, secondary, accent)
+        - footer_config (jsonb: static text, dynamic fields)
+        - created_at (timestamptz)
+        - updated_at (timestamptz)
+      </brand_templates>
+
+      <transcription_macros>
+        - id (uuid, pk)
+        - user_id (uuid, refs profiles)
+        - category_id (uuid, nullable, refs macro_categories)
+        - name (text)
+        - replacement_text (text)
+        - is_global (boolean)
+        - is_active (boolean)
+        - is_smart (boolean, default false)
+        - smart_context (jsonb, nullable)
+        - created_at (timestamptz)
+        - updated_at (timestamptz)
+      </transcription_macros>
+
+      <macro_categories>
+        - id (uuid, pk)
+        - user_id (uuid, refs profiles)
+        - name (text)
+        - parent_id (uuid, nullable, refs macro_categories)
+        - created_at (timestamptz)
+      </macro_categories>
+
+      <subscriptions>
+        - user_id (uuid, pk, refs profiles)
+        - stripe_customer_id (text, unique)
+        - plan (enum: free, plus, pro)
+        - status (enum: active, trialing, past_due, canceled, incomplete)
+        - period_start (timestamptz)
+        - period_end (timestamptz)
+        - created_at (timestamptz)
+        - updated_at (timestamptz)
+      </subscriptions>
+
+      <subscription_limits>
+        - plan (enum, pk)
+        - max_reports_per_month (int)
+        - max_transcriptions_per_month (int)
+        - max_transcription_minutes (int)
+        - max_personal_templates (int)
+        - max_brand_templates (int)
+        - features (jsonb)
+      </subscription_limits>
+
+      <credits_ledger>
+        - id (uuid, pk)
+        - user_id (uuid, refs profiles)
+        - delta (int)
+        - reason (enum: allocation, debit, topup, refund)
+        - meta (jsonb)
+        - idempotency_key (text, unique)
+        - created_at (timestamptz)
+      </credits_ledger>
+
+      <report_sessions>
+        - id (uuid, pk)
+        - user_id (uuid, refs profiles)
+        - scan_type (text)
+        - template_ref (jsonb)
+        - options (jsonb)
+        - model (text)
+        - duration_ms (int)
+        - credits_consumed (int)
+        - created_at (timestamptz)
+      </report_sessions>
+
+      <transcribe_sessions>
+        - id (uuid, pk)
+        - session_id (text, unique)
+        - user_id (uuid, refs profiles)
+        - object_key (text)
+        - status (enum: uploaded, processing, completed, deleted, failed)
+        - storage_bytes (int)
+        - storage_expires_at (timestamptz)
+        - encryption (text)
+        - nonce_b64 (text)
+        - duration_ms (int)
+        - error_code (text, nullable)
+        - created_at (timestamptz)
+        - updated_at (timestamptz)
+        - deleted_at (timestamptz, nullable)
+      </transcribe_sessions>
+
+      <user_preferences>
+        - user_id (uuid, pk, refs profiles)
+        - theme (enum: light, dark, system)
+        - default_template_id (uuid, nullable)
+        - default_brand_template_id (uuid, nullable)
+        - yolo_mode_enabled (boolean, default false)
+        - keyboard_shortcuts_enabled (boolean, default true)
+        - onboarding_completed (boolean, default false)
+        - created_at (timestamptz)
+        - updated_at (timestamptz)
+      </user_preferences>
+    </tables>
+
+    <rls_policies>
+      - All tables have RLS enabled
+      - Users can only access their own data
+      - Admins can access all data
+      - Global templates: public read (if published), admin write
+      - Institution templates: members can read, admins can write
+      - Credits ledger: user read only, service role write
+    </rls_policies>
+
+    <indexes>
+      - profiles(user_id)
+      - templates_global(is_published, modality, body_part)
+      - templates_global(tags) using gin
+      - templates_personal(user_id, lower(name)) unique
+      - template_versions(template_id, template_type, version_number)
+      - brand_templates(user_id, is_default)
+      - transcription_macros(user_id, is_active)
+      - macro_categories(user_id, parent_id)
+      - credits_ledger(idempotency_key) unique
+      - credits_ledger(user_id, created_at desc)
+      - subscriptions(stripe_customer_id) unique
+    </indexes>
+  </database_schema>
+
+  <api_endpoints_summary>
+    <authentication>
+      - POST /auth/sign-up (email/password registration)
+      - POST /auth/sign-in (email/password login)
+      - POST /auth/sign-out (logout)
+      - GET /auth/callback (OAuth redirect handler)
+      - POST /auth/reset-password (password reset request)
+      - POST /auth/update-password (password update)
+    </authentication>
+
+    <transcription>
+      - POST /api/transcribe (Edge - file upload, returns transcript)
+      - GET /api/transcribe/:sessionId (poll status for async)
+    </transcription>
+
+    <generation>
+      - POST /api/generate (Edge - SSE streaming report generation)
+    </generation>
+
+    <templates>
+      - POST /api/templates/list (Edge - paginated list with filters)
+      - POST /api/templates/create (Edge - create personal template)
+      - GET /api/templates/:id (Edge - get template details)
+      - PUT /api/templates/:id (Edge - update template)
+      - DELETE /api/templates/:id (Edge - delete template)
+      - POST /api/templates/clone (Edge - clone global to personal)
+      - GET /api/templates/:id/versions (Edge - version history)
+      - POST /api/templates/:id/rollback (Edge - rollback to version)
+    </templates>
+
+    <brand_templates>
+      - GET /api/brand-templates (Edge - list user's brand templates)
+      - POST /api/brand-templates (Edge - create brand template)
+      - PUT /api/brand-templates/:id (Edge - update brand template)
+      - DELETE /api/brand-templates/:id (Edge - delete brand template)
+      - POST /api/brand-templates/:id/upload-letterhead (Node - file upload)
+    </brand_templates>
+
+    <macros>
+      - GET /api/macros (Edge - list personal + global macros)
+      - POST /api/macros (Edge - create macro)
+      - PUT /api/macros/:id (Edge - update macro)
+      - DELETE /api/macros/:id (Edge - delete macro)
+      - GET /api/macros/categories (Edge - list categories)
+      - POST /api/macros/categories (Edge - create category)
+      - POST /api/macros/import (Edge - import macros from file)
+      - GET /api/macros/export (Edge - export macros to file)
+    </macros>
+
+    <institutions>
+      - GET /api/institutions (Edge - list user's institutions)
+      - POST /api/institutions (Edge - create institution)
+      - PUT /api/institutions/:id (Edge - update institution)
+      - POST /api/institutions/:id/invite (Edge - invite member)
+      - POST /api/institutions/:id/leave (Edge - leave institution)
+      - GET /api/institutions/:id/members (Edge - list members)
+    </institutions>
+
+    <billing>
+      - POST /api/stripe/checkout (Node - create checkout session)
+      - POST /api/stripe/portal (Node - billing portal link)
+      - POST /api/stripe/webhook (Node - handle Stripe events)
+      - GET /api/billing/usage (Edge - current usage stats)
+    </billing>
+
+    <preferences>
+      - GET /api/preferences (Edge - get user preferences)
+      - POST /api/preferences (Edge - update preferences)
+    </preferences>
+
+    <export>
+      - POST /api/export/pdf (Node - generate PDF with branding)
+      - POST /api/export/docx (Node - generate Word document)
+    </export>
+
+    <admin>
+      - GET /api/admin/users (Edge - list all users)
+      - GET /api/admin/stats (Edge - system-wide statistics)
+      - POST /api/admin/templates (Edge - create global template)
+      - PUT /api/admin/templates/:id (Edge - update global template)
+    </admin>
+  </api_endpoints_summary>
+
+  <ui_layout>
+    <main_structure>
+      - App Shell with sidebar navigation (collapsible on mobile)
+      - Header with user menu, theme toggle, notifications
+      - Main content area (max-width 5xl with 24px gutters)
+      - Full-bleed exception for /transcribe page
+    </main_structure>
+
+    <pages>
+      - / (Dashboard - quick actions, stats, usage)
+      - /transcribe (Full-screen transcription interface)
+      - /generate (Report generation with template selection)
+      - /templates (Template library with search/filters)
+      - /templates/:id (Template detail/edit)
+      - /templates/new (Create new template)
+      - /brand-templates (Brand template management)
+      - /brand-templates/:id (Brand template editor)
+      - /macros (Macro management)
+      - /billing (Subscription and usage)
+      - /settings (User preferences)
+      - /admin (Admin dashboard - admin only)
+      - /admin/templates (Global template management)
+      - /admin/users (User management)
+      - /welcome (Onboarding for new users)
+    </pages>
+
+    <responsive_breakpoints>
+      - Mobile: 375px
+      - Tablet: 768px
+      - Desktop: 1024px
+      - Wide: 1280px
+    </responsive_breakpoints>
+  </ui_layout>
+
+  <design_system>
+    <color_palette>
+      - Background: var(--bg)
+      - Surface: var(--surface), var(--surface-muted), var(--surface-raised)
+      - Text: var(--text-primary), var(--text-muted), var(--text-secondary)
+      - Brand: var(--brand) - burgundy primary
+      - Focus: var(--focus)
+      - Success: var(--success)
+      - Warning: var(--warning)
+      - Danger: var(--danger)
+      - Info: var(--info)
+    </color_palette>
+
+    <typography>
+      - Font family: var(--font-sans) - system fonts
+      - Heading sizes: text-2xl, text-xl, text-lg
+      - Body: text-base, text-sm
+      - Consistent line heights
+    </typography>
+
+    <spacing>
+      - 4px grid system
+      - Vertical rhythm: 24px
+      - Horizontal gutters: 16px
+    </spacing>
+
+    <border_radius>
+      - sm: 0.25rem
+      - md: 0.375rem
+      - lg: 0.5rem
+      - xl: 0.75rem (button default)
+      - 2xl: 1rem
+    </border_radius>
+
+    <shadows>
+      - sm: subtle elevation
+      - md: card elevation
+      - lg: modal elevation
+      - brand: branded shadow for primary actions
+    </shadows>
+
+    <animations>
+      - skeleton-pulse: 1.5s opacity loop
+      - fade-in: 200ms slide-up + fade
+      - slide-in: 200ms slide from left
+      - scale-in: 200ms scale + fade
+    </animations>
+
+    <themes>
+      - Light mode (default)
+      - Dark mode via data-theme="dark" on :root
+      - System preference detection
+    </themes>
+  </design_system>
+
+  <billing_tiers>
+    <tier name="free">
+      <price>$0/month</price>
+      <limits>
+        <reports_per_month>10</reports_per_month>
+        <transcription_minutes>15</transcription_minutes>
+        <personal_templates>3</personal_templates>
+        <brand_templates>1</brand_templates>
+      </limits>
+      <features>
+        - Basic PDF export
+        - Standard templates
+        - Email support (community)
+      </features>
+    </tier>
+
+    <tier name="plus">
+      <price>$15/month</price>
+      <limits>
+        <reports_per_month>100</reports_per_month>
+        <transcription_minutes>150</transcription_minutes>
+        <personal_templates>20</personal_templates>
+        <brand_templates>5</brand_templates>
+      </limits>
+      <features>
+        - Professional PDF export
+        - Word/DOCX export
+        - Template versioning
+        - Macro categories
+        - Email support
+      </features>
+    </tier>
+
+    <tier name="pro">
+      <price>$35/month</price>
+      <limits>
+        <reports_per_month>unlimited</reports_per_month>
+        <transcription_minutes>unlimited</transcription_minutes>
+        <personal_templates>unlimited</personal_templates>
+        <brand_templates>unlimited</brand_templates>
+      </limits>
+      <features>
+        - All Plus features
+        - Institution features
+        - Template sharing
+        - Smart macros
+        - Priority support (email + chat)
+        - Productivity insights
+      </features>
+    </tier>
+  </billing_tiers>
+
+  <implementation_phases>
+    <phase number="1" name="Core MVP">
+      <title>Core MVP - Foundation</title>
+      <feature_count>140</feature_count>
+      <tasks>
+        - Set up Next.js 14 project with TypeScript
+        - Configure Tailwind CSS with design tokens
+        - Set up Supabase connection (reuse baseline clients)
+        - Implement authentication (email/password + Google OAuth)
+        - Build UI component library (reuse baseline primitives)
+        - Implement transcription system (mic + file upload)
+        - Implement report generation with streaming
+        - Build template management (CRUD, clone, search)
+        - Create basic brand template builder
+        - Implement PDF export with branding
+        - Set up Stripe billing (3 tiers)
+        - Build dashboard with usage stats
+        - Implement light/dark theme
+        - Write Phase 1 E2E tests
+        - Performance testing and optimization
+      </tasks>
+      <success_criteria>
+        - All Phase 1 features working
+        - All Phase 1 E2E tests passing
+        - PDF export with branding functional
+        - Stripe checkout and webhooks working
+        - 50-75 concurrent users without crashing
+      </success_criteria>
+    </phase>
+
+    <phase number="2" name="Advanced Features">
+      <title>Advanced Features - Polish</title>
+      <feature_count>140</feature_count>
+      <tasks>
+        - Implement YOLO mode (auto-detect, auto-generate)
+        - Build advanced brand template builder
+        - Implement template versioning with diff view
+        - Build institution management system
+        - Enhance macro system (categories, smart macros)
+        - Add Word/DOCX export
+        - Implement section regeneration
+        - Build productivity insights dashboard
+        - Create interactive onboarding tutorial
+        - Implement advanced error handling (offline, retry)
+        - Add confidence highlighting for transcription
+        - Write Phase 2 E2E tests
+        - Full accessibility audit
+        - Performance optimization
+        - Documentation
+      </tasks>
+      <success_criteria>
+        - All Phase 2 features working
+        - All E2E tests passing (Phase 1 + Phase 2)
+        - YOLO mode functional
+        - Institution features working
+        - Full keyboard navigation
+        - Onboarding tutorial complete
+      </success_criteria>
+    </phase>
+  </implementation_phases>
+
+  <success_criteria>
+    <functionality>
+      - Two-mode workflow: Standard (4 clicks) + YOLO (2 clicks)
+      - 95%+ medical term transcription accuracy
+      - Report generation in less than 5 seconds (streaming)
+      - Transcription in less than 10 seconds for 1-minute audio
+      - All CRUD operations for templates, macros, brand templates
+      - Working Stripe subscription system
+    </functionality>
+
+    <user_experience>
+      - Intuitive enough that no training needed
+      - Minimum clicks to generate report
+      - Professional, polished UI
+      - Light and dark mode
+      - Desktop-first, mobile-usable
+      - Helpful error messages
+      - Loading states for all async operations
+    </user_experience>
+
+    <technical_quality>
+      - TypeScript strict mode throughout
+      - All E2E tests passing
+      - No console errors in production
+      - 50-75 concurrent users without crashing
+      - Sub-3-second page loads
+      - Proper error handling and recovery
+    </technical_quality>
+
+    <security_and_compliance>
+      - Zero PHI storage
+      - RLS on all database tables
+      - Auto-logout after 30 minutes
+      - Secure authentication (email + OAuth)
+      - Encrypted temporary audio storage
+      - HIPAA-friendly architecture
+    </security_and_compliance>
+
+    <testing>
+      - 280 total features with tests
+      - Phase 1: 12 critical E2E tests
+      - Phase 2: 20 additional E2E tests
+      - All tests run headless in CI
+      - Unit tests for utilities and schemas
+    </testing>
+  </success_criteria>
+
+  <test_configuration>
+    <unit_tests>
+      <framework>Vitest</framework>
+      <config_file>vitest.config.ts</config_file>
+      <command>pnpm test</command>
+      <watch_command>pnpm test:watch</watch_command>
+      <coverage>lib/**, types/**, app/**</coverage>
+    </unit_tests>
+
+    <e2e_tests>
+      <framework>Playwright</framework>
+      <config_file>playwright.config.ts</config_file>
+      <command>pnpm test:e2e</command>
+      <headed_command>pnpm test:e2e --headed</headed_command>
+      <ui_command>pnpm test:e2e:ui</ui_command>
+      <headless>true (default)</headless>
+      <browser>Chromium</browser>
+      <base_url>http://localhost:3000</base_url>
+      <test_id_attribute>data-testid</test_id_attribute>
+      <test_id_format>E2E-XXX</test_id_format>
+    </e2e_tests>
+  </test_configuration>
+
+  <environment_variables>
+    <supabase>
+      - NEXT_PUBLIC_SUPABASE_URL
+      - SUPABASE_ANON_KEY
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY
+      - SUPABASE_SERVICE_ROLE_KEY
+      - SUPABASE_POOLER_URL (for connection pooling)
+    </supabase>
+
+    <openai>
+      - OPENAI_API_KEY
+      - OPENAI_MODEL_GENERATE (gpt-4o)
+      - OPENAI_MODEL_WHISPER (whisper-1)
+    </openai>
+
+    <stripe>
+      - STRIPE_SECRET_KEY
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+      - STRIPE_WEBHOOK_SECRET
+      - STRIPE_PRICE_ID_PLUS
+      - STRIPE_PRICE_ID_PRO
+    </stripe>
+
+    <storage>
+      - TRANSCRIBE_STORAGE_BUCKET
+      - TRANSCRIBE_ENCRYPTION_KEY
+    </storage>
+
+    <redis>
+      - UPSTASH_REDIS_REST_URL
+      - UPSTASH_REDIS_REST_TOKEN
+    </redis>
+
+    <deployment>
+      - VERCEL_URL
+      - NODE_ENV
+    </deployment>
+  </environment_variables>
+</project_specification>

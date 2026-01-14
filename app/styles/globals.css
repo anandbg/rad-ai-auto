@@ -1,0 +1,176 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design Tokens - CSS Variables */
+:root {
+  /* Light theme colors */
+  --bg: #ffffff;
+  --surface: #f8fafc;
+  --surface-muted: #f1f5f9;
+  --surface-raised: #ffffff;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  /* Brand colors - Burgundy */
+  --brand: #7c2d3c;
+  --brand-foreground: #ffffff;
+
+  /* Semantic colors */
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --danger: #dc2626;
+  --danger-foreground: #ffffff;
+  --info: #2563eb;
+  --info-foreground: #ffffff;
+
+  /* Focus */
+  --focus: #3b82f6;
+
+  /* Borders */
+  --border: #e2e8f0;
+  --border-muted: #f1f5f9;
+
+  /* Font */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+}
+
+/* Dark theme */
+[data-theme='dark'] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-muted: #334155;
+  --surface-raised: #1e293b;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+
+  --brand: #9f4556;
+  --brand-foreground: #ffffff;
+
+  --border: #334155;
+  --border-muted: #1e293b;
+}
+
+/* Base styles */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    @apply bg-background text-text-primary;
+    font-family: var(--font-sans);
+  }
+
+  /* Focus ring utility */
+  .focus-ring {
+    @apply outline-none ring-2 ring-offset-2;
+    ring-color: var(--focus);
+    ring-offset-color: var(--bg);
+  }
+
+  /* Custom focus-visible styles */
+  :focus-visible {
+    @apply focus-ring;
+  }
+}
+
+@layer components {
+  /* Skip link for accessibility */
+  .skip-link {
+    @apply absolute -top-10 left-4 z-50 rounded bg-brand px-4 py-2 text-brand-foreground;
+    @apply focus:top-4 focus:outline-none;
+  }
+
+  /* Loading skeleton */
+  .skeleton {
+    @apply animate-skeleton-pulse rounded bg-surface-muted;
+  }
+
+  /* Card component base */
+  .card {
+    @apply rounded-xl border bg-surface-raised shadow-md;
+  }
+
+  /* Button base styles */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium;
+    @apply transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand text-brand-foreground hover:opacity-90;
+    ring-color: var(--brand);
+  }
+
+  .btn-secondary {
+    @apply btn border bg-surface hover:bg-surface-muted;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger text-danger-foreground hover:opacity-90;
+    ring-color: var(--danger);
+  }
+
+  /* Input base styles */
+  .input {
+    @apply flex h-10 w-full rounded-lg border bg-background px-3 py-2 text-sm;
+    @apply placeholder:text-text-muted;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+    ring-color: var(--focus);
+  }
+
+  /* Label styles */
+  .label {
+    @apply text-sm font-medium text-text-primary;
+  }
+
+  /* Toast styles */
+  .toast {
+    @apply rounded-lg border bg-surface-raised px-4 py-3 shadow-lg;
+  }
+
+  .toast-success {
+    @apply toast border-success/50 bg-success/10;
+  }
+
+  .toast-error {
+    @apply toast border-danger/50 bg-danger/10;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Truncate with ellipsis */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Next.js
+.next
+out
+build
+
+# Testing
+coverage
+test-results
+playwright-report
+.playwright
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Build output
+dist
+*.tsbuildinfo
+
+# Vercel
+.vercel
+
+# Misc
+*.pem
+
+# SQLite databases (features.db is managed by the features API)
+assistant.db
+
+# Claude settings
+.claude_*.json
+
+# Agent lock
+.agent.lock
+
+# Existing AI-RADIOLOGIST folder (baseline reference only)
+AI-RADIOLOGIST/
