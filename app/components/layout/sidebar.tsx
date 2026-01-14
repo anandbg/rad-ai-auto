@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -26,6 +27,19 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Filter nav items based on user role
   const visibleNavItems = navItems.filter(
@@ -68,22 +82,58 @@ export function Sidebar() {
       </nav>
 
       {/* User section */}
-      <div className="border-t p-4">
-        <div className="mb-3 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-sm">
-            {user?.name?.[0]?.toUpperCase() || '?'}
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <p className="truncate text-sm font-medium">{user?.name || 'Loading...'}</p>
-            <p className="truncate text-xs text-text-muted">{user?.email}</p>
-          </div>
+      <div className="border-t p-4" ref={userMenuRef}>
+        <div className="relative">
+          <button
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            className="mb-3 flex w-full items-center gap-3 rounded-lg p-2 hover:bg-surface-muted transition-colors cursor-pointer"
+            aria-expanded={isUserMenuOpen}
+            aria-haspopup="true"
+            data-testid="user-menu-trigger"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-sm">
+              {user?.name?.[0]?.toUpperCase() || '?'}
+            </div>
+            <div className="flex-1 overflow-hidden text-left">
+              <p className="truncate text-sm font-medium">{user?.name || 'Loading...'}</p>
+              <p className="truncate text-xs text-text-muted">{user?.email}</p>
+            </div>
+            <svg
+              className={`h-4 w-4 text-text-muted transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Dropdown menu */}
+          {isUserMenuOpen && (
+            <div className="absolute bottom-full left-0 right-0 mb-2 rounded-lg border bg-surface shadow-lg">
+              <Link
+                href="/settings"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-3 text-sm hover:bg-surface-muted transition-colors"
+                data-testid="user-menu-profile"
+              >
+                <span>👤</span>
+                <span>Profile & Settings</span>
+              </Link>
+              <hr className="border-surface-muted" />
+              <button
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  signOut();
+                }}
+                className="flex w-full items-center gap-2 px-4 py-3 text-sm text-danger hover:bg-surface-muted transition-colors"
+              >
+                <span>🚪</span>
+                <span>Sign out</span>
+              </button>
+            </div>
+          )}
         </div>
-        <button
-          onClick={signOut}
-          className="btn-secondary w-full text-sm"
-        >
-          Sign out
-        </button>
       </div>
     </aside>
   );
