@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/lib/auth/auth-context';
 
 // Template interface
 interface Template {
@@ -18,7 +19,7 @@ interface Template {
   updatedAt: string;
 }
 
-// Mock templates for development
+// Mock templates for development (Global templates - visible to all users)
 const mockTemplates: Template[] = [
   {
     id: 'tpl-001',
@@ -40,22 +41,17 @@ const mockTemplates: Template[] = [
     createdAt: '2024-01-12T14:30:00Z',
     updatedAt: '2024-01-12T14:30:00Z',
   },
-  {
-    id: 'tpl-003',
-    name: 'MRI Brain',
-    modality: 'MRI',
-    bodyPart: 'Head',
-    description: 'Standard brain MRI with diffusion-weighted imaging',
-    isGlobal: false,
-    createdAt: '2024-01-14T09:15:00Z',
-    updatedAt: '2024-01-14T09:15:00Z',
-  },
 ];
 
-// Helper to get templates from localStorage
-function getStoredTemplates(): Template[] {
+// Helper to get user-specific storage key
+function getStorageKey(userId: string | undefined): string {
+  return userId ? `ai-rad-templates-${userId}` : 'ai-rad-templates';
+}
+
+// Helper to get templates from localStorage (user-specific)
+function getStoredTemplates(userId: string | undefined): Template[] {
   if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem('ai-rad-templates');
+  const stored = localStorage.getItem(getStorageKey(userId));
   if (!stored) return [];
   try {
     return JSON.parse(stored);
@@ -64,22 +60,23 @@ function getStoredTemplates(): Template[] {
   }
 }
 
-// Helper to save templates to localStorage
-function saveTemplates(templates: Template[]) {
+// Helper to save templates to localStorage (user-specific)
+function saveTemplates(templates: Template[], userId: string | undefined) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('ai-rad-templates', JSON.stringify(templates));
+  localStorage.setItem(getStorageKey(userId), JSON.stringify(templates));
 }
 
 export default function TemplatesPage() {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModality, setSelectedModality] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load templates on mount
+  // Load templates on mount and when user changes
   useEffect(() => {
-    const storedTemplates = getStoredTemplates();
-    // Combine mock templates with stored ones (stored take precedence by ID)
+    const storedTemplates = getStoredTemplates(user?.id);
+    // Combine user's personal templates with global templates
     const storedIds = new Set(storedTemplates.map(t => t.id));
     const combinedTemplates = [
       ...storedTemplates,
@@ -87,7 +84,7 @@ export default function TemplatesPage() {
     ];
     setTemplates(combinedTemplates);
     setIsLoading(false);
-  }, []);
+  }, [user?.id]);
 
   // Filter templates
   const filteredTemplates = templates.filter(template => {
@@ -109,7 +106,8 @@ export default function TemplatesPage() {
   const handleDelete = (id: string) => {
     const updatedTemplates = templates.filter(t => t.id !== id);
     setTemplates(updatedTemplates);
-    saveTemplates(updatedTemplates.filter(t => !mockTemplates.some(m => m.id === t.id)));
+    // Only save non-global templates to user's storage
+    saveTemplates(updatedTemplates.filter(t => !mockTemplates.some(m => m.id === t.id)), user?.id);
   };
 
   if (isLoading) {

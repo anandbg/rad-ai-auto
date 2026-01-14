@@ -183,3 +183,193 @@ Created reusable UI components from baseline AI-RADIOLOGIST code:
 - Package Manager: pnpm
 - Framework: Next.js 14 (App Router)
 - Dev Server: http://localhost:3000
+
+---
+
+# Session 3 - Coding Agent
+
+## Date: 2025-01-14
+
+## Session Summary
+Continued feature implementation, focusing on Real Data Verification features. Implemented functional Generate Report page with template dropdown and usage statistics tracking on the dashboard.
+
+## Tasks Completed
+
+### 1. Generate Report Page Implementation
+Replaced the placeholder generate page with a fully functional implementation:
+- Template dropdown with Personal and Global template groups
+- Finds entry textarea for clinical indications
+- Report generation (simulated AI with 1.5s delay)
+- Generated report display with copy/export buttons
+- Integrates with localStorage template storage
+
+### 2. Dashboard Usage Statistics
+Implemented real-time usage statistics tracking:
+- Reports Generated counter (reads from localStorage)
+- Progress bar visualization
+- Auto-refresh on window focus and storage events
+- Data persists across sessions
+
+### 3. Template Deletion from Dropdowns
+Verified that deleted templates are properly removed from:
+- Template list page
+- Generate page template dropdown
+
+## Features Verified and Passing This Session
+- **#50**: Deleted template removed from list
+- **#51**: Deleted template removed from dropdowns
+- **#52**: Search returns only matching real data
+- **#53**: Dashboard stats reflect real counts
+
+## Current State
+
+### Feature Progress
+- Total Features: 280
+- Passing: 26
+- In Progress: 0
+- Percentage: 9.3%
+
+### Git Status
+- Clean working directory ready for commit
+
+## Files Modified This Session
+
+### Modified Files
+- `app/app/(protected)/generate/page.tsx` - Full implementation with template dropdown, findings input, report generation
+- `app/app/(protected)/dashboard/page.tsx` - Added real usage stats from localStorage
+
+## Key Implementation Details
+
+### Data Storage (localStorage)
+- `ai-rad-templates` - Array of user-created templates
+- `ai-rad-usage` - Object with { reportsGenerated, transcriptionMinutes }
+
+### Template Dropdown Behavior
+- Shows Personal Templates (user-created) and Global Templates (default)
+- Filters out deleted templates automatically
+- Updates in real-time when templates are deleted
+
+### Usage Statistics
+- Increments report count after successful generation
+- Dashboard refreshes stats on mount, window focus, and storage events
+
+## Next Steps for Future Sessions
+
+1. **Continue Real Data Verification Features**
+   - Feature #54+ pending
+   - Continue through C. Real Data Verification category
+
+2. **Implement Workflow Completeness Features**
+   - Full report generation workflow
+   - Template cloning functionality
+   - PDF export
+
+3. **Implement Transcription Page**
+   - Audio recording interface
+   - File upload
+   - Transcription minutes tracking
+
+## Testing Notes
+
+- Used browser automation (Playwright MCP) for all verification
+- Dev server runs on http://localhost:3001 (port 3000 was in use)
+- All features tested with real data creation/deletion flows
+- No mock data issues - all data properly stored in localStorage
+
+## Environment
+
+- Working Directory: `/Users/anand/rad-ai-auto/`
+- Node.js: 20+
+- Package Manager: pnpm
+- Framework: Next.js 14 (App Router)
+- Dev Server: http://localhost:3001
+
+---
+
+# Session 4 - Coding Agent
+
+## Date: 2026-01-14
+
+## Session Summary
+Continued feature implementation, focusing on Real Data Verification features. Implemented user-specific data isolation and verified timestamp accuracy.
+
+## Tasks Completed
+
+### 1. Feature #54: Usage Stats Reflect Actual Usage
+- Verified that billing page shows real transcription minutes
+- Performed transcription (13 seconds = ~0.2 minutes)
+- Confirmed transcription minutes increased from 0.3 to 0.5 on billing page
+
+### 2. Feature #55: Timestamps Are Accurate
+- Updated template detail page to show full timestamps (date + time) instead of just date
+- Added `data-testid` attributes for `template-created-at` and `template-updated-at`
+- Verified createdAt is set on template creation and within 1 minute of actual time
+- Verified updatedAt changes when editing a template
+
+### 3. Feature #56: User Data Isolation
+- Implemented user-specific localStorage storage for templates
+- Storage keys now use format `ai-rad-templates-{userId}` instead of generic `ai-rad-templates`
+- Updated templates list page, create page, and detail page to use auth context
+- Verified that User A's private template is NOT visible to User B
+
+## Features Verified and Passing This Session
+- **#54**: Usage stats reflect actual usage
+- **#55**: Timestamps are accurate
+- **#56**: User A data not visible to User B
+
+## Current State
+
+### Feature Progress
+- Total Features: 280
+- Passing: 29
+- In Progress: 0
+- Percentage: 10.4%
+
+### Git Status
+- Modified files ready for commit
+
+## Files Modified This Session
+
+### Modified Files
+- `app/app/(protected)/templates/page.tsx` - Added useAuth, user-specific storage
+- `app/app/(protected)/templates/new/page.tsx` - Added useAuth, user-specific storage
+- `app/app/(protected)/templates/[id]/page.tsx` - Added useAuth, user-specific storage, full timestamps
+
+## Key Implementation Details
+
+### User-Specific Storage
+- Storage key format: `ai-rad-templates-{userId}`
+- User IDs: `mock-user-radiologist-123` (radiologist), `mock-user-admin-456` (admin)
+- Templates created by one user are not visible to other users
+- Global templates are visible to all users
+
+### Timestamp Display
+- Changed from `toLocaleDateString()` to `toLocaleString()` for full timestamp visibility
+- Both createdAt and updatedAt are now visible with date and time
+
+## Next Steps for Future Sessions
+
+1. **Continue Real Data Verification Features**
+   - Feature #57+ pending
+   - Continue through remaining categories
+
+2. **Clean Up Orphaned Data**
+   - Old templates in generic `ai-rad-templates` key should be migrated or cleaned
+
+3. **Make Usage Stats User-Specific**
+   - Currently `ai-rad-usage` is shared - should be user-specific too
+
+## Testing Notes
+
+- Used browser automation (Playwright MCP) for all verification
+- Dev server runs on http://localhost:3000
+- All features tested with real data creation/deletion flows
+- User isolation verified by logging in as different users
+
+## Environment
+
+- Working Directory: `/Users/anand/rad-ai-auto/`
+- Node.js: 20+
+- Package Manager: pnpm
+- Framework: Next.js 14 (App Router)
+- Dev Server: http://localhost:3000

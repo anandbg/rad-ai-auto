@@ -1,9 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
-// Mock billing data for development
+// Plan configuration
 const currentPlan = {
   name: 'Free',
   price: '$0',
@@ -62,14 +63,30 @@ const plans = [
   },
 ];
 
-const usageStats = {
-  reportsUsed: 3,
-  reportsLimit: 10,
-  transcriptionUsed: 5,
-  transcriptionLimit: 15,
-  templatesUsed: 2,
-  templatesLimit: 3,
-};
+// Helper to get usage stats from localStorage
+function getUsageStats(): { reportsGenerated: number; transcriptionMinutes: number } {
+  if (typeof window === 'undefined') return { reportsGenerated: 0, transcriptionMinutes: 0 };
+  const stored = localStorage.getItem('ai-rad-usage');
+  if (!stored) return { reportsGenerated: 0, transcriptionMinutes: 0 };
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return { reportsGenerated: 0, transcriptionMinutes: 0 };
+  }
+}
+
+// Helper to count personal templates
+function getTemplateCount(): number {
+  if (typeof window === 'undefined') return 0;
+  const stored = localStorage.getItem('ai-rad-templates');
+  if (!stored) return 0;
+  try {
+    const templates = JSON.parse(stored);
+    return templates.filter((t: { isGlobal: boolean }) => !t.isGlobal).length;
+  } catch {
+    return 0;
+  }
+}
 
 // Mock invoice history
 const invoices = [
@@ -108,6 +125,27 @@ function formatDate(dateString: string) {
 }
 
 export default function BillingPage() {
+  const [usageStats, setUsageStats] = useState({ reportsGenerated: 0, transcriptionMinutes: 0 });
+  const [templateCount, setTemplateCount] = useState(0);
+
+  // Load usage stats on mount
+  useEffect(() => {
+    const loadStats = () => {
+      setUsageStats(getUsageStats());
+      setTemplateCount(getTemplateCount());
+    };
+    loadStats();
+
+    // Also reload when the window gains focus
+    window.addEventListener('focus', loadStats);
+    window.addEventListener('storage', loadStats);
+
+    return () => {
+      window.removeEventListener('focus', loadStats);
+      window.removeEventListener('storage', loadStats);
+    };
+  }, []);
+
   const usagePercentage = (used: number, limit: number) => Math.round((used / limit) * 100);
 
   return (
@@ -162,14 +200,14 @@ export default function BillingPage() {
             <div>
               <div className="mb-1 flex justify-between text-sm">
                 <span className="text-text-secondary">Reports Generated</span>
-                <span className="font-medium text-text-primary">
-                  {usageStats.reportsUsed} / {usageStats.reportsLimit}
+                <span className="font-medium text-text-primary" data-testid="billing-reports-count">
+                  {usageStats.reportsGenerated} / 10
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
                 <div
                   className="h-full bg-brand transition-all"
-                  style={{ width: `${usagePercentage(usageStats.reportsUsed, usageStats.reportsLimit)}%` }}
+                  style={{ width: `${usagePercentage(usageStats.reportsGenerated, 10)}%` }}
                 />
               </div>
             </div>
@@ -178,14 +216,14 @@ export default function BillingPage() {
             <div>
               <div className="mb-1 flex justify-between text-sm">
                 <span className="text-text-secondary">Transcription Minutes</span>
-                <span className="font-medium text-text-primary">
-                  {usageStats.transcriptionUsed} / {usageStats.transcriptionLimit} min
+                <span className="font-medium text-text-primary" data-testid="billing-transcription-minutes">
+                  {usageStats.transcriptionMinutes} / 15 min
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
                 <div
                   className="h-full bg-info transition-all"
-                  style={{ width: `${usagePercentage(usageStats.transcriptionUsed, usageStats.transcriptionLimit)}%` }}
+                  style={{ width: `${usagePercentage(usageStats.transcriptionMinutes, 15)}%` }}
                 />
               </div>
             </div>
@@ -194,14 +232,14 @@ export default function BillingPage() {
             <div>
               <div className="mb-1 flex justify-between text-sm">
                 <span className="text-text-secondary">Personal Templates</span>
-                <span className="font-medium text-text-primary">
-                  {usageStats.templatesUsed} / {usageStats.templatesLimit}
+                <span className="font-medium text-text-primary" data-testid="billing-templates-count">
+                  {templateCount} / 3
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
                 <div
                   className="h-full bg-success transition-all"
-                  style={{ width: `${usagePercentage(usageStats.templatesUsed, usageStats.templatesLimit)}%` }}
+                  style={{ width: `${usagePercentage(templateCount, 3)}%` }}
                 />
               </div>
             </div>

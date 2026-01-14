@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/lib/auth/auth-context';
 
 // Template interface - must match the one in the list page
 interface Template {
@@ -21,7 +22,7 @@ interface Template {
   content?: string;
 }
 
-// Mock templates for development (same as list page)
+// Mock templates for development (Global templates)
 const mockTemplates: Template[] = [
   {
     id: 'tpl-001',
@@ -44,17 +45,6 @@ const mockTemplates: Template[] = [
     createdAt: '2024-01-12T14:30:00Z',
     updatedAt: '2024-01-12T14:30:00Z',
     content: 'CT ABDOMEN AND PELVIS WITH CONTRAST\n\nCLINICAL INDICATION:\n{{INDICATION}}\n\nTECHNIQUE:\n{{TECHNIQUE}}\n\nFINDINGS:\n{{FINDINGS}}\n\nIMPRESSION:\n{{IMPRESSION}}',
-  },
-  {
-    id: 'tpl-003',
-    name: 'MRI Brain',
-    modality: 'MRI',
-    bodyPart: 'Head',
-    description: 'Standard brain MRI with diffusion-weighted imaging',
-    isGlobal: false,
-    createdAt: '2024-01-14T09:15:00Z',
-    updatedAt: '2024-01-14T09:15:00Z',
-    content: 'MRI BRAIN WITHOUT CONTRAST\n\nCLINICAL INDICATION:\n{{INDICATION}}\n\nSEQUENCES:\n{{SEQUENCES}}\n\nFINDINGS:\n{{FINDINGS}}\n\nIMPRESSION:\n{{IMPRESSION}}',
   },
 ];
 
@@ -85,10 +75,15 @@ const bodyPartOptions = [
   'Other',
 ];
 
-// Helper to get templates from localStorage
-function getStoredTemplates(): Template[] {
+// Helper to get user-specific storage key
+function getStorageKey(userId: string | undefined): string {
+  return userId ? `ai-rad-templates-${userId}` : 'ai-rad-templates';
+}
+
+// Helper to get templates from localStorage (user-specific)
+function getStoredTemplates(userId: string | undefined): Template[] {
   if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem('ai-rad-templates');
+  const stored = localStorage.getItem(getStorageKey(userId));
   if (!stored) return [];
   try {
     return JSON.parse(stored);
@@ -97,15 +92,16 @@ function getStoredTemplates(): Template[] {
   }
 }
 
-// Helper to save templates to localStorage
-function saveTemplates(templates: Template[]) {
+// Helper to save templates to localStorage (user-specific)
+function saveTemplates(templates: Template[], userId: string | undefined) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('ai-rad-templates', JSON.stringify(templates));
+  localStorage.setItem(getStorageKey(userId), JSON.stringify(templates));
 }
 
 export default function TemplateDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const id = params.id as string;
 
   const [template, setTemplate] = useState<Template | null>(null);
@@ -120,9 +116,9 @@ export default function TemplateDetailPage() {
     content: '',
   });
 
-  // Load template on mount
+  // Load template on mount and when user changes
   useEffect(() => {
-    const storedTemplates = getStoredTemplates();
+    const storedTemplates = getStoredTemplates(user?.id);
     const allTemplates = [...storedTemplates, ...mockTemplates.filter(m => !storedTemplates.some(s => s.id === m.id))];
     const foundTemplate = allTemplates.find(t => t.id === id);
 
@@ -137,7 +133,7 @@ export default function TemplateDetailPage() {
       });
     }
     setIsLoading(false);
-  }, [id]);
+  }, [id, user?.id]);
 
   const handleSave = () => {
     if (!template) return;
@@ -154,8 +150,8 @@ export default function TemplateDetailPage() {
       updatedAt: new Date().toISOString(),
     };
 
-    // Update in localStorage
-    const storedTemplates = getStoredTemplates();
+    // Update in localStorage (user-specific)
+    const storedTemplates = getStoredTemplates(user?.id);
     const existingIndex = storedTemplates.findIndex(t => t.id === id);
 
     if (existingIndex >= 0) {
@@ -164,7 +160,7 @@ export default function TemplateDetailPage() {
       storedTemplates.push(updatedTemplate);
     }
 
-    saveTemplates(storedTemplates);
+    saveTemplates(storedTemplates, user?.id);
     setTemplate(updatedTemplate);
     setIsEditing(false);
     setIsSaving(false);
@@ -358,14 +354,14 @@ export default function TemplateDetailPage() {
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-text-secondary">Created</dt>
-                  <dd className="mt-1 text-text-primary">
-                    {new Date(template.createdAt).toLocaleDateString()}
+                  <dd className="mt-1 text-text-primary" data-testid="template-created-at">
+                    {new Date(template.createdAt).toLocaleString()}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-text-secondary">Last Updated</dt>
-                  <dd className="mt-1 text-text-primary">
-                    {new Date(template.updatedAt).toLocaleDateString()}
+                  <dd className="mt-1 text-text-primary" data-testid="template-updated-at">
+                    {new Date(template.updatedAt).toLocaleString()}
                   </dd>
                 </div>
               </dl>

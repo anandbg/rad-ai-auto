@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/lib/auth/auth-context';
 
 // Template interface - must match the one in the list page
 interface Template {
@@ -47,10 +48,15 @@ const bodyPartOptions = [
   'Other',
 ];
 
-// Helper to get templates from localStorage
-function getStoredTemplates(): Template[] {
+// Helper to get user-specific storage key
+function getStorageKey(userId: string | undefined): string {
+  return userId ? `ai-rad-templates-${userId}` : 'ai-rad-templates';
+}
+
+// Helper to get templates from localStorage (user-specific)
+function getStoredTemplates(userId: string | undefined): Template[] {
   if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem('ai-rad-templates');
+  const stored = localStorage.getItem(getStorageKey(userId));
   if (!stored) return [];
   try {
     return JSON.parse(stored);
@@ -59,10 +65,10 @@ function getStoredTemplates(): Template[] {
   }
 }
 
-// Helper to save templates to localStorage
-function saveTemplates(templates: Template[]) {
+// Helper to save templates to localStorage (user-specific)
+function saveTemplates(templates: Template[], userId: string | undefined) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('ai-rad-templates', JSON.stringify(templates));
+  localStorage.setItem(getStorageKey(userId), JSON.stringify(templates));
 }
 
 // Generate unique ID
@@ -72,6 +78,7 @@ function generateId(): string {
 
 export default function NewTemplatePage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -130,9 +137,9 @@ export default function NewTemplatePage() {
       updatedAt: new Date().toISOString(),
     };
 
-    // Save to localStorage
-    const existingTemplates = getStoredTemplates();
-    saveTemplates([newTemplate, ...existingTemplates]);
+    // Save to localStorage (user-specific)
+    const existingTemplates = getStoredTemplates(user?.id);
+    saveTemplates([newTemplate, ...existingTemplates], user?.id);
 
     // Redirect to templates list
     router.push('/templates');
