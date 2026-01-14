@@ -17,6 +17,7 @@ interface Template {
   isGlobal: boolean;
   createdAt: string;
   updatedAt: string;
+  content?: string;
 }
 
 // Seed global templates (only used if no global templates exist in storage)
@@ -143,6 +144,28 @@ export default function TemplatesPage() {
       // User deleting personal template
       saveTemplates(updatedTemplates.filter(t => !t.isGlobal), user?.id);
     }
+  };
+
+  const handleClone = (id: string) => {
+    const templateToClone = templates.find(t => t.id === id);
+    if (!templateToClone) return;
+
+    // Create a new personal copy of the template
+    const clonedTemplate: Template = {
+      ...templateToClone,
+      id: 'tpl-' + Math.random().toString(36).substring(2, 9),
+      name: `${templateToClone.name} (Copy)`,
+      isGlobal: false, // Cloned template is always personal
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Add to personal templates
+    const currentPersonalTemplates = getStoredTemplates(user?.id);
+    saveTemplates([clonedTemplate, ...currentPersonalTemplates], user?.id);
+
+    // Update local state
+    setTemplates([clonedTemplate, ...templates]);
   };
 
   if (isLoading) {
@@ -280,7 +303,12 @@ export default function TemplatesPage() {
                 <Button variant="ghost" size="sm" asChild>
                   <Link href={`/templates/${template.id}`}>View</Link>
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleClone(template.id)}
+                  data-testid={`clone-template-${template.id}`}
+                >
                   Clone
                 </Button>
               </CardFooter>
