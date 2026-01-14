@@ -5,10 +5,23 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+// Helper to get usage stats from localStorage
+function getUsageStats(): { reportsGenerated: number; transcriptionMinutes: number } {
+  if (typeof window === 'undefined') return { reportsGenerated: 0, transcriptionMinutes: 0 };
+  const stored = localStorage.getItem('ai-rad-usage');
+  if (!stored) return { reportsGenerated: 0, transcriptionMinutes: 0 };
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return { reportsGenerated: 0, transcriptionMinutes: 0 };
+  }
+}
+
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
   const searchParams = useSearchParams();
   const [showUnauthorizedError, setShowUnauthorizedError] = useState(false);
+  const [usageStats, setUsageStats] = useState({ reportsGenerated: 0, transcriptionMinutes: 0 });
 
   useEffect(() => {
     if (searchParams.get('error') === 'unauthorized') {
@@ -17,6 +30,24 @@ export default function DashboardPage() {
       setTimeout(() => setShowUnauthorizedError(false), 5000);
     }
   }, [searchParams]);
+
+  // Load usage stats on mount and when window gains focus
+  useEffect(() => {
+    const loadStats = () => {
+      setUsageStats(getUsageStats());
+    };
+    loadStats();
+
+    // Also reload when the window gains focus (in case reports were generated in another tab)
+    window.addEventListener('focus', loadStats);
+    // Listen for storage events from other tabs
+    window.addEventListener('storage', loadStats);
+
+    return () => {
+      window.removeEventListener('focus', loadStats);
+      window.removeEventListener('storage', loadStats);
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -94,24 +125,24 @@ export default function DashboardPage() {
               <div>
                 <div className="mb-1 flex justify-between text-sm">
                   <span>Reports Generated</span>
-                  <span className="text-text-muted">0 / 10</span>
+                  <span className="text-text-muted" data-testid="reports-count">{usageStats.reportsGenerated} / 10</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
                   <div
                     className="h-full bg-brand transition-all"
-                    style={{ width: '0%' }}
+                    style={{ width: `${Math.min((usageStats.reportsGenerated / 10) * 100, 100)}%` }}
                   />
                 </div>
               </div>
               <div>
                 <div className="mb-1 flex justify-between text-sm">
                   <span>Transcription Minutes</span>
-                  <span className="text-text-muted">0 / 15</span>
+                  <span className="text-text-muted" data-testid="transcription-minutes">{usageStats.transcriptionMinutes} / 15</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
                   <div
                     className="h-full bg-brand transition-all"
-                    style={{ width: '0%' }}
+                    style={{ width: `${Math.min((usageStats.transcriptionMinutes / 15) * 100, 100)}%` }}
                   />
                 </div>
               </div>
