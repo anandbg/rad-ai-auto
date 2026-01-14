@@ -373,3 +373,122 @@ Continued feature implementation, focusing on Real Data Verification features. I
 - Package Manager: pnpm
 - Framework: Next.js 14 (App Router)
 - Dev Server: http://localhost:3000
+
+---
+
+# Session 5 - Coding Agent
+
+## Date: 2026-01-14
+
+## Session Summary
+Implemented template sorting, sections management, and toast notifications. Completed Features #64-67.
+
+## Tasks Completed
+
+### 1. Feature #64: Filter results are real not cached
+- Verified template filters query actual data (not cached)
+- Tested by creating MRI template, filtering by MRI (appears), filtering by CT (not shown)
+
+### 2. Feature #65: Sort reflects actual data order
+- Added template sorting dropdown with options:
+  - Name (A-Z)
+  - Name (Z-A)
+  - Date (Oldest)
+  - Date (Newest)
+- Verified sorting operates on real database data
+
+### 3. Feature #66: E2E: Create personal template workflow
+- Added Template Sections management:
+  - Add sections with name and content
+  - Remove sections
+  - Sections saved with template
+- Added Toast notification system:
+  - Success, error, warning, info types
+  - Auto-dismiss after 4 seconds
+  - Animated with Framer Motion
+- Verified complete template creation workflow
+
+### 4. Feature #67: E2E: View template details workflow
+- Updated template detail page to show sections
+- Verified all template details display correctly:
+  - Modality, Body Part, Description
+  - Created/Updated timestamps
+  - Template Sections (when present)
+  - Additional Template Content
+
+## Features Verified and Passing This Session
+- **#64**: Filter results are real not cached
+- **#65**: Sort reflects actual data order
+- **#66**: E2E: Create personal template workflow
+- **#67**: E2E: View template details workflow
+
+## Current State
+
+### Feature Progress
+- Total Features: 280
+- Passing: 39
+- In Progress: 0
+- Percentage: 13.9%
+
+### Git Status
+- Latest commit: "Implement template sorting, sections, and toast notifications - Features #64-67 passing"
+
+## Files Created/Modified This Session
+
+### New Files
+- `app/components/ui/toast.tsx` - Toast notification component with context provider
+
+### Modified Files
+- `app/app/(protected)/templates/page.tsx` - Added sorting dropdown and sort logic
+- `app/app/(protected)/templates/new/page.tsx` - Added sections management and toast notification
+- `app/app/(protected)/templates/[id]/page.tsx` - Added sections display, updated interface
+- `app/app/layout.tsx` - Added ToastProvider wrapper
+
+## Key Implementation Details
+
+### Toast Notification System
+- Uses React Context for global state
+- Supports 4 toast types: success, error, warning, info
+- Auto-dismiss after 4 seconds (configurable)
+- Animated with Framer Motion (fade-in/out, scale)
+- Positioned at top-right of screen
+
+### Template Sections
+- Sections stored as array in template: `{ id, name, content }`
+- Add/remove sections in create form
+- Sections displayed in detail view when present
+- Each section has name heading and content area
+
+### Template Sorting
+- Sort dropdown added to templates list page
+- Sorts both personal and global templates separately
+- Available sorts: name-asc, name-desc, date-asc, date-desc
+
+## Next Steps for Future Sessions
+
+1. **Continue Workflow Completeness Features**
+   - Feature #68+ pending
+   - Continue through D. Workflow Completeness category
+
+2. **Implement Error Handling Features**
+   - E. Error Handling category
+
+3. **Core Functionality Improvements**
+   - Report generation workflow
+   - PDF export with branding
+   - Transcription functionality
+
+## Testing Notes
+
+- Used browser automation (Playwright MCP) for all verification
+- Dev server runs on http://localhost:3000
+- All features tested with real data creation/deletion flows
+- Screenshots saved in `.playwright-mcp/` directory
+
+## Environment
+
+- Working Directory: `/Users/anand/rad-ai-auto/`
+- Node.js: 20+
+- Package Manager: pnpm
+- Framework: Next.js 14 (App Router)
+- Dev Server: http://localhost:3000
