@@ -69,6 +69,9 @@ export default function MacrosPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newMacroName, setNewMacroName] = useState('');
   const [newMacroText, setNewMacroText] = useState('');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingMacro, setEditingMacro] = useState<Macro | null>(null);
+  const [editMacroText, setEditMacroText] = useState('');
 
   // Load macros on mount and when user changes
   useEffect(() => {
@@ -110,6 +113,27 @@ export default function MacrosPage() {
     const updatedMacros = macros.filter(macro => macro.id !== id);
     setMacros(updatedMacros);
     saveMacros(updatedMacros, user?.id);
+  };
+
+  const openEditDialog = (macro: Macro) => {
+    setEditingMacro(macro);
+    setEditMacroText(macro.replacementText);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditMacro = () => {
+    if (!editingMacro || !editMacroText.trim()) return;
+
+    const updatedMacros = macros.map(macro =>
+      macro.id === editingMacro.id
+        ? { ...macro, replacementText: editMacroText.trim() }
+        : macro
+    );
+    setMacros(updatedMacros);
+    saveMacros(updatedMacros, user?.id);
+    setIsEditDialogOpen(false);
+    setEditingMacro(null);
+    setEditMacroText('');
   };
 
   const activeMacros = macros.filter(m => m.isActive);
@@ -216,6 +240,15 @@ export default function MacrosPage() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => openEditDialog(macro)}
+                          title="Edit macro"
+                          data-testid={`edit-macro-${macro.id}`}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => toggleMacro(macro.id)}
                           title="Disable macro"
                         >
@@ -304,6 +337,44 @@ export default function MacrosPage() {
           </Button>
         </div>
       )}
+
+      {/* Edit Macro Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent data-testid="edit-macro-dialog">
+          <DialogHeader>
+            <DialogTitle>Edit Macro</DialogTitle>
+            <DialogDescription>
+              Modify the expansion text for &quot;{editingMacro?.name}&quot;
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 px-6 py-4">
+            <div>
+              <label htmlFor="edit-macro-text" className="mb-2 block text-sm font-medium text-text-primary">
+                Expansion Text
+              </label>
+              <Textarea
+                id="edit-macro-text"
+                placeholder="Enter expansion text"
+                value={editMacroText}
+                onChange={(e) => setEditMacroText(e.target.value)}
+                data-testid="edit-macro-text-input"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditMacro}
+              disabled={!editMacroText.trim()}
+              data-testid="save-edit-macro-button"
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
