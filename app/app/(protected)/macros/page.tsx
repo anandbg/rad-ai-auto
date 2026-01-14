@@ -72,6 +72,8 @@ export default function MacrosPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMacro, setEditingMacro] = useState<Macro | null>(null);
   const [editMacroText, setEditMacroText] = useState('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [macroToDelete, setMacroToDelete] = useState<Macro | null>(null);
 
   // Load macros on mount and when user changes
   useEffect(() => {
@@ -109,10 +111,18 @@ export default function MacrosPage() {
     saveMacros(updatedMacros, user?.id);
   };
 
-  const deleteMacro = (id: string) => {
-    const updatedMacros = macros.filter(macro => macro.id !== id);
+  const openDeleteDialog = (macro: Macro) => {
+    setMacroToDelete(macro);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteMacro = () => {
+    if (!macroToDelete) return;
+    const updatedMacros = macros.filter(macro => macro.id !== macroToDelete.id);
     setMacros(updatedMacros);
     saveMacros(updatedMacros, user?.id);
+    setIsDeleteDialogOpen(false);
+    setMacroToDelete(null);
   };
 
   const openEditDialog = (macro: Macro) => {
@@ -257,9 +267,10 @@ export default function MacrosPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => deleteMacro(macro.id)}
+                          onClick={() => openDeleteDialog(macro)}
                           className="text-danger hover:text-danger"
                           title="Delete macro"
+                          data-testid={`delete-macro-${macro.id}`}
                         >
                           Delete
                         </Button>
@@ -310,7 +321,7 @@ export default function MacrosPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteMacro(macro.id)}
+                        onClick={() => openDeleteDialog(macro)}
                         className="text-danger hover:text-danger"
                         title="Delete macro"
                       >
@@ -371,6 +382,30 @@ export default function MacrosPage() {
               data-testid="save-edit-macro-button"
             >
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Macro Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent data-testid="delete-macro-dialog">
+          <DialogHeader>
+            <DialogTitle>Delete Macro</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the macro &quot;{macroToDelete?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} data-testid="cancel-delete-macro-button">
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmDeleteMacro}
+              data-testid="confirm-delete-macro-button"
+            >
+              Delete Macro
             </Button>
           </DialogFooter>
         </DialogContent>
