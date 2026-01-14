@@ -1,33 +1,52 @@
+'use client';
+
 import Link from 'next/link';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import { useAuth } from '@/lib/auth/auth-context';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export default async function DashboardPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function DashboardPage() {
+  const { user, isLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const [showUnauthorizedError, setShowUnauthorizedError] = useState(false);
 
-  // This should be caught by middleware, but double-check
-  if (!user) {
-    redirect('/login?redirect=/dashboard');
+  useEffect(() => {
+    if (searchParams.get('error') === 'unauthorized') {
+      setShowUnauthorizedError(true);
+      // Clear the error after showing
+      setTimeout(() => setShowUnauthorizedError(false), 5000);
+    }
+  }, [searchParams]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-4xl">⏳</div>
+          <p className="text-text-secondary">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <main id="main-content" className="min-h-screen p-8">
+    <div className="p-8">
       <div className="mx-auto max-w-5xl">
-        <header className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="mt-1 text-text-secondary">
-              Welcome back, {user.email}
-            </p>
+        {showUnauthorizedError && (
+          <div
+            className="mb-6 rounded-lg border border-danger/50 bg-danger/10 p-4 text-danger"
+            role="alert"
+          >
+            <p className="font-medium">Access Denied</p>
+            <p className="text-sm">You don&apos;t have permission to access that page.</p>
           </div>
-          <form action="/api/auth/signout" method="POST">
-            <button type="submit" className="btn-secondary">
-              Sign out
-            </button>
-          </form>
+        )}
+
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-text-secondary">
+            Welcome back, {user?.name || user?.email}
+          </p>
         </header>
 
         <section className="mb-8">
@@ -115,6 +134,6 @@ export default async function DashboardPage() {
           </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }

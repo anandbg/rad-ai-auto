@@ -1,9 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { MOCK_AUTH_COOKIE, MOCK_USERS } from '@/lib/auth/mock-auth';
+
+// Check if Supabase is configured
+function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +26,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isDev, setIsDev] = useState(false);
+
+  useEffect(() => {
+    setIsDev(!isSupabaseConfigured());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +38,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      if (isDev) {
+        // Development mode: use mock auth
+        setError('Supabase not configured. Use the development login buttons below.');
+        return;
+      }
+
+      // Production mode: use real Supabase
+      const { createSupabaseBrowserClient } = await import('@/lib/supabase/client');
       const supabase = createSupabaseBrowserClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
@@ -41,6 +66,14 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDevLogin = (userType: 'radiologist' | 'admin') => {
+    // Set mock auth cookie
+    document.cookie = `${MOCK_AUTH_COOKIE}=${userType}; path=/; max-age=${60 * 60 * 24 * 7}`;
+    // Redirect to dashboard
+    router.push(redirectTo);
+    router.refresh();
   };
 
   return (
@@ -110,6 +143,31 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
+
+          {/* Development mode login buttons */}
+          {isDev && (
+            <div className="mt-6 border-t pt-6">
+              <p className="mb-3 text-center text-sm text-text-muted">
+                Development Mode - Quick Login
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleDevLogin('radiologist')}
+                  className="btn-secondary flex-1"
+                  type="button"
+                >
+                  Login as Radiologist
+                </button>
+                <button
+                  onClick={() => handleDevLogin('admin')}
+                  className="btn-secondary flex-1"
+                  type="button"
+                >
+                  Login as Admin
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 text-center text-sm">
             <p className="text-text-secondary">

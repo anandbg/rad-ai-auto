@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import { AuthProvider } from '@/lib/auth/auth-context';
 
 export const metadata: Metadata = {
   title: 'AI Radiologist - AI-Powered Report Generation',
@@ -20,7 +21,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
