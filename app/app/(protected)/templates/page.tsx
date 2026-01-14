@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useToast } from '@/components/ui/toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 // Template interface
 interface Template {
@@ -94,11 +96,17 @@ function saveTemplates(templates: Template[], userId: string | undefined) {
 
 export default function TemplatesPage() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModality, setSelectedModality] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'date-asc' | 'date-desc'>('name-asc');
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
+  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
+  const [templateToClone, setTemplateToClone] = useState<Template | null>(null);
+  const [cloneName, setCloneName] = useState('');
 
   // Load templates on mount and when user changes
   useEffect(() => {
@@ -150,10 +158,18 @@ export default function TemplatesPage() {
   const globalTemplates = sortTemplates(filteredTemplates.filter(t => t.isGlobal));
 
   const handleDelete = (id: string) => {
-    const templateToDelete = templates.find(t => t.id === id);
+    const template = templates.find(t => t.id === id);
+    if (!template) return;
+
+    // Open confirmation dialog
+    setTemplateToDelete(template);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
     if (!templateToDelete) return;
 
-    const updatedTemplates = templates.filter(t => t.id !== id);
+    const updatedTemplates = templates.filter(t => t.id !== templateToDelete.id);
     setTemplates(updatedTemplates);
 
     if (templateToDelete.isGlobal) {
@@ -163,17 +179,33 @@ export default function TemplatesPage() {
       // User deleting personal template
       saveTemplates(updatedTemplates.filter(t => !t.isGlobal), user?.id);
     }
+
+    // Show success toast
+    showToast(`Template "${templateToDelete.name}" deleted successfully!`, 'success');
+
+    // Close dialog
+    setDeleteDialogOpen(false);
+    setTemplateToDelete(null);
   };
 
   const handleClone = (id: string) => {
-    const templateToClone = templates.find(t => t.id === id);
+    const template = templates.find(t => t.id === id);
+    if (!template) return;
+
+    // Open clone dialog
+    setTemplateToClone(template);
+    setCloneName(`${template.name} (Copy)`);
+    setCloneDialogOpen(true);
+  };
+
+  const confirmClone = () => {
     if (!templateToClone) return;
 
     // Create a new personal copy of the template
     const clonedTemplate: Template = {
       ...templateToClone,
       id: 'tpl-' + Math.random().toString(36).substring(2, 9),
-      name: `${templateToClone.name} (Copy)`,
+      name: cloneName.trim() || `${templateToClone.name} (Copy)`,
       isGlobal: false, // Cloned template is always personal
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -185,6 +217,14 @@ export default function TemplatesPage() {
 
     // Update local state
     setTemplates([clonedTemplate, ...templates]);
+
+    // Show success toast
+    showToast(`Template "${clonedTemplate.name}" cloned successfully!`, 'success');
+
+    // Close dialog
+    setCloneDialogOpen(false);
+    setTemplateToClone(null);
+    setCloneName('');
   };
 
   if (isLoading) {
@@ -358,6 +398,73 @@ export default function TemplatesPage() {
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent data-testid="delete-confirmation-dialog">
+          <DialogHeader>
+            <DialogTitle>Delete Template</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{templateToDelete?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setDeleteDialogOpen(false)}
+              data-testid="cancel-delete-button"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmDelete}
+              data-testid="confirm-delete-button"
+            >
+              Delete Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Clone Template Dialog */}
+      <Dialog open={cloneDialogOpen} onOpenChange={setCloneDialogOpen}>
+        <DialogContent data-testid="clone-template-dialog">
+          <DialogHeader>
+            <DialogTitle>Clone Template</DialogTitle>
+            <DialogDescription>
+              Create a personal copy of &quot;{templateToClone?.name}&quot;. You can customize the name below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label htmlFor="clone-name" className="mb-2 block text-sm font-medium text-text-primary">
+              Template Name
+            </label>
+            <Input
+              id="clone-name"
+              value={cloneName}
+              onChange={(e) => setCloneName(e.target.value)}
+              placeholder="Enter template name"
+              data-testid="clone-name-input"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setCloneDialogOpen(false)}
+              data-testid="cancel-clone-button"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmClone}
+              data-testid="confirm-clone-button"
+            >
+              Clone Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

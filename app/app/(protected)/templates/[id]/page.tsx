@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useToast } from '@/components/ui/toast';
 
 // Section interface for template sections
 interface TemplateSection {
@@ -135,6 +136,7 @@ export default function TemplateDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const id = params.id as string;
 
   const [template, setTemplate] = useState<Template | null>(null);
@@ -210,6 +212,9 @@ export default function TemplateDetailPage() {
     setTemplate(updatedTemplate);
     setIsEditing(false);
     setIsSaving(false);
+
+    // Show success toast
+    showToast(`Template "${updatedTemplate.name}" updated successfully!`, 'success');
   };
 
   const handleChange = (field: string, value: string) => {
