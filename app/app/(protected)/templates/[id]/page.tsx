@@ -22,8 +22,11 @@ interface Template {
   content?: string;
 }
 
-// Mock templates for development (Global templates)
-const mockTemplates: Template[] = [
+// Global templates storage key (shared across all users)
+const GLOBAL_TEMPLATES_KEY = 'ai-rad-global-templates';
+
+// Seed global templates (only used if no global templates exist in storage)
+const seedGlobalTemplates: Template[] = [
   {
     id: 'tpl-001',
     name: 'Chest X-Ray Standard',
@@ -47,6 +50,28 @@ const mockTemplates: Template[] = [
     content: 'CT ABDOMEN AND PELVIS WITH CONTRAST\n\nCLINICAL INDICATION:\n{{INDICATION}}\n\nTECHNIQUE:\n{{TECHNIQUE}}\n\nFINDINGS:\n{{FINDINGS}}\n\nIMPRESSION:\n{{IMPRESSION}}',
   },
 ];
+
+// Helper to get global templates from localStorage
+function getGlobalTemplates(): Template[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(GLOBAL_TEMPLATES_KEY);
+  if (!stored) {
+    // Initialize with seed templates if nothing exists
+    localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(seedGlobalTemplates));
+    return seedGlobalTemplates;
+  }
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+// Helper to save global templates to localStorage
+function saveGlobalTemplates(templates: Template[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(templates));
+}
 
 // Modality options
 const modalityOptions = [
@@ -119,7 +144,8 @@ export default function TemplateDetailPage() {
   // Load template on mount and when user changes
   useEffect(() => {
     const storedTemplates = getStoredTemplates(user?.id);
-    const allTemplates = [...storedTemplates, ...mockTemplates.filter(m => !storedTemplates.some(s => s.id === m.id))];
+    const globalTemplates = getGlobalTemplates();
+    const allTemplates = [...storedTemplates, ...globalTemplates.filter(g => !storedTemplates.some(s => s.id === g.id))];
     const foundTemplate = allTemplates.find(t => t.id === id);
 
     if (foundTemplate) {
@@ -150,17 +176,29 @@ export default function TemplateDetailPage() {
       updatedAt: new Date().toISOString(),
     };
 
-    // Update in localStorage (user-specific)
-    const storedTemplates = getStoredTemplates(user?.id);
-    const existingIndex = storedTemplates.findIndex(t => t.id === id);
-
-    if (existingIndex >= 0) {
-      storedTemplates[existingIndex] = updatedTemplate;
+    // Update in appropriate localStorage storage
+    if (updatedTemplate.isGlobal) {
+      // Admin editing a global template
+      const globalTemplates = getGlobalTemplates();
+      const existingIndex = globalTemplates.findIndex(t => t.id === id);
+      if (existingIndex >= 0) {
+        globalTemplates[existingIndex] = updatedTemplate;
+      } else {
+        globalTemplates.push(updatedTemplate);
+      }
+      saveGlobalTemplates(globalTemplates);
     } else {
-      storedTemplates.push(updatedTemplate);
+      // User editing personal template
+      const storedTemplates = getStoredTemplates(user?.id);
+      const existingIndex = storedTemplates.findIndex(t => t.id === id);
+      if (existingIndex >= 0) {
+        storedTemplates[existingIndex] = updatedTemplate;
+      } else {
+        storedTemplates.push(updatedTemplate);
+      }
+      saveTemplates(storedTemplates, user?.id);
     }
 
-    saveTemplates(storedTemplates, user?.id);
     setTemplate(updatedTemplate);
     setIsEditing(false);
     setIsSaving(false);
@@ -199,7 +237,8 @@ export default function TemplateDetailPage() {
   }
 
   const isGlobal = template.isGlobal;
-  const canEdit = !isGlobal;
+  const isAdmin = user?.role === 'admin';
+  const canEdit = !isGlobal || isAdmin; // Admins can edit global templates
 
   return (
     <div className="mx-auto max-w-4xl p-6">

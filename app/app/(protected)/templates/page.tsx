@@ -19,8 +19,8 @@ interface Template {
   updatedAt: string;
 }
 
-// Mock templates for development (Global templates - visible to all users)
-const mockTemplates: Template[] = [
+// Seed global templates (only used if no global templates exist in storage)
+const seedGlobalTemplates: Template[] = [
   {
     id: 'tpl-001',
     name: 'Chest X-Ray Standard',
@@ -42,6 +42,31 @@ const mockTemplates: Template[] = [
     updatedAt: '2024-01-12T14:30:00Z',
   },
 ];
+
+// Global templates storage key (shared across all users)
+const GLOBAL_TEMPLATES_KEY = 'ai-rad-global-templates';
+
+// Helper to get global templates from localStorage
+function getGlobalTemplates(): Template[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(GLOBAL_TEMPLATES_KEY);
+  if (!stored) {
+    // Initialize with seed templates if nothing exists
+    localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(seedGlobalTemplates));
+    return seedGlobalTemplates;
+  }
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+// Helper to save global templates to localStorage
+function saveGlobalTemplates(templates: Template[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(templates));
+}
 
 // Helper to get user-specific storage key
 function getStorageKey(userId: string | undefined): string {
@@ -76,11 +101,12 @@ export default function TemplatesPage() {
   // Load templates on mount and when user changes
   useEffect(() => {
     const storedTemplates = getStoredTemplates(user?.id);
+    const globalTemplates = getGlobalTemplates();
     // Combine user's personal templates with global templates
-    const storedIds = new Set(storedTemplates.map(t => t.id));
+    const globalIds = new Set(globalTemplates.map(t => t.id));
     const combinedTemplates = [
-      ...storedTemplates,
-      ...mockTemplates.filter(t => !storedIds.has(t.id)),
+      ...storedTemplates.filter(t => !globalIds.has(t.id)), // personal templates only
+      ...globalTemplates,
     ];
     setTemplates(combinedTemplates);
     setIsLoading(false);
@@ -104,10 +130,19 @@ export default function TemplatesPage() {
   const globalTemplates = filteredTemplates.filter(t => t.isGlobal);
 
   const handleDelete = (id: string) => {
+    const templateToDelete = templates.find(t => t.id === id);
+    if (!templateToDelete) return;
+
     const updatedTemplates = templates.filter(t => t.id !== id);
     setTemplates(updatedTemplates);
-    // Only save non-global templates to user's storage
-    saveTemplates(updatedTemplates.filter(t => !mockTemplates.some(m => m.id === t.id)), user?.id);
+
+    if (templateToDelete.isGlobal) {
+      // Admin deleting a global template
+      saveGlobalTemplates(updatedTemplates.filter(t => t.isGlobal));
+    } else {
+      // User deleting personal template
+      saveTemplates(updatedTemplates.filter(t => !t.isGlobal), user?.id);
+    }
   };
 
   if (isLoading) {

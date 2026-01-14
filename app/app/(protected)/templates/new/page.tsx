@@ -71,6 +71,27 @@ function saveTemplates(templates: Template[], userId: string | undefined) {
   localStorage.setItem(getStorageKey(userId), JSON.stringify(templates));
 }
 
+// Global templates storage key (shared across all users)
+const GLOBAL_TEMPLATES_KEY = 'ai-rad-global-templates';
+
+// Helper to get global templates from localStorage
+function getGlobalTemplates(): Template[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(GLOBAL_TEMPLATES_KEY);
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+// Helper to save global templates to localStorage
+function saveGlobalTemplates(templates: Template[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(templates));
+}
+
 // Generate unique ID
 function generateId(): string {
   return 'tpl-' + Math.random().toString(36).substring(2, 9);
@@ -90,6 +111,10 @@ export default function NewTemplatePage() {
     description: '',
     content: '',
   });
+  const [isGlobal, setIsGlobal] = useState(false);
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin';
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -132,14 +157,21 @@ export default function NewTemplatePage() {
       modality: formData.modality,
       bodyPart: formData.bodyPart,
       description: formData.description.trim(),
-      isGlobal: false, // User-created templates are personal
+      isGlobal: isAdmin && isGlobal, // Only admins can create global templates
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    // Save to localStorage (user-specific)
-    const existingTemplates = getStoredTemplates(user?.id);
-    saveTemplates([newTemplate, ...existingTemplates], user?.id);
+    // Save to appropriate storage
+    if (newTemplate.isGlobal) {
+      // Save to global templates storage
+      const existingGlobalTemplates = getGlobalTemplates();
+      saveGlobalTemplates([newTemplate, ...existingGlobalTemplates]);
+    } else {
+      // Save to user-specific storage
+      const existingTemplates = getStoredTemplates(user?.id);
+      saveTemplates([newTemplate, ...existingTemplates], user?.id);
+    }
 
     // Redirect to templates list
     router.push('/templates');
@@ -278,6 +310,28 @@ export default function NewTemplatePage() {
                 Use placeholders for dynamic content: {'{{PATIENT_NAME}}'}, {'{{STUDY_DATE}}'}, {'{{FINDINGS}}'}, etc.
               </p>
             </div>
+
+            {/* Global Template Option (Admin only) */}
+            {isAdmin && (
+              <div className="flex items-center gap-3 rounded-lg border border-brand/20 bg-brand/5 p-4">
+                <input
+                  type="checkbox"
+                  id="isGlobal"
+                  checked={isGlobal}
+                  onChange={(e) => setIsGlobal(e.target.checked)}
+                  data-testid="template-global-checkbox"
+                  className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                />
+                <div>
+                  <label htmlFor="isGlobal" className="text-sm font-medium text-text-primary cursor-pointer">
+                    Publish as Global Template
+                  </label>
+                  <p className="text-xs text-text-secondary">
+                    Global templates are visible to all users in the system
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="justify-between">
             <Button variant="ghost" asChild>
