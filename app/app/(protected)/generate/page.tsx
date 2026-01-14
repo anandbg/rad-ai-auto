@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
+import { useAuth } from '@/lib/auth/auth-context';
 
 // Template interface
 interface Template {
@@ -56,10 +57,15 @@ const mockTemplates: Template[] = [
   },
 ];
 
+// Helper to get user-specific storage key
+function getStorageKey(userId: string | undefined): string {
+  return userId ? `ai-rad-templates-${userId}` : 'ai-rad-templates';
+}
+
 // Helper to get templates from localStorage
-function getStoredTemplates(): Template[] {
+function getStoredTemplates(userId: string | undefined): Template[] {
   if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem('ai-rad-templates');
+  const stored = localStorage.getItem(getStorageKey(userId));
   if (!stored) return [];
   try {
     return JSON.parse(stored);
@@ -87,6 +93,7 @@ function incrementReportCount() {
 }
 
 export default function GeneratePage() {
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -95,9 +102,9 @@ export default function GeneratePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load templates on mount
+  // Load templates on mount and when user changes
   useEffect(() => {
-    const storedTemplates = getStoredTemplates();
+    const storedTemplates = getStoredTemplates(user?.id);
     // Combine mock templates with stored ones (stored take precedence by ID)
     const storedIds = new Set(storedTemplates.map(t => t.id));
     const combinedTemplates = [
@@ -106,7 +113,7 @@ export default function GeneratePage() {
     ];
     setTemplates(combinedTemplates);
     setIsLoading(false);
-  }, []);
+  }, [user?.id]);
 
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
