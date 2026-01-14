@@ -116,9 +116,9 @@ export default function BrandTemplatesPage() {
             Customize your report branding with logos, colors, and typography
           </p>
         </div>
-        <Button asChild>
+        <Button asChild data-testid="create-brand-template-button">
           <Link href="/brand-templates/new">
-            + New Template
+            + Create New
           </Link>
         </Button>
       </div>
