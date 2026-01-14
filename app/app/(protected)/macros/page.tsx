@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,53 +14,74 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { useAuth } from '@/lib/auth/auth-context';
 
-// Mock macros for development
-const initialMacros = [
+// Macro interface
+interface Macro {
+  id: string;
+  name: string;
+  replacementText: string;
+  isActive: boolean;
+  isGlobal: boolean;
+  createdAt: string;
+}
+
+// Global macros (available to all users)
+const globalMacros: Macro[] = [
   {
-    id: 'macro-001',
-    name: 'nml',
-    replacementText: 'within normal limits',
-    isActive: true,
-    isGlobal: false,
-    createdAt: '2024-01-10T10:00:00Z',
-  },
-  {
-    id: 'macro-002',
-    name: 'nad',
-    replacementText: 'no acute disease',
-    isActive: true,
-    isGlobal: false,
-    createdAt: '2024-01-11T14:30:00Z',
-  },
-  {
-    id: 'macro-003',
+    id: 'macro-global-001',
     name: 'neg',
     replacementText: 'negative for acute findings',
     isActive: true,
     isGlobal: true,
     createdAt: '2024-01-12T09:15:00Z',
   },
-  {
-    id: 'macro-004',
-    name: 'wnl',
-    replacementText: 'within normal limits',
-    isActive: false,
-    isGlobal: false,
-    createdAt: '2024-01-13T16:45:00Z',
-  },
 ];
 
+// Helper to get user-specific storage key
+function getStorageKey(userId: string | undefined): string {
+  return userId ? `ai-rad-macros-${userId}` : 'ai-rad-macros';
+}
+
+// Helper to get macros from localStorage
+function getStoredMacros(userId: string | undefined): Macro[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(getStorageKey(userId));
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+// Helper to save macros to localStorage
+function saveMacros(macros: Macro[], userId: string | undefined) {
+  if (typeof window === 'undefined') return;
+  // Only save non-global macros
+  const userMacros = macros.filter(m => !m.isGlobal);
+  localStorage.setItem(getStorageKey(userId), JSON.stringify(userMacros));
+}
+
 export default function MacrosPage() {
-  const [macros, setMacros] = useState(initialMacros);
+  const { user } = useAuth();
+  const [macros, setMacros] = useState<Macro[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newMacroName, setNewMacroName] = useState('');
   const [newMacroText, setNewMacroText] = useState('');
 
+  // Load macros on mount and when user changes
+  useEffect(() => {
+    const storedMacros = getStoredMacros(user?.id);
+    // Combine user macros with global macros
+    const allMacros = [...storedMacros, ...globalMacros];
+    setMacros(allMacros);
+  }, [user?.id]);
+
   const handleCreateMacro = () => {
     if (!newMacroName.trim() || !newMacroText.trim()) return;
 
-    const newMacro = {
+    const newMacro: Macro = {
       id: `macro-${Date.now()}`,
       name: newMacroName.trim().toLowerCase(),
       replacementText: newMacroText.trim(),
@@ -69,20 +90,26 @@ export default function MacrosPage() {
       createdAt: new Date().toISOString(),
     };
 
-    setMacros([newMacro, ...macros]);
+    const updatedMacros = [newMacro, ...macros];
+    setMacros(updatedMacros);
+    saveMacros(updatedMacros, user?.id);
     setNewMacroName('');
     setNewMacroText('');
     setIsDialogOpen(false);
   };
 
   const toggleMacro = (id: string) => {
-    setMacros(macros.map(macro =>
+    const updatedMacros = macros.map(macro =>
       macro.id === id ? { ...macro, isActive: !macro.isActive } : macro
-    ));
+    );
+    setMacros(updatedMacros);
+    saveMacros(updatedMacros, user?.id);
   };
 
   const deleteMacro = (id: string) => {
-    setMacros(macros.filter(macro => macro.id !== id));
+    const updatedMacros = macros.filter(macro => macro.id !== id);
+    setMacros(updatedMacros);
+    saveMacros(updatedMacros, user?.id);
   };
 
   const activeMacros = macros.filter(m => m.isActive);

@@ -4,6 +4,46 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/lib/auth/auth-context';
+
+// Macro interface
+interface Macro {
+  id: string;
+  name: string;
+  replacementText: string;
+  isActive: boolean;
+  isGlobal: boolean;
+  createdAt: string;
+}
+
+// Global macros (available to all users)
+const globalMacros: Macro[] = [
+  {
+    id: 'macro-global-001',
+    name: 'neg',
+    replacementText: 'negative for acute findings',
+    isActive: true,
+    isGlobal: true,
+    createdAt: '2024-01-12T09:15:00Z',
+  },
+];
+
+// Helper to get user-specific macros storage key
+function getMacrosStorageKey(userId: string | undefined): string {
+  return userId ? `ai-rad-macros-${userId}` : 'ai-rad-macros';
+}
+
+// Helper to get macros from localStorage
+function getStoredMacros(userId: string | undefined): Macro[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(getMacrosStorageKey(userId));
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
 
 // Helper to get and update usage stats
 function getUsageStats(): { reportsGenerated: number; transcriptionMinutes: number } {
@@ -24,13 +64,22 @@ function addTranscriptionMinutes(minutes: number) {
 }
 
 export default function TranscribePage() {
+  const { user } = useAuth();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcribedText, setTranscribedText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [macros, setMacros] = useState<Macro[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load macros on mount
+  useEffect(() => {
+    const storedMacros = getStoredMacros(user?.id);
+    const allMacros = [...storedMacros, ...globalMacros].filter(m => m.isActive);
+    setMacros(allMacros);
+  }, [user?.id]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -40,6 +89,23 @@ export default function TranscribePage() {
       }
     };
   }, []);
+
+  // Apply macro expansion to text
+  const applyMacros = (text: string): string => {
+    let expandedText = text;
+    for (const macro of macros) {
+      // Create regex that matches the macro name as a whole word (case-insensitive)
+      const regex = new RegExp(`\\b${macro.name}\\b`, 'gi');
+      expandedText = expandedText.replace(regex, macro.replacementText);
+    }
+    return expandedText;
+  };
+
+  // Handle macro expansion button click
+  const handleExpandMacros = () => {
+    const expanded = applyMacros(transcribedText);
+    setTranscribedText(expanded);
+  };
 
   const startRecording = () => {
     setIsRecording(true);
@@ -240,7 +306,16 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                   className="font-mono text-sm"
                   data-testid="transcription-output"
                 />
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleExpandMacros}
+                    disabled={macros.length === 0}
+                    data-testid="expand-macros-btn"
+                  >
+                    ⚡ Expand Macros
+                  </Button>
                   <Button variant="outline" size="sm" onClick={copyToClipboard}>
                     Copy to Clipboard
                   </Button>
@@ -248,6 +323,11 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                     <a href="/generate">Use in Report</a>
                   </Button>
                 </div>
+                {macros.length > 0 && (
+                  <p className="text-xs text-text-secondary">
+                    {macros.length} macro{macros.length !== 1 ? 's' : ''} available: {macros.map(m => m.name).join(', ')}
+                  </p>
+                )}
               </div>
             ) : (
               <div className="flex h-64 flex-col items-center justify-center text-center">
