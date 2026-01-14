@@ -8,6 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useToast } from '@/components/ui/toast';
+
+// Section interface for template sections
+interface TemplateSection {
+  id: string;
+  name: string;
+  content: string;
+}
 
 // Template interface - must match the one in the list page
 interface Template {
@@ -19,6 +27,7 @@ interface Template {
   isGlobal: boolean;
   createdAt: string;
   updatedAt: string;
+  sections?: TemplateSection[];
 }
 
 // Modality options
@@ -100,6 +109,7 @@ function generateId(): string {
 export default function NewTemplatePage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -113,8 +123,38 @@ export default function NewTemplatePage() {
   });
   const [isGlobal, setIsGlobal] = useState(false);
 
+  // Sections state
+  const [sections, setSections] = useState<TemplateSection[]>([]);
+  const [newSectionName, setNewSectionName] = useState('');
+
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
+
+  // Add a new section
+  const handleAddSection = () => {
+    if (!newSectionName.trim()) return;
+
+    const newSection: TemplateSection = {
+      id: Math.random().toString(36).substring(2, 9),
+      name: newSectionName.trim(),
+      content: '',
+    };
+
+    setSections([...sections, newSection]);
+    setNewSectionName('');
+  };
+
+  // Remove a section
+  const handleRemoveSection = (id: string) => {
+    setSections(sections.filter(s => s.id !== id));
+  };
+
+  // Update section content
+  const handleUpdateSectionContent = (id: string, content: string) => {
+    setSections(sections.map(s =>
+      s.id === id ? { ...s, content } : s
+    ));
+  };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -150,7 +190,7 @@ export default function NewTemplatePage() {
 
     setIsSubmitting(true);
 
-    // Create new template
+    // Create new template with sections
     const newTemplate: Template = {
       id: generateId(),
       name: formData.name.trim(),
@@ -160,6 +200,7 @@ export default function NewTemplatePage() {
       isGlobal: isAdmin && isGlobal, // Only admins can create global templates
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      sections: sections.length > 0 ? sections : undefined,
     };
 
     // Save to appropriate storage
@@ -172,6 +213,9 @@ export default function NewTemplatePage() {
       const existingTemplates = getStoredTemplates(user?.id);
       saveTemplates([newTemplate, ...existingTemplates], user?.id);
     }
+
+    // Show success toast
+    showToast(`Template "${newTemplate.name}" created successfully!`, 'success');
 
     // Redirect to templates list
     router.push('/templates');
@@ -292,18 +336,93 @@ export default function NewTemplatePage() {
               )}
             </div>
 
-            {/* Template Content */}
+            {/* Template Sections */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-text-primary">
+                Template Sections
+              </label>
+              <p className="mb-3 text-xs text-text-secondary">
+                Add sections to organize your template (e.g., Findings, Impression, Technique)
+              </p>
+
+              {/* Add new section */}
+              <div className="flex gap-2 mb-4">
+                <Input
+                  type="text"
+                  placeholder="Section name (e.g., Findings)"
+                  value={newSectionName}
+                  onChange={(e) => setNewSectionName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddSection();
+                    }
+                  }}
+                  data-testid="section-name-input"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddSection}
+                  data-testid="add-section-button"
+                >
+                  Add Section
+                </Button>
+              </div>
+
+              {/* Sections list */}
+              {sections.length > 0 && (
+                <div className="space-y-4" data-testid="sections-list">
+                  {sections.map((section, index) => (
+                    <div
+                      key={section.id}
+                      className="rounded-lg border border-border bg-surface-muted p-4"
+                      data-testid={`section-${index}`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-text-primary">{section.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSection(section.id)}
+                          className="text-sm text-error hover:underline"
+                          data-testid={`remove-section-${index}`}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <Textarea
+                        placeholder={`Enter content for ${section.name}...`}
+                        value={section.content}
+                        onChange={(e) => handleUpdateSectionContent(section.id, e.target.value)}
+                        rows={3}
+                        className="font-mono text-sm"
+                        data-testid={`section-content-${index}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {sections.length === 0 && (
+                <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-text-secondary">
+                  No sections added yet. Add sections to organize your template.
+                </div>
+              )}
+            </div>
+
+            {/* Template Content (Legacy/General) */}
             <div>
               <label htmlFor="content" className="mb-2 block text-sm font-medium text-text-primary">
-                Template Content
+                Additional Template Content
               </label>
               <Textarea
                 id="content"
-                placeholder="Enter the template content with placeholders like {{PATIENT_NAME}}, {{DATE}}, etc."
+                placeholder="Enter any additional template content with placeholders like {{PATIENT_NAME}}, {{DATE}}, etc."
                 value={formData.content}
                 onChange={(e) => handleChange('content', e.target.value)}
                 data-testid="template-content-input"
-                rows={10}
+                rows={6}
                 className="font-mono text-sm"
               />
               <p className="mt-1 text-xs text-text-secondary">

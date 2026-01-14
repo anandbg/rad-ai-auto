@@ -9,6 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
 
+// Section interface for template sections
+interface TemplateSection {
+  id: string;
+  name: string;
+  content: string;
+}
+
 // Template interface - must match the one in the list page
 interface Template {
   id: string;
@@ -20,6 +27,7 @@ interface Template {
   createdAt: string;
   updatedAt: string;
   content?: string;
+  sections?: TemplateSection[];
 }
 
 // Global templates storage key (shared across all users)
@@ -407,15 +415,41 @@ export default function TemplateDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Sections Card */}
+          {template.sections && template.sections.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Template Sections</CardTitle>
+                <CardDescription>Organized sections of the report template</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4" data-testid="template-sections">
+                  {template.sections.map((section, index) => (
+                    <div
+                      key={section.id}
+                      className="rounded-lg border border-border bg-surface-muted p-4"
+                      data-testid={`template-section-${index}`}
+                    >
+                      <h4 className="font-medium text-text-primary mb-2">{section.name}</h4>
+                      <pre className="whitespace-pre-wrap font-mono text-sm text-text-secondary">
+                        {section.content || 'No content'}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Content Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Template Content</CardTitle>
+              <CardTitle>Additional Template Content</CardTitle>
               <CardDescription>Report template with placeholders</CardDescription>
             </CardHeader>
             <CardContent>
               <pre className="whitespace-pre-wrap rounded-lg bg-surface-muted p-4 font-mono text-sm text-text-primary">
-                {template.content || 'No content defined yet.'}
+                {template.content || 'No additional content defined.'}
               </pre>
             </CardContent>
           </Card>

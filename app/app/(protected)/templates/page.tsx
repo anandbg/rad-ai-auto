@@ -97,6 +97,7 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModality, setSelectedModality] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'date-asc' | 'date-desc'>('name-asc');
   const [isLoading, setIsLoading] = useState(true);
 
   // Load templates on mount and when user changes
@@ -123,12 +124,30 @@ export default function TemplatesPage() {
     return matchesSearch && matchesModality;
   });
 
+  // Sort templates
+  const sortTemplates = (templatesArray: Template[]) => {
+    return [...templatesArray].sort((a, b) => {
+      switch (sortBy) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'date-asc':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'date-desc':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        default:
+          return 0;
+      }
+    });
+  };
+
   // Get unique modalities for filter
   const modalities = ['all', ...new Set(templates.map(t => t.modality))];
 
-  // Personal vs Global templates
-  const personalTemplates = filteredTemplates.filter(t => !t.isGlobal);
-  const globalTemplates = filteredTemplates.filter(t => t.isGlobal);
+  // Personal vs Global templates (sorted)
+  const personalTemplates = sortTemplates(filteredTemplates.filter(t => !t.isGlobal));
+  const globalTemplates = sortTemplates(filteredTemplates.filter(t => t.isGlobal));
 
   const handleDelete = (id: string) => {
     const templateToDelete = templates.find(t => t.id === id);
@@ -206,6 +225,19 @@ export default function TemplatesPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="template-search"
           />
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            className="h-9 rounded-xl border border-border bg-surface px-3 py-1 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand"
+            data-testid="template-sort"
+          >
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="date-asc">Date (Oldest)</option>
+            <option value="date-desc">Date (Newest)</option>
+          </select>
         </div>
         <div className="flex gap-2">
           {modalities.map((modality) => (
