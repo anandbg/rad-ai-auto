@@ -298,13 +298,18 @@ export default function TemplateDetailPage() {
     setIsLoading(false);
   }, [id, user?.id]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!template) return;
 
     setIsSaving(true);
 
-    // Save the current state as a version BEFORE updating
-    const newVersion = saveTemplateVersion(template, user?.id);
+    // Check for simulated API failure (for testing optimistic updates rollback)
+    const urlParams = new URLSearchParams(window.location.search);
+    const simulateError = urlParams.get('simulate_save_error') === 'true';
+
+    // Optimistic update: immediately update the UI
+    const previousTemplate = { ...template };
+    const previousFormData = { ...formData };
 
     // Get current version number for the template
     const currentVersion = (template.version || 0) + 1;
@@ -319,6 +324,25 @@ export default function TemplateDetailPage() {
       updatedAt: new Date().toISOString(),
       version: currentVersion,
     };
+
+    // Optimistically update UI immediately
+    setTemplate(updatedTemplate);
+
+    // Simulate async save operation
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Simulate error if flag is set
+    if (simulateError) {
+      // ROLLBACK: Revert to original state
+      setTemplate(previousTemplate);
+      setFormData(originalFormData);
+      setIsSaving(false);
+      showToast('Failed to save template. Changes have been reverted.', 'error');
+      return;
+    }
+
+    // Save the current state as a version BEFORE updating
+    const newVersion = saveTemplateVersion(previousTemplate, user?.id);
 
     // Update in appropriate localStorage storage
     if (updatedTemplate.isGlobal) {
@@ -343,7 +367,6 @@ export default function TemplateDetailPage() {
       saveTemplates(storedTemplates, user?.id);
     }
 
-    setTemplate(updatedTemplate);
     // Update versions list with the new version
     setVersions(prev => [newVersion, ...prev]);
     // Reset original form data to match saved state (clears dirty flag)
