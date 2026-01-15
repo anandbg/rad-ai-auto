@@ -29,6 +29,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDev, setIsDev] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
 
   useEffect(() => {
     setIsDev(!isSupabaseConfigured());
@@ -52,8 +54,45 @@ export default function LoginPage() {
 
     try {
       if (isDev) {
-        // Development mode: use mock auth
-        setError('Supabase not configured. Use the development login buttons below.');
+        // Development mode: check for registered users in localStorage
+        const mockUsers = JSON.parse(localStorage.getItem('ai-rad-mock-users') || '{}');
+        const user = mockUsers[email];
+
+        if (user) {
+          // User exists - check password
+          if (user.password !== password) {
+            setError('Invalid email or password.');
+            setLoading(false);
+            return;
+          }
+
+          // Check if email is verified
+          if (!user.emailVerified) {
+            setNeedsVerification(true);
+            setUnverifiedEmail(email);
+            setError('Please verify your email address before signing in. Check your inbox for the verification link.');
+            setLoading(false);
+            return;
+          }
+
+          // User is verified - set auth cookie with custom user type
+          document.cookie = `${MOCK_AUTH_COOKIE}=custom_${email}; path=/; max-age=${60 * 60 * 24 * 7}`;
+
+          // Store custom user data
+          localStorage.setItem('ai-rad-custom-user', JSON.stringify({
+            email,
+            name: user.name,
+            role: user.role || 'radiologist',
+          }));
+
+          router.push(redirectTo);
+          router.refresh();
+          return;
+        }
+
+        // No registered user found - show error
+        setError('Invalid email or password. Or use the quick login buttons below for testing.');
+        setLoading(false);
         return;
       }
 
@@ -112,6 +151,31 @@ export default function LoginPage() {
                 role="alert"
               >
                 {error}
+                {needsVerification && unverifiedEmail && (
+                  <div className="mt-2 pt-2 border-t border-danger/30">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Resend verification email
+                        const mockUsers = JSON.parse(localStorage.getItem('ai-rad-mock-users') || '{}');
+                        const user = mockUsers[unverifiedEmail];
+                        if (user && user.verificationToken) {
+                          const verifyLink = `${window.location.origin}/verify-email?token=${user.verificationToken}&email=${encodeURIComponent(unverifiedEmail)}`;
+                          console.log('='.repeat(60));
+                          console.log('📧 EMAIL VERIFICATION RESENT (Development Mode)');
+                          console.log('='.repeat(60));
+                          console.log(`To: ${unverifiedEmail}`);
+                          console.log(verifyLink);
+                          console.log('='.repeat(60));
+                          alert(`Verification link logged to console:\n${verifyLink}`);
+                        }
+                      }}
+                      className="text-brand hover:underline font-medium"
+                    >
+                      Resend verification email
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

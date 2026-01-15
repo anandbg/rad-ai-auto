@@ -53,10 +53,21 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [isDev, setIsDev] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [verificationLink, setVerificationLink] = useState<string | null>(null);
 
   useEffect(() => {
     setIsDev(!isSupabaseConfigured());
   }, []);
+
+  // Generate verification token
+  const generateVerificationToken = (): string => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 64; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+  };
 
   const handleChange = (field: keyof SignupFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -106,11 +117,39 @@ export default function SignupPage() {
 
     try {
       if (isDev) {
-        // Development mode: simulate signup success
+        // Development mode: create unverified user in localStorage
+        const verificationToken = generateVerificationToken();
+        const verifyLink = `${window.location.origin}/verify-email?token=${verificationToken}&email=${encodeURIComponent(formData.email)}`;
+
+        // Store user as unverified
+        const mockUsers = JSON.parse(localStorage.getItem('ai-rad-mock-users') || '{}');
+        mockUsers[formData.email] = {
+          password: formData.password,
+          name: formData.name,
+          role: 'radiologist',
+          emailVerified: false,
+          verificationToken,
+          createdAt: new Date().toISOString(),
+        };
+        localStorage.setItem('ai-rad-mock-users', JSON.stringify(mockUsers));
+
+        // Log verification email to console
+        console.log('='.repeat(60));
+        console.log('📧 EMAIL VERIFICATION (Development Mode)');
+        console.log('='.repeat(60));
+        console.log(`To: ${formData.email}`);
+        console.log(`Subject: Verify your AI Radiologist account`);
+        console.log('');
+        console.log('Welcome to AI Radiologist!');
+        console.log('');
+        console.log('Click the link below to verify your email:');
+        console.log(verifyLink);
+        console.log('');
+        console.log('This link will expire in 24 hours.');
+        console.log('='.repeat(60));
+
+        setVerificationLink(verifyLink);
         setSuccess(true);
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
         return;
       }
 
@@ -149,16 +188,49 @@ export default function SignupPage() {
         className="flex min-h-screen flex-col items-center justify-center p-8"
       >
         <div className="w-full max-w-md text-center">
-          <div className="mb-4 text-6xl">✅</div>
-          <h1 className="mb-2 text-2xl font-bold">Account Created!</h1>
+          <div className="mb-4 text-6xl">📧</div>
+          <h1 className="mb-2 text-2xl font-bold">Verify your email</h1>
           <p className="mb-6 text-text-secondary">
-            {isDev
-              ? 'In development mode, redirecting to login...'
-              : 'Please check your email to verify your account.'}
+            We&apos;ve sent a verification link to <strong>{formData.email}</strong>.
+            Please check your inbox and click the link to activate your account.
           </p>
-          <Link href="/login" className="btn-primary">
-            Go to Login
-          </Link>
+
+          {/* Development mode: show verification link */}
+          {isDev && verificationLink && (
+            <div className="mb-6 rounded-lg border border-warning/30 bg-warning/10 p-4 text-left">
+              <p className="mb-2 text-sm font-medium text-warning">
+                Development Mode - Verification Link:
+              </p>
+              <p className="mb-3 text-xs text-text-muted">
+                In production, this link would be sent via email. Check the browser console for the full email.
+              </p>
+              <Link
+                href={verificationLink}
+                className="block break-all text-sm text-brand hover:underline"
+                data-testid="dev-verification-link"
+              >
+                {verificationLink}
+              </Link>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <Link href="/login" className="btn-secondary inline-block">
+              Go to Login
+            </Link>
+            <p className="text-sm text-text-muted">
+              Didn&apos;t receive the email? Check your spam folder or{' '}
+              <button
+                onClick={() => {
+                  setSuccess(false);
+                  setVerificationLink(null);
+                }}
+                className="text-brand hover:underline"
+              >
+                try again
+              </button>
+            </p>
+          </div>
         </div>
       </main>
     );
