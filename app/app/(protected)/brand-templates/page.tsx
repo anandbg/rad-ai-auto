@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/lib/auth/auth-context';
 
 // Brand template interface
@@ -89,16 +98,40 @@ function getStoredBrandTemplates(userId: string | undefined): BrandTemplate[] {
   }
 }
 
+// Helper to save brand templates
+function saveBrandTemplates(templates: BrandTemplate[], userId: string | undefined) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(getStorageKey(userId), JSON.stringify(templates));
+}
+
 export default function BrandTemplatesPage() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [brandTemplates, setBrandTemplates] = useState<BrandTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<BrandTemplate | null>(null);
 
   useEffect(() => {
     const templates = getStoredBrandTemplates(user?.id);
     setBrandTemplates(templates);
     setIsLoading(false);
   }, [user?.id]);
+
+  const openDeleteDialog = (template: BrandTemplate) => {
+    setTemplateToDelete(template);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteTemplate = () => {
+    if (!templateToDelete) return;
+    const updatedTemplates = brandTemplates.filter(t => t.id !== templateToDelete.id);
+    setBrandTemplates(updatedTemplates);
+    saveBrandTemplates(updatedTemplates, user?.id);
+    showToast(`Brand template "${templateToDelete.name}" deleted successfully!`, 'success');
+    setIsDeleteDialogOpen(false);
+    setTemplateToDelete(null);
+  };
 
   if (isLoading) {
     return (
@@ -159,6 +192,17 @@ export default function BrandTemplatesPage() {
                   Edit
                 </Link>
               </Button>
+              {!template.isDefault && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openDeleteDialog(template)}
+                  className="text-danger hover:text-danger"
+                  data-testid={`delete-brand-template-${template.id}`}
+                >
+                  Delete
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}
@@ -178,6 +222,30 @@ export default function BrandTemplatesPage() {
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent data-testid="delete-brand-template-dialog">
+          <DialogHeader>
+            <DialogTitle>Delete Brand Template</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{templateToDelete?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmDeleteTemplate}
+              data-testid="confirm-delete-brand-template-button"
+            >
+              Delete Brand Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
