@@ -81,15 +81,19 @@ export default function AdminPage() {
           </Button>
         </Card>
 
-        <Card className="p-6">
-          <div className="mb-3 text-3xl">🏢</div>
-          <h2 className="mb-2 text-lg font-semibold text-text-primary">Institutions</h2>
-          <p className="mb-4 text-sm text-text-secondary">
-            Manage registered institutions
-          </p>
-          <Button variant="secondary" size="sm" disabled>
-            Coming Soon
-          </Button>
+        <Card className="group cursor-pointer transition-shadow hover:shadow-lg">
+          <Link href="/admin/institutions" className="block p-6" data-testid="admin-institutions-link">
+            <div className="mb-3 text-3xl">🏢</div>
+            <h2 className="mb-2 text-lg font-semibold text-text-primary group-hover:text-brand">
+              Institutions
+            </h2>
+            <p className="mb-4 text-sm text-text-secondary">
+              Manage registered institutions
+            </p>
+            <Button variant="secondary" size="sm">
+              Manage Institutions
+            </Button>
+          </Link>
         </Card>
 
         <Card className="p-6">
