@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,34 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast';
 import { useCsrf } from '@/lib/hooks/use-csrf';
+
+// Zod schema for template validation
+const templateSectionSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, 'Section name is required'),
+  content: z.string(),
+});
+
+const templateFormSchema = z.object({
+  name: z.string()
+    .min(1, 'Template name is required')
+    .min(3, 'Template name must be at least 3 characters')
+    .max(100, 'Template name must be less than 100 characters')
+    .refine(
+      (val) => val.length === 0 || /^[a-zA-Z0-9\s\-_]+$/.test(val),
+      'Template name can only contain letters, numbers, spaces, hyphens, and underscores'
+    ),
+  modality: z.string().min(1, 'Please select a modality'),
+  bodyPart: z.string().min(1, 'Please select a body part'),
+  description: z.string()
+    .min(1, 'Description is required')
+    .min(10, 'Description must be at least 10 characters')
+    .max(500, 'Description must be less than 500 characters'),
+  content: z.string().max(10000, 'Template content must be less than 10,000 characters').optional(),
+  sections: z.array(templateSectionSchema).optional(),
+});
+
+export type TemplateFormData = z.infer<typeof templateFormSchema>;
 
 // Form draft storage key
 const FORM_DRAFT_KEY = 'ai-rad-template-draft';
@@ -272,22 +301,25 @@ export default function NewTemplatePage() {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Template name is required';
-    } else if (formData.name.length < 3) {
-      newErrors.name = 'Template name must be at least 3 characters';
-    }
+    // Use Zod schema for validation
+    const validationData = {
+      name: formData.name.trim(),
+      modality: formData.modality,
+      bodyPart: formData.bodyPart,
+      description: formData.description.trim(),
+      content: formData.content,
+      sections: sections,
+    };
 
-    if (!formData.modality) {
-      newErrors.modality = 'Please select a modality';
-    }
+    const result = templateFormSchema.safeParse(validationData);
 
-    if (!formData.bodyPart) {
-      newErrors.bodyPart = 'Please select a body part';
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
+    if (!result.success) {
+      // Extract Zod validation errors
+      result.error.errors.forEach((error) => {
+        const field = error.path[0] as string;
+        // Use friendly error messages from Zod schema
+        newErrors[field] = error.message;
+      });
     }
 
     setErrors(newErrors);
