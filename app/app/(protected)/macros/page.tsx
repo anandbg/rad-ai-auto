@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -44,8 +44,8 @@ interface Macro {
   contextExpansions?: ContextExpansion[];
 }
 
-// Global macros (available to all users)
-const globalMacros: Macro[] = [
+// Seed global macros (used only if database fetch fails or Supabase is not configured)
+const seedGlobalMacros: Macro[] = [
   {
     id: 'macro-global-001',
     name: 'neg',
@@ -55,6 +55,92 @@ const globalMacros: Macro[] = [
     createdAt: '2024-01-12T09:15:00Z',
   },
 ];
+
+// Global macros storage key for localStorage cache
+const GLOBAL_MACROS_KEY = 'ai-rad-global-macros';
+
+// Helper to check if Supabase is configured
+function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Helper to get global macros from localStorage cache
+function getCachedGlobalMacros(): Macro[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(GLOBAL_MACROS_KEY);
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+// Helper to cache global macros in localStorage
+function cacheGlobalMacros(macros: Macro[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(GLOBAL_MACROS_KEY, JSON.stringify(macros));
+}
+
+// Fetch global macros from Supabase
+async function fetchGlobalMacrosFromSupabase(): Promise<Macro[]> {
+  if (!isSupabaseConfigured()) {
+    return [];
+  }
+
+  try {
+    const { createSupabaseBrowserClient } = await import('@/lib/supabase/client');
+    const supabase = createSupabaseBrowserClient();
+
+    const { data, error } = await supabase
+      .from('macros_global')
+      .select('*')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching global macros:', error);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Map database schema to frontend Macro interface
+    return data.map((row: {
+      id: string;
+      name: string;
+      replacement_text: string;
+      is_active: boolean;
+      is_smart?: boolean;
+      smart_context?: { body_parts?: string[] } | null;
+      created_at: string;
+    }) => ({
+      id: row.id,
+      name: row.name,
+      replacementText: row.replacement_text,
+      isActive: row.is_active,
+      isGlobal: true,
+      createdAt: row.created_at,
+      isSmartMacro: row.is_smart || false,
+      contextExpansions: row.smart_context?.body_parts?.map(bp => ({
+        bodyPart: bp,
+        text: row.replacement_text, // Default text for context
+      })),
+    }));
+  } catch (error) {
+    console.error('Error connecting to Supabase for global macros:', error);
+    return [];
+  }
+}
 
 // Helper to get user-specific storage key
 function getStorageKey(userId: string | undefined): string {
@@ -132,15 +218,50 @@ export default function MacrosPage() {
   const [newContextBodyPart, setNewContextBodyPart] = useState('');
   const [newContextText, setNewContextText] = useState('');
 
+  // State to track if global macros are loading
+  const [isLoadingGlobalMacros, setIsLoadingGlobalMacros] = useState(true);
+
+  // Load global macros from Supabase or fallback to seed/cache
+  const loadGlobalMacros = useCallback(async (): Promise<Macro[]> => {
+    // First try to fetch from Supabase
+    if (isSupabaseConfigured()) {
+      const supabaseMacros = await fetchGlobalMacrosFromSupabase();
+      if (supabaseMacros.length > 0) {
+        // Cache the fetched macros for offline use
+        cacheGlobalMacros(supabaseMacros);
+        return supabaseMacros;
+      }
+    }
+
+    // Fall back to cached macros if available
+    const cachedMacros = getCachedGlobalMacros();
+    if (cachedMacros.length > 0) {
+      return cachedMacros;
+    }
+
+    // Finally fall back to seed data
+    return seedGlobalMacros;
+  }, []);
+
   // Load macros and categories on mount and when user changes
   useEffect(() => {
-    const storedMacros = getStoredMacros(user?.id);
-    const storedCategories = getStoredCategories(user?.id);
-    // Combine user macros with global macros
-    const allMacros = [...storedMacros, ...globalMacros];
-    setMacros(allMacros);
-    setCategories(storedCategories);
-  }, [user?.id]);
+    const loadAllData = async () => {
+      setIsLoadingGlobalMacros(true);
+
+      const storedMacros = getStoredMacros(user?.id);
+      const storedCategories = getStoredCategories(user?.id);
+      const globalMacros = await loadGlobalMacros();
+
+      // Combine user macros with global macros
+      const allMacros = [...storedMacros, ...globalMacros];
+      setMacros(allMacros);
+      setCategories(storedCategories);
+
+      setIsLoadingGlobalMacros(false);
+    };
+
+    loadAllData();
+  }, [user?.id, loadGlobalMacros]);
 
   const handleCreateMacro = () => {
     if (!newMacroName.trim() || !newMacroText.trim()) return;
@@ -920,7 +1041,7 @@ export default function MacrosPage() {
         </div>
       )}
 
-      {macros.length === 0 && (
+      {macros.length === 0 && !isLoadingGlobalMacros && (
         <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center">
           <div className="mb-4 text-5xl">⚡</div>
           <h3 className="mb-2 text-lg font-semibold text-text-primary">No macros yet</h3>
@@ -930,6 +1051,13 @@ export default function MacrosPage() {
           <Button onClick={() => setIsDialogOpen(true)}>
             Create Macro
           </Button>
+        </div>
+      )}
+
+      {isLoadingGlobalMacros && macros.length === 0 && (
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center">
+          <div className="mb-4 text-4xl animate-pulse">⏳</div>
+          <p className="text-sm text-text-secondary">Loading macros...</p>
         </div>
       )}
 
