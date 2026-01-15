@@ -1,0 +1,31 @@
+{
+  "exportedAt": "2026-01-15T10:15:21.154Z",
+  "version": "1.0",
+  "macros": {
+    "personal": [
+      {
+        "name": "casctest",
+        "replacementText": "This is a test macro for cascade delete testing",
+        "isActive": true,
+        "categoryId": "cat-1768458341461",
+        "isSmartMacro": false,
+        "createdAt": "2026-01-15T06:26:05.884Z"
+      }
+    ],
+    "global": [
+      {
+        "name": "neg",
+        "replacementText": "negative for acute findings",
+        "isActive": true,
+        "createdAt": "2024-01-12T09:15:00Z"
+      }
+    ]
+  },
+  "categories": [
+    {
+      "name": "Test Category for Cascade Delete",
+      "createdAt": "2026-01-15T06:25:41.461Z"
+    }
+  ],
+  "totalCount": 2
+}

@@ -279,6 +279,51 @@ export default function MacrosPage() {
   const activeMacros = macros.filter(m => m.isActive);
   const inactiveMacros = macros.filter(m => !m.isActive);
 
+  // Export all macros to JSON file
+  const handleExportMacros = () => {
+    const userMacros = macros.filter(m => !m.isGlobal);
+    const globalMacrosList = macros.filter(m => m.isGlobal);
+
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      version: '1.0',
+      macros: {
+        personal: userMacros.map(m => ({
+          name: m.name,
+          replacementText: m.replacementText,
+          isActive: m.isActive,
+          categoryId: m.categoryId,
+          isSmartMacro: m.isSmartMacro,
+          contextExpansions: m.contextExpansions,
+          createdAt: m.createdAt,
+        })),
+        global: globalMacrosList.map(m => ({
+          name: m.name,
+          replacementText: m.replacementText,
+          isActive: m.isActive,
+          createdAt: m.createdAt,
+        })),
+      },
+      categories: categories.map(c => ({
+        name: c.name,
+        createdAt: c.createdAt,
+      })),
+      totalCount: macros.length,
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `macros-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast(`Exported ${macros.length} macros successfully!`, 'success');
+  };
+
   // Group active macros by category
   const uncategorizedMacros = activeMacros.filter(m => !m.categoryId);
   const categorizedMacros = categories.map(cat => ({
@@ -296,6 +341,13 @@ export default function MacrosPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportMacros}
+            data-testid="export-macros-button"
+          >
+            Export
+          </Button>
           <Button
             variant="outline"
             onClick={() => setIsCategoryDialogOpen(true)}
