@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast';
+import { usePreferences } from '@/lib/preferences/preferences-context';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 // Template interface
@@ -98,6 +99,7 @@ function saveTemplates(templates: Template[], userId: string | undefined) {
 export default function TemplatesPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { preferences, updatePreference } = usePreferences();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -168,10 +170,11 @@ export default function TemplatesPage() {
 
   // Filter templates
   const filteredTemplates = templates.filter(template => {
-    const matchesSearch =
-      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.bodyPart.toLowerCase().includes(searchQuery.toLowerCase());
+    const trimmedSearch = searchQuery.trim().toLowerCase();
+    const matchesSearch = !trimmedSearch ||
+      template.name.toLowerCase().includes(trimmedSearch) ||
+      template.description.toLowerCase().includes(trimmedSearch) ||
+      template.bodyPart.toLowerCase().includes(trimmedSearch);
     const matchesModality = selectedModality === 'all' || template.modality === selectedModality;
     return matchesSearch && matchesModality;
   });
@@ -210,7 +213,7 @@ export default function TemplatesPage() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!templateToDelete) return;
 
     const updatedTemplates = templates.filter(t => t.id !== templateToDelete.id);
@@ -222,6 +225,11 @@ export default function TemplatesPage() {
     } else {
       // User deleting personal template
       saveTemplates(updatedTemplates.filter(t => !t.isGlobal), user?.id);
+    }
+
+    // Clear default template preference if deleted template was the default
+    if (preferences.defaultTemplate === templateToDelete.id) {
+      await updatePreference('defaultTemplate', null);
     }
 
     // Show success toast

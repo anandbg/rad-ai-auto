@@ -10,6 +10,7 @@ interface UserPreferences {
   defaultTemplate: string | null;
   autoSave: boolean;
   compactMode: boolean;
+  yoloMode: boolean;
 }
 
 interface PreferencesContextType {
@@ -24,6 +25,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   defaultTemplate: null,
   autoSave: true,
   compactMode: false,
+  yoloMode: false,
 };
 
 const PreferencesContext = createContext<PreferencesContextType>({

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/auth-context';
+import { usePreferences } from '@/lib/preferences/preferences-context';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -19,9 +20,22 @@ function getUsageStats(): { reportsGenerated: number; transcriptionMinutes: numb
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
+  const { preferences, updatePreference } = usePreferences();
   const searchParams = useSearchParams();
   const [showUnauthorizedError, setShowUnauthorizedError] = useState(false);
   const [usageStats, setUsageStats] = useState({ reportsGenerated: 0, transcriptionMinutes: 0 });
+  const [savingYolo, setSavingYolo] = useState(false);
+
+  const handleYoloModeToggle = async () => {
+    setSavingYolo(true);
+    try {
+      await updatePreference('yoloMode', !preferences.yoloMode);
+    } catch (error) {
+      console.error('Failed to toggle YOLO mode:', error);
+    } finally {
+      setSavingYolo(false);
+    }
+  };
 
   useEffect(() => {
     if (searchParams.get('error') === 'unauthorized') {
@@ -79,6 +93,53 @@ export default function DashboardPage() {
             Welcome back, {user?.name || user?.email}
           </p>
         </header>
+
+        {/* YOLO Mode Toggle */}
+        <section className="mb-8">
+          <div className="card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🚀</span>
+                  <h2 className="text-xl font-semibold">YOLO Mode</h2>
+                  {preferences.yoloMode && (
+                    <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-sm text-text-secondary">
+                  Auto-detect modality, select template, and generate reports with minimal clicks
+                </p>
+              </div>
+              <button
+                onClick={handleYoloModeToggle}
+                disabled={savingYolo}
+                className={`relative h-7 w-12 rounded-full transition-colors ${
+                  preferences.yoloMode
+                    ? 'bg-success'
+                    : 'bg-surface-muted'
+                } ${savingYolo ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                data-testid="yolo-mode-toggle"
+                aria-label={preferences.yoloMode ? 'Disable YOLO mode' : 'Enable YOLO mode'}
+              >
+                <span
+                  className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    preferences.yoloMode ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            {preferences.yoloMode && (
+              <div className="mt-4 rounded-lg bg-success/5 p-3 text-sm text-success">
+                <p className="font-medium">YOLO Mode is enabled!</p>
+                <p className="mt-1 text-success/80">
+                  Start transcribing and the system will automatically detect the best template and generate your report.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
 
         <section className="mb-8">
           <h2 className="mb-4 text-xl font-semibold">Quick Actions</h2>
