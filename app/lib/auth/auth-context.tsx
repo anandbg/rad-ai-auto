@@ -8,18 +8,46 @@ interface AuthUser {
   email: string;
   name: string;
   role: 'radiologist' | 'admin';
+  specialty?: string;
+  institution?: string;
+}
+
+// Profile data stored in localStorage
+interface UserProfile {
+  name: string;
+  specialty: string;
+  institution: string;
+}
+
+function getProfileStorageKey(userId: string): string {
+  return `ai-rad-profile-${userId}`;
+}
+
+function loadUserProfile(userId: string): Partial<UserProfile> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const stored = localStorage.getItem(getProfileStorageKey(userId));
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return {};
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   signOut: () => void;
+  updateProfile: (profile: Partial<UserProfile>) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   signOut: () => {},
+  updateProfile: () => {},
 });
 
 export function useAuth() {
@@ -59,11 +87,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const mockUserKey = getCookie(MOCK_AUTH_COOKIE);
       if (mockUserKey && MOCK_USERS[mockUserKey]) {
         const mockUser = MOCK_USERS[mockUserKey];
+        // Load profile data from localStorage (may override mock name)
+        const storedProfile = loadUserProfile(mockUser.id);
         setUser({
           id: mockUser.id,
           email: mockUser.email,
-          name: mockUser.name,
+          name: storedProfile.name || mockUser.name,
           role: mockUser.role,
+          specialty: storedProfile.specialty,
+          institution: storedProfile.institution,
         });
         setIsLoading(false);
         return;
@@ -114,8 +146,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/login';
   };
 
+  const updateProfile = (profile: Partial<UserProfile>) => {
+    if (!user) return;
+
+    // Update user state
+    setUser(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        name: profile.name || prev.name,
+        specialty: profile.specialty !== undefined ? profile.specialty : prev.specialty,
+        institution: profile.institution !== undefined ? profile.institution : prev.institution,
+      };
+    });
+
+    // Save to localStorage
+    const storageKey = getProfileStorageKey(user.id);
+    const currentProfile = loadUserProfile(user.id);
+    const updatedProfile = {
+      ...currentProfile,
+      ...profile,
+    };
+    localStorage.setItem(storageKey, JSON.stringify(updatedProfile));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, signOut }}>
+    <AuthContext.Provider value={{ user, isLoading, signOut, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

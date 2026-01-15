@@ -58,7 +58,7 @@ function getStoredTemplates(userId: string | undefined): Template[] {
 }
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { preferences, updatePreference, resolvedTheme, isLoading } = usePreferences();
   const { showToast } = useToast();
   const [saving, setSaving] = useState<string | null>(null);
@@ -66,6 +66,21 @@ export default function SettingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Profile editing state
+  const [profileName, setProfileName] = useState('');
+  const [profileSpecialty, setProfileSpecialty] = useState('');
+  const [profileInstitution, setProfileInstitution] = useState('');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  // Initialize profile form with user data
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileSpecialty(user.specialty || '');
+      setProfileInstitution(user.institution || '');
+    }
+  }, [user]);
 
   // Handle hash navigation (wait until preferences are loaded)
   useHashScroll(!isLoading);
@@ -129,6 +144,37 @@ export default function SettingsPage() {
     } finally {
       setSaving(null);
     }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profileName.trim()) {
+      showToast('Name is required', 'error');
+      return;
+    }
+    setSaving('profile');
+    try {
+      updateProfile({
+        name: profileName.trim(),
+        specialty: profileSpecialty.trim(),
+        institution: profileInstitution.trim(),
+      });
+      setIsEditingProfile(false);
+      showToast('Profile saved successfully', 'success');
+    } catch {
+      showToast('Failed to save profile', 'error');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleCancelEditProfile = () => {
+    // Reset form to current user values
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileSpecialty(user.specialty || '');
+      setProfileInstitution(user.institution || '');
+    }
+    setIsEditingProfile(false);
   };
 
   // Delete account and all associated user data (cascade delete)
@@ -374,33 +420,115 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Account Info */}
-        <Card id="account">
-          <CardHeader>
-            <CardTitle>Account Information</CardTitle>
-            <CardDescription>Your account details</CardDescription>
+        {/* Profile Section */}
+        <Card id="profile">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Profile</CardTitle>
+              <CardDescription>Your personal information</CardDescription>
+            </div>
+            {!isEditingProfile && (
+              <Button
+                variant="outline"
+                onClick={() => setIsEditingProfile(true)}
+                data-testid="edit-profile-button"
+              >
+                Edit Profile
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            {isEditingProfile ? (
+              <div className="space-y-4">
                 <div>
-                  <label className="label text-sm">Name</label>
-                  <p className="text-text-primary" data-testid="user-name">{user?.name || 'N/A'}</p>
+                  <label className="label mb-1 block">Name *</label>
+                  <Input
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    placeholder="Dr. John Smith"
+                    data-testid="profile-name-input"
+                  />
                 </div>
                 <div>
-                  <label className="label text-sm">Email</label>
-                  <p className="text-text-primary" data-testid="user-email">{user?.email || 'N/A'}</p>
+                  <label className="label mb-1 block">Specialty</label>
+                  <select
+                    value={profileSpecialty}
+                    onChange={(e) => setProfileSpecialty(e.target.value)}
+                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-text-primary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                    data-testid="profile-specialty-select"
+                  >
+                    <option value="">Select a specialty</option>
+                    <option value="Diagnostic Radiology">Diagnostic Radiology</option>
+                    <option value="Neuroradiology">Neuroradiology</option>
+                    <option value="Musculoskeletal Radiology">Musculoskeletal Radiology</option>
+                    <option value="Interventional Radiology">Interventional Radiology</option>
+                    <option value="Pediatric Radiology">Pediatric Radiology</option>
+                    <option value="Nuclear Medicine">Nuclear Medicine</option>
+                    <option value="Breast Imaging">Breast Imaging</option>
+                    <option value="Abdominal Radiology">Abdominal Radiology</option>
+                    <option value="Cardiothoracic Radiology">Cardiothoracic Radiology</option>
+                    <option value="Emergency Radiology">Emergency Radiology</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
                 <div>
-                  <label className="label text-sm">Role</label>
-                  <p className="text-text-primary capitalize" data-testid="user-role">{user?.role || 'N/A'}</p>
+                  <label className="label mb-1 block">Institution</label>
+                  <Input
+                    value={profileInstitution}
+                    onChange={(e) => setProfileInstitution(e.target.value)}
+                    placeholder="Hospital or Practice Name"
+                    data-testid="profile-institution-input"
+                  />
                 </div>
-                <div>
-                  <label className="label text-sm">User ID</label>
-                  <p className="text-text-muted text-xs" data-testid="user-id">{user?.id || 'N/A'}</p>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="primary"
+                    onClick={handleSaveProfile}
+                    disabled={saving === 'profile'}
+                    data-testid="save-profile-button"
+                  >
+                    {saving === 'profile' ? 'Saving...' : 'Save Profile'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={handleCancelEditProfile}
+                    disabled={saving === 'profile'}
+                    data-testid="cancel-edit-profile-button"
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label text-sm">Name</label>
+                    <p className="text-text-primary" data-testid="user-name">{user?.name || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="label text-sm">Email</label>
+                    <p className="text-text-primary" data-testid="user-email">{user?.email || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="label text-sm">Specialty</label>
+                    <p className="text-text-primary" data-testid="user-specialty">{user?.specialty || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="label text-sm">Institution</label>
+                    <p className="text-text-primary" data-testid="user-institution">{user?.institution || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="label text-sm">Role</label>
+                    <p className="text-text-primary capitalize" data-testid="user-role">{user?.role || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="label text-sm">User ID</label>
+                    <p className="text-text-muted text-xs" data-testid="user-id">{user?.id || 'Not set'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
