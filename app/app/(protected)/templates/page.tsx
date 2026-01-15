@@ -514,8 +514,8 @@ export default function TemplatesPage() {
             {personalTemplates.map((template) => (
               <Card key={template.id} data-testid={`template-card-${template.id}`}>
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
                       <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
                       <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
                     </div>
@@ -578,12 +578,12 @@ export default function TemplatesPage() {
               {institutionTemplates.map((template) => (
                 <Card key={template.id} data-testid={`template-card-${template.id}`}>
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
                         <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
                         <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
                       </div>
-                      <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info" data-testid="institution-badge">
+                      <span className="shrink-0 rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info" data-testid="institution-badge">
                         Institution
                       </span>
                     </div>
@@ -622,12 +622,12 @@ export default function TemplatesPage() {
           {globalTemplates.map((template) => (
             <Card key={template.id} data-testid={`template-card-${template.id}`}>
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
                     <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
                     <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
                   </div>
-                  <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
+                  <span className="shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
                     Global
                   </span>
                 </div>

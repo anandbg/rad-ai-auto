@@ -19,7 +19,7 @@ CardHeader.displayName = "CardHeader";
 
 export const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn("text-base font-semibold text-text-primary leading-tight", className)} {...props} />
+    <p ref={ref} className={cn("text-base font-semibold text-text-primary leading-tight truncate", className)} {...props} />
   )
 );
 CardTitle.displayName = "CardTitle";
