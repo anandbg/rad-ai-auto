@@ -1,0 +1,5 @@
+{ this is not valid JSON
+  "macros": [
+    broken syntax here
+  ]
+}
