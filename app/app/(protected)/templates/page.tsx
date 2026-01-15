@@ -186,6 +186,9 @@ export default function TemplatesPage() {
   const [institutionName, setInstitutionName] = useState('');
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [templateToShare, setTemplateToShare] = useState<Template | null>(null);
+  // Bulk selection state
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   // Read URL query params on mount
   useEffect(() => {
@@ -425,6 +428,57 @@ export default function TemplatesPage() {
     setCloneName('');
   };
 
+  // Bulk selection handlers
+  const handleToggleSelect = (id: string) => {
+    const newSelected = new Set(selectedTemplateIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedTemplateIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedTemplateIds.size === personalTemplates.length && personalTemplates.length > 0) {
+      // Deselect all
+      setSelectedTemplateIds(new Set());
+    } else {
+      // Select all personal templates
+      setSelectedTemplateIds(new Set(personalTemplates.map(t => t.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedTemplateIds.size === 0) return;
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedTemplateIds.size === 0) return;
+
+    const deletedCount = selectedTemplateIds.size;
+    const updatedTemplates = templates.filter(t => !selectedTemplateIds.has(t.id));
+    setTemplates(updatedTemplates);
+
+    // Save personal templates (excluding deleted ones)
+    saveTemplates(updatedTemplates.filter(t => !t.isGlobal), user?.id);
+
+    // Clear default template preference if any deleted template was the default
+    if (preferences.defaultTemplate && selectedTemplateIds.has(preferences.defaultTemplate)) {
+      await updatePreference('defaultTemplate', null);
+    }
+
+    // Clear selection
+    setSelectedTemplateIds(new Set());
+
+    // Show success toast
+    showToast(`Successfully deleted ${deletedCount} template${deletedCount > 1 ? 's' : ''}!`, 'success');
+
+    // Close dialog
+    setBulkDeleteDialogOpen(false);
+  };
+
   // Export templates to JSON file
   const handleExportAll = () => {
     const exportData = {
@@ -544,9 +598,34 @@ export default function TemplatesPage() {
 
       {/* Personal Templates */}
       <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">
-          Personal Templates ({personalTemplates.length})
-        </h2>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {personalTemplates.length > 0 && (
+              <label className="flex items-center gap-2 cursor-pointer" data-testid="select-all-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedTemplateIds.size === personalTemplates.length && personalTemplates.length > 0}
+                  onChange={handleSelectAll}
+                  className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                />
+                <span className="text-sm text-text-secondary">Select All</span>
+              </label>
+            )}
+            <h2 className="text-lg font-semibold text-text-primary">
+              Personal Templates ({personalTemplates.length})
+            </h2>
+          </div>
+          {selectedTemplateIds.size > 0 && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleBulkDelete}
+              data-testid="bulk-delete-button"
+            >
+              Delete Selected ({selectedTemplateIds.size})
+            </Button>
+          )}
+        </div>
         {personalTemplates.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -563,12 +642,25 @@ export default function TemplatesPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {personalTemplates.map((template) => (
-              <Card key={template.id} data-testid={`template-card-${template.id}`}>
+              <Card
+                key={template.id}
+                data-testid={`template-card-${template.id}`}
+                className={selectedTemplateIds.has(template.id) ? 'ring-2 ring-brand' : ''}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
-                      <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedTemplateIds.has(template.id)}
+                        onChange={() => handleToggleSelect(template.id)}
+                        className="mt-1 h-4 w-4 rounded border-border text-brand focus:ring-brand cursor-pointer"
+                        data-testid={`checkbox-${template.id}`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
+                        <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
@@ -810,6 +902,48 @@ export default function TemplatesPage() {
               data-testid="confirm-share-button"
             >
               Share Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <DialogContent data-testid="bulk-delete-dialog">
+          <DialogHeader>
+            <DialogTitle>Delete Multiple Templates</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedTemplateIds.size} template{selectedTemplateIds.size > 1 ? 's' : ''}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 max-h-40 overflow-y-auto">
+            <p className="text-sm font-medium text-text-primary mb-2">Templates to delete:</p>
+            <ul className="text-sm text-text-secondary space-y-1">
+              {Array.from(selectedTemplateIds).map(id => {
+                const template = templates.find(t => t.id === id);
+                return template ? (
+                  <li key={id} className="flex items-center gap-2">
+                    <span className="text-danger">•</span>
+                    {template.name}
+                  </li>
+                ) : null;
+              })}
+            </ul>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setBulkDeleteDialogOpen(false)}
+              data-testid="cancel-bulk-delete-button"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmBulkDelete}
+              data-testid="confirm-bulk-delete-button"
+            >
+              Delete {selectedTemplateIds.size} Template{selectedTemplateIds.size > 1 ? 's' : ''}
             </Button>
           </DialogFooter>
         </DialogContent>
