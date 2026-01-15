@@ -19,6 +19,9 @@ interface TemplateSection {
   content: string;
 }
 
+// Editor tab type
+type EditorTab = 'sections' | 'settings' | 'normalFindings';
+
 // Template interface - must match the one in the list page
 interface Template {
   id: string;
@@ -226,6 +229,7 @@ export default function TemplateDetailPage() {
     bodyPart: '',
     description: '',
     content: '',
+    normalFindings: '',
   });
   const [originalFormData, setOriginalFormData] = useState({
     name: '',
@@ -233,7 +237,10 @@ export default function TemplateDetailPage() {
     bodyPart: '',
     description: '',
     content: '',
+    normalFindings: '',
   });
+  const [editorTab, setEditorTab] = useState<EditorTab>('sections');
+  const [editSections, setEditSections] = useState<TemplateSection[]>([]);
 
   // Check if form has unsaved changes
   const hasUnsavedChanges = useMemo(() => {
@@ -243,9 +250,11 @@ export default function TemplateDetailPage() {
       formData.modality !== originalFormData.modality ||
       formData.bodyPart !== originalFormData.bodyPart ||
       formData.description !== originalFormData.description ||
-      formData.content !== originalFormData.content
+      formData.content !== originalFormData.content ||
+      formData.normalFindings !== originalFormData.normalFindings ||
+      JSON.stringify(editSections) !== JSON.stringify(template?.sections || [])
     );
-  }, [isEditing, formData, originalFormData]);
+  }, [isEditing, formData, originalFormData, editSections, template?.sections]);
 
   // Unsaved changes warning
   const {
@@ -288,9 +297,11 @@ export default function TemplateDetailPage() {
         bodyPart: foundTemplate.bodyPart,
         description: foundTemplate.description,
         content: foundTemplate.content || '',
+        normalFindings: (foundTemplate as any).normalFindings || '',
       };
       setFormData(initialData);
       setOriginalFormData(initialData);
+      setEditSections(foundTemplate.sections || []);
       // Load version history for this template
       const templateVersions = getTemplateVersions(id);
       setVersions(templateVersions);
@@ -314,13 +325,15 @@ export default function TemplateDetailPage() {
     // Get current version number for the template
     const currentVersion = (template.version || 0) + 1;
 
-    const updatedTemplate: Template = {
+    const updatedTemplate: Template & { normalFindings?: string } = {
       ...template,
       name: formData.name,
       modality: formData.modality,
       bodyPart: formData.bodyPart,
       description: formData.description,
       content: formData.content,
+      normalFindings: formData.normalFindings,
+      sections: editSections,
       updatedAt: new Date().toISOString(),
       version: currentVersion,
     };
@@ -600,91 +613,267 @@ export default function TemplateDetailPage() {
       </div>
 
       {isEditing ? (
-        /* Edit Mode */
+        /* Edit Mode with Tabs */
         <Card>
           <CardHeader>
             <CardTitle>Edit Template</CardTitle>
-            <CardDescription>Update template details</CardDescription>
+            <CardDescription>Update template details using the tabs below</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Template Name */}
-            <div>
-              <label htmlFor="name" className="mb-2 block text-sm font-medium text-text-primary">
-                Template Name
-              </label>
-              <Input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                data-testid="edit-template-name"
-              />
-            </div>
 
-            {/* Modality and Body Part */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="modality" className="mb-2 block text-sm font-medium text-text-primary">
-                  Modality
-                </label>
-                <select
-                  id="modality"
-                  value={formData.modality}
-                  onChange={(e) => handleChange('modality', e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                >
-                  {modalityOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+          {/* Tab Navigation */}
+          <div className="border-b border-border px-6">
+            <nav className="flex gap-4" data-testid="editor-tabs">
+              <button
+                type="button"
+                onClick={() => setEditorTab('sections')}
+                className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+                  editorTab === 'sections'
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
+                }`}
+                data-testid="tab-sections"
+              >
+                Sections
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorTab('settings')}
+                className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+                  editorTab === 'settings'
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
+                }`}
+                data-testid="tab-settings"
+              >
+                Settings
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorTab('normalFindings')}
+                className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+                  editorTab === 'normalFindings'
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border'
+                }`}
+                data-testid="tab-normal-findings"
+              >
+                Normal Findings
+              </button>
+            </nav>
+          </div>
+
+          <CardContent className="space-y-6 pt-6">
+            {/* Sections Tab */}
+            {editorTab === 'sections' && (
+              <div data-testid="sections-tab-content">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-medium text-text-primary">Template Sections</h3>
+                    <p className="text-sm text-text-secondary">Define the sections of your report template</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      const newSection: TemplateSection = {
+                        id: `sec-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                        name: '',
+                        content: '',
+                      };
+                      setEditSections(prev => [...prev, newSection]);
+                    }}
+                    data-testid="add-section-btn"
+                  >
+                    + Add Section
+                  </Button>
+                </div>
+
+                {editSections.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-border p-8 text-center">
+                    <p className="text-text-muted">No sections defined. Click "Add Section" to create one.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {editSections.map((section, index) => (
+                      <div
+                        key={section.id}
+                        className="rounded-lg border border-border bg-surface-muted p-4"
+                        data-testid={`edit-section-${index}`}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <Input
+                            value={section.name}
+                            onChange={(e) => {
+                              const updated = [...editSections];
+                              updated[index] = { ...section, name: e.target.value };
+                              setEditSections(updated);
+                            }}
+                            placeholder="Section name (e.g., FINDINGS, IMPRESSION)"
+                            className="flex-1 mr-2 font-medium"
+                            data-testid={`section-name-${index}`}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditSections(prev => prev.filter((_, i) => i !== index));
+                            }}
+                            className="text-danger hover:text-danger"
+                            data-testid={`remove-section-${index}`}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                        <Textarea
+                          value={section.content}
+                          onChange={(e) => {
+                            const updated = [...editSections];
+                            updated[index] = { ...section, content: e.target.value };
+                            setEditSections(updated);
+                          }}
+                          placeholder="Section content or template text..."
+                          rows={4}
+                          className="font-mono text-sm"
+                          data-testid={`section-content-${index}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Additional Template Content */}
+                <div className="mt-6 pt-6 border-t border-border">
+                  <label htmlFor="content" className="mb-2 block text-sm font-medium text-text-primary">
+                    Additional Template Content
+                  </label>
+                  <p className="text-xs text-text-muted mb-2">
+                    Raw template content with placeholders (e.g., {'{{FINDINGS}}'}, {'{{IMPRESSION}}'})
+                  </p>
+                  <Textarea
+                    id="content"
+                    value={formData.content}
+                    onChange={(e) => handleChange('content', e.target.value)}
+                    rows={8}
+                    className="font-mono text-sm"
+                    data-testid="template-content-editor"
+                  />
+                </div>
               </div>
-              <div>
-                <label htmlFor="bodyPart" className="mb-2 block text-sm font-medium text-text-primary">
-                  Body Part
-                </label>
-                <select
-                  id="bodyPart"
-                  value={formData.bodyPart}
-                  onChange={(e) => handleChange('bodyPart', e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                >
-                  {bodyPartOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+            )}
+
+            {/* Settings Tab */}
+            {editorTab === 'settings' && (
+              <div data-testid="settings-tab-content" className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-text-primary mb-1">Template Settings</h3>
+                  <p className="text-sm text-text-secondary">Configure basic template information</p>
+                </div>
+
+                {/* Template Name */}
+                <div>
+                  <label htmlFor="name" className="mb-2 block text-sm font-medium text-text-primary">
+                    Template Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    data-testid="edit-template-name"
+                  />
+                </div>
+
+                {/* Modality and Body Part */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="modality" className="mb-2 block text-sm font-medium text-text-primary">
+                      Modality
+                    </label>
+                    <select
+                      id="modality"
+                      value={formData.modality}
+                      onChange={(e) => handleChange('modality', e.target.value)}
+                      className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                      data-testid="edit-template-modality"
+                    >
+                      {modalityOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="bodyPart" className="mb-2 block text-sm font-medium text-text-primary">
+                      Body Part
+                    </label>
+                    <select
+                      id="bodyPart"
+                      value={formData.bodyPart}
+                      onChange={(e) => handleChange('bodyPart', e.target.value)}
+                      className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                      data-testid="edit-template-bodypart"
+                    >
+                      {bodyPartOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label htmlFor="description" className="mb-2 block text-sm font-medium text-text-primary">
+                    Description
+                  </label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => handleChange('description', e.target.value)}
+                    rows={3}
+                    data-testid="edit-template-description"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Description */}
-            <div>
-              <label htmlFor="description" className="mb-2 block text-sm font-medium text-text-primary">
-                Description
-              </label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                rows={3}
-              />
-            </div>
+            {/* Normal Findings Tab */}
+            {editorTab === 'normalFindings' && (
+              <div data-testid="normal-findings-tab-content">
+                <div className="mb-4">
+                  <h3 className="text-lg font-medium text-text-primary mb-1">Normal Findings</h3>
+                  <p className="text-sm text-text-secondary">
+                    Define standard normal findings text that can be quickly inserted into reports.
+                    This helps speed up reporting for studies with no significant abnormalities.
+                  </p>
+                </div>
 
-            {/* Template Content */}
-            <div>
-              <label htmlFor="content" className="mb-2 block text-sm font-medium text-text-primary">
-                Template Content
-              </label>
-              <Textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) => handleChange('content', e.target.value)}
-                rows={10}
-                className="font-mono text-sm"
-              />
-            </div>
+                <Textarea
+                  id="normalFindings"
+                  value={formData.normalFindings}
+                  onChange={(e) => handleChange('normalFindings', e.target.value)}
+                  rows={12}
+                  placeholder="Enter normal findings template text...
+
+Example for Chest X-Ray:
+The lungs are clear. No focal consolidation, pleural effusion, or pneumothorax. The cardiac silhouette is normal in size. The mediastinal contours are unremarkable. No acute osseous abnormality."
+                  className="font-mono text-sm"
+                  data-testid="normal-findings-editor"
+                />
+
+                <div className="mt-4 p-4 rounded-lg bg-surface-muted border border-border">
+                  <h4 className="text-sm font-medium text-text-primary mb-2">💡 Tips</h4>
+                  <ul className="text-sm text-text-secondary space-y-1">
+                    <li>• Use clear, concise language that accurately describes normal anatomy</li>
+                    <li>• Include all relevant structures for the study type</li>
+                    <li>• This text can be inserted with one click during report generation</li>
+                  </ul>
+                </div>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="justify-between">
             <Button variant="ghost" onClick={() => setIsEditing(false)}>
