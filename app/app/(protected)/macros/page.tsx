@@ -123,6 +123,9 @@ export default function MacrosPage() {
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [macroToMove, setMacroToMove] = useState<Macro | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  // Delete category state
+  const [isDeleteCategoryDialogOpen, setIsDeleteCategoryDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<MacroCategory | null>(null);
   // Smart macro state
   const [isSmartMacro, setIsSmartMacro] = useState(false);
   const [contextExpansions, setContextExpansions] = useState<ContextExpansion[]>([]);
@@ -269,6 +272,44 @@ export default function MacrosPage() {
     setIsMoveDialogOpen(false);
     setMacroToMove(null);
     setSelectedCategoryId('');
+  };
+
+  // Delete category handler
+  const openDeleteCategoryDialog = (category: MacroCategory) => {
+    setCategoryToDelete(category);
+    setIsDeleteCategoryDialogOpen(true);
+  };
+
+  const handleDeleteCategory = () => {
+    if (!categoryToDelete) return;
+
+    // Count macros in this category
+    const macrosInCategory = macros.filter(m => m.categoryId === categoryToDelete.id);
+    const macroCount = macrosInCategory.length;
+
+    // Move all macros in this category to uncategorized (remove categoryId)
+    const updatedMacros = macros.map(macro =>
+      macro.categoryId === categoryToDelete.id
+        ? { ...macro, categoryId: undefined }
+        : macro
+    );
+    setMacros(updatedMacros);
+    saveMacros(updatedMacros, user?.id);
+
+    // Remove the category
+    const updatedCategories = categories.filter(c => c.id !== categoryToDelete.id);
+    setCategories(updatedCategories);
+    saveCategories(updatedCategories, user?.id);
+
+    // Show toast with count of moved macros
+    if (macroCount > 0) {
+      showToast(`Category "${categoryToDelete.name}" deleted. ${macroCount} macro${macroCount !== 1 ? 's' : ''} moved to Uncategorized.`, 'success');
+    } else {
+      showToast(`Category "${categoryToDelete.name}" deleted.`, 'success');
+    }
+
+    setIsDeleteCategoryDialogOpen(false);
+    setCategoryToDelete(null);
   };
 
   const getCategoryName = (categoryId: string | undefined): string => {
@@ -639,15 +680,31 @@ export default function MacrosPage() {
             Categories
           </h2>
           <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <span
-                key={cat.id}
-                className="rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand"
-                data-testid={`category-badge-${cat.id}`}
-              >
-                {cat.name}
-              </span>
-            ))}
+            {categories.map((cat) => {
+              const macroCount = macros.filter(m => m.categoryId === cat.id).length;
+              return (
+                <span
+                  key={cat.id}
+                  className="group inline-flex items-center gap-1 rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand"
+                  data-testid={`category-badge-${cat.id}`}
+                >
+                  {cat.name}
+                  {macroCount > 0 && (
+                    <span className="text-xs opacity-70">({macroCount})</span>
+                  )}
+                  <button
+                    onClick={() => openDeleteCategoryDialog(cat)}
+                    className="ml-1 rounded-full p-0.5 hover:bg-danger/20 hover:text-danger transition-colors"
+                    title={`Delete category "${cat.name}"`}
+                    data-testid={`delete-category-${cat.id}`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1015,6 +1072,38 @@ export default function MacrosPage() {
               data-testid="confirm-move-macro-button"
             >
               Move Macro
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Category Confirmation Dialog */}
+      <Dialog open={isDeleteCategoryDialogOpen} onOpenChange={setIsDeleteCategoryDialogOpen}>
+        <DialogContent data-testid="delete-category-dialog">
+          <DialogHeader>
+            <DialogTitle>Delete Category</DialogTitle>
+            <DialogDescription>
+              {(() => {
+                const macroCount = categoryToDelete
+                  ? macros.filter(m => m.categoryId === categoryToDelete.id).length
+                  : 0;
+                if (macroCount > 0) {
+                  return `Are you sure you want to delete the category "${categoryToDelete?.name}"? The ${macroCount} macro${macroCount !== 1 ? 's' : ''} in this category will be moved to Uncategorized.`;
+                }
+                return `Are you sure you want to delete the category "${categoryToDelete?.name}"?`;
+              })()}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteCategoryDialogOpen(false)} data-testid="cancel-delete-category-button">
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteCategory}
+              data-testid="confirm-delete-category-button"
+            >
+              Delete Category
             </Button>
           </DialogFooter>
         </DialogContent>
