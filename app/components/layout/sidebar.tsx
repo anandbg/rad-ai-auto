@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
   { href: '/templates', label: 'Templates', icon: '📋' },
   { href: '/brand-templates', label: 'Branding', icon: '🎨' },
   { href: '/macros', label: 'Macros', icon: '⚡' },
+  { href: '/productivity', label: 'Productivity', icon: '📊' },
   { href: '/billing', label: 'Billing', icon: '💳' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
   { href: '/admin', label: 'Admin', icon: '🔐', adminOnly: true },

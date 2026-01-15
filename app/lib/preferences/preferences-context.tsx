@@ -11,6 +11,7 @@ interface UserPreferences {
   autoSave: boolean;
   compactMode: boolean;
   yoloMode: boolean;
+  onboardingCompleted: boolean;
 }
 
 interface PreferencesContextType {
@@ -26,6 +27,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   autoSave: true,
   compactMode: false,
   yoloMode: false,
+  onboardingCompleted: false,
 };
 
 const PreferencesContext = createContext<PreferencesContextType>({
