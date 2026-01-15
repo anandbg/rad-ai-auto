@@ -200,8 +200,17 @@ export default function TranscribePage() {
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  // Audio playback state
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackTime, setPlaybackTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   // Detect modality and body part when transcribed text changes
   useEffect(() => {
@@ -230,14 +239,48 @@ export default function TranscribePage() {
     setMacros(allMacros);
   }, [user?.id]);
 
-  // Clean up timer on unmount
+  // Clean up timer and audio URL on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      // Revoke audio URL to prevent memory leak
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
     };
-  }, []);
+  }, [audioUrl]);
+
+  // Handle audio playback time updates
+  useEffect(() => {
+    if (audioRef.current) {
+      const audio = audioRef.current;
+
+      const handleTimeUpdate = () => {
+        setPlaybackTime(audio.currentTime);
+      };
+
+      const handleLoadedMetadata = () => {
+        setAudioDuration(audio.duration);
+      };
+
+      const handleEnded = () => {
+        setIsPlaying(false);
+        setPlaybackTime(0);
+      };
+
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('ended', handleEnded);
+
+      return () => {
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.removeEventListener('ended', handleEnded);
+      };
+    }
+  }, [audioUrl]);
 
   // Apply macro expansion to text with context awareness
   const applyMacros = (text: string, bodyPartContext?: string | null): string => {
@@ -273,7 +316,15 @@ export default function TranscribePage() {
     setTranscribedText(expanded);
   };
 
-  const startRecording = useCallback(() => {
+  const startRecording = useCallback(async () => {
+    // Clear previous audio
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+    setAudioBlob(null);
+    audioChunksRef.current = [];
+
     setIsRecording(true);
     setIsPaused(false);
     setRecordingTime(0);
@@ -283,7 +334,36 @@ export default function TranscribePage() {
     timerRef.current = setInterval(() => {
       setRecordingTime(prev => prev + 1);
     }, 1000);
-  }, []);
+
+    // Try to get microphone access and start recording
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        // Create blob from recorded chunks
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start(100); // Collect data every 100ms
+    } catch (err) {
+      console.log('Microphone access not available, using simulated recording');
+      // Continue without actual recording - will generate sample audio on stop
+    }
+  }, [audioUrl]);
 
   const pauseRecording = useCallback(() => {
     setIsPaused(true);
@@ -291,6 +371,10 @@ export default function TranscribePage() {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
+    }
+    // Pause the media recorder if available
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.pause();
     }
   }, []);
 
@@ -300,6 +384,10 @@ export default function TranscribePage() {
     timerRef.current = setInterval(() => {
       setRecordingTime(prev => prev + 1);
     }, 1000);
+    // Resume the media recorder if available
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
+      mediaRecorderRef.current.resume();
+    }
   }, []);
 
   const cancelRecording = useCallback(() => {
@@ -312,6 +400,11 @@ export default function TranscribePage() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    // Stop the media recorder if active
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    audioChunksRef.current = [];
     // No transcription minutes are added - recording is discarded
   }, []);
 
@@ -340,17 +433,51 @@ export default function TranscribePage() {
       timerRef.current = null;
     }
 
+    // Stop the media recorder if active
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+
     // Calculate minutes recorded (minimum 0.1 minutes)
     const minutes = Math.max(0.1, Math.round((recordingTime / 60) * 10) / 10);
+    const recordedDuration = recordingTime;
 
     setIsProcessing(true);
 
     // Simulate transcription processing
     await new Promise(resolve => setTimeout(resolve, 2000));
 
+    // If no real recording, create a sample audio blob for demo
+    if (!audioBlob && audioChunksRef.current.length === 0) {
+      // Create a simple audio context to generate a sample tone
+      try {
+        const audioContext = new AudioContext();
+        const duration = Math.min(recordedDuration, 5); // Cap at 5 seconds for demo
+        const sampleRate = audioContext.sampleRate;
+        const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        // Generate a simple tone that fades
+        for (let i = 0; i < data.length; i++) {
+          const t = i / sampleRate;
+          const envelope = Math.exp(-t * 2); // Fade out
+          data[i] = envelope * Math.sin(2 * Math.PI * 440 * t) * 0.3;
+        }
+
+        // Encode to WAV (simplified)
+        const wavBlob = audioBufferToWav(buffer);
+        setAudioBlob(wavBlob);
+        const url = URL.createObjectURL(wavBlob);
+        setAudioUrl(url);
+        setAudioDuration(duration);
+      } catch {
+        console.log('Could not create sample audio');
+      }
+    }
+
     // Generate sample transcription based on recording duration
     // Include modality keywords for YOLO mode detection testing
-    const sampleTranscription = `[Transcribed audio - ${recordingTime} seconds]
+    const sampleTranscription = `[Transcribed audio - ${recordedDuration} seconds]
 
 The patient presents for CT scan of the chest. Clinical history indicates prior CT examination showed areas of concern in the lung fields.
 
@@ -367,6 +494,56 @@ IMPRESSION: No acute findings on CT. Recommend continued monitoring as clinicall
 
     // Add transcription minutes to usage stats
     addTranscriptionMinutes(minutes);
+  };
+
+  // Helper function to convert AudioBuffer to WAV blob
+  const audioBufferToWav = (buffer: AudioBuffer): Blob => {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const format = 1; // PCM
+    const bitDepth = 16;
+    const bytesPerSample = bitDepth / 8;
+    const blockAlign = numChannels * bytesPerSample;
+
+    const data = buffer.getChannelData(0);
+    const samples = data.length;
+    const dataSize = samples * blockAlign;
+    const bufferSize = 44 + dataSize;
+
+    const arrayBuffer = new ArrayBuffer(bufferSize);
+    const view = new DataView(arrayBuffer);
+
+    // WAV header
+    const writeString = (offset: number, str: string) => {
+      for (let i = 0; i < str.length; i++) {
+        view.setUint8(offset + i, str.charCodeAt(i));
+      }
+    };
+
+    writeString(0, 'RIFF');
+    view.setUint32(4, bufferSize - 8, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * blockAlign, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitDepth, true);
+    writeString(36, 'data');
+    view.setUint32(40, dataSize, true);
+
+    // Write audio data
+    let offset = 44;
+    for (let i = 0; i < samples; i++) {
+      const sample = Math.max(-1, Math.min(1, data[i]));
+      const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+      view.setInt16(offset, intSample, true);
+      offset += 2;
+    }
+
+    return new Blob([arrayBuffer], { type: 'audio/wav' });
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -486,6 +663,32 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
     navigator.clipboard.writeText(transcribedText);
   };
 
+  // Audio playback controls
+  const togglePlayback = () => {
+    if (!audioRef.current || !audioUrl) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const seekAudio = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!audioRef.current) return;
+    const time = parseFloat(e.target.value);
+    audioRef.current.currentTime = time;
+    setPlaybackTime(time);
+  };
+
+  const formatPlaybackTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="mx-auto max-w-4xl p-6">
       {/* Header */}
@@ -571,6 +774,61 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                   )}
                 </div>
               </div>
+
+              {/* Audio Playback Controls - shown after recording */}
+              {audioUrl && !isRecording && (
+                <div
+                  className="mt-6 p-4 rounded-lg border border-border bg-surface-muted"
+                  data-testid="audio-playback-section"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-text-primary">🔊 Recorded Audio</h4>
+                    <span className="text-xs text-text-muted">
+                      Duration: {formatPlaybackTime(audioDuration)}
+                    </span>
+                  </div>
+
+                  {/* Hidden audio element */}
+                  <audio ref={audioRef} src={audioUrl} preload="metadata" />
+
+                  {/* Playback controls */}
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={togglePlayback}
+                      data-testid="play-pause-btn"
+                      className="w-24"
+                    >
+                      {isPlaying ? '⏸️ Pause' : '▶️ Play'}
+                    </Button>
+
+                    {/* Progress bar */}
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="text-xs font-mono text-text-muted w-10" data-testid="playback-current-time">
+                        {formatPlaybackTime(playbackTime)}
+                      </span>
+                      <input
+                        type="range"
+                        min="0"
+                        max={audioDuration || 0}
+                        step="0.1"
+                        value={playbackTime}
+                        onChange={seekAudio}
+                        className="flex-1 h-2 rounded-lg appearance-none cursor-pointer bg-border accent-brand"
+                        data-testid="playback-seek"
+                      />
+                      <span className="text-xs font-mono text-text-muted w-10" data-testid="playback-duration">
+                        {formatPlaybackTime(audioDuration)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="mt-2 text-xs text-text-muted">
+                    Click Play to listen to your recording before using in a report
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
