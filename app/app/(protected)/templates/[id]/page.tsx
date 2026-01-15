@@ -216,6 +216,8 @@ export default function TemplateDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [versions, setVersions] = useState<TemplateVersion[]>([]);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
+  const [showDiffView, setShowDiffView] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     modality: '',
@@ -337,6 +339,49 @@ export default function TemplateDetailPage() {
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Handle version selection for comparison
+  const handleVersionSelect = (versionId: string) => {
+    setSelectedVersions(prev => {
+      if (prev.includes(versionId)) {
+        return prev.filter(id => id !== versionId);
+      }
+      if (prev.length < 2) {
+        return [...prev, versionId];
+      }
+      // Replace the oldest selection
+      return [prev[1], versionId];
+    });
+  };
+
+  // Get diff between two versions
+  const getVersionDiff = (v1: TemplateVersion, v2: TemplateVersion) => {
+    const diffs: { field: string; oldValue: string; newValue: string }[] = [];
+
+    if (v1.name !== v2.name) {
+      diffs.push({ field: 'Name', oldValue: v1.name, newValue: v2.name });
+    }
+    if (v1.modality !== v2.modality) {
+      diffs.push({ field: 'Modality', oldValue: v1.modality, newValue: v2.modality });
+    }
+    if (v1.bodyPart !== v2.bodyPart) {
+      diffs.push({ field: 'Body Part', oldValue: v1.bodyPart, newValue: v2.bodyPart });
+    }
+    if (v1.description !== v2.description) {
+      diffs.push({ field: 'Description', oldValue: v1.description, newValue: v2.description });
+    }
+    if ((v1.content || '') !== (v2.content || '')) {
+      diffs.push({ field: 'Content', oldValue: v1.content || '', newValue: v2.content || '' });
+    }
+
+    return diffs;
+  };
+
+  // Get selected versions for comparison (sorted by version number)
+  const getSelectedVersionsForComparison = () => {
+    const selected = versions.filter(v => selectedVersions.includes(v.id));
+    return selected.sort((a, b) => a.version - b.version);
   };
 
   if (isLoading) {
@@ -595,40 +640,114 @@ export default function TemplateDetailPage() {
                     : 'No version history yet. Edit and save to create a version.'}
                 </CardDescription>
               </div>
-              {versions.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowVersionHistory(!showVersionHistory)}
-                  data-testid="toggle-version-history"
-                >
-                  {showVersionHistory ? 'Hide' : 'Show'} History
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {versions.length >= 2 && selectedVersions.length === 2 && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowDiffView(!showDiffView)}
+                    data-testid="compare-versions-btn"
+                  >
+                    {showDiffView ? 'Hide' : 'Compare'} Versions
+                  </Button>
+                )}
+                {versions.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowVersionHistory(!showVersionHistory)}
+                    data-testid="toggle-version-history"
+                  >
+                    {showVersionHistory ? 'Hide' : 'Show'} History
+                  </Button>
+                )}
+              </div>
             </CardHeader>
+
+            {/* Version Diff View */}
+            {showDiffView && selectedVersions.length === 2 && (
+              <CardContent className="border-b border-border pb-4">
+                {(() => {
+                  const [v1, v2] = getSelectedVersionsForComparison();
+                  const diffs = getVersionDiff(v1, v2);
+                  return (
+                    <div data-testid="version-diff-view">
+                      <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
+                        <span>Comparing:</span>
+                        <span className="font-medium text-text-primary">Version {v1.version}</span>
+                        <span>→</span>
+                        <span className="font-medium text-text-primary">Version {v2.version}</span>
+                      </div>
+                      {diffs.length === 0 ? (
+                        <p className="text-text-muted text-sm">No differences found between selected versions.</p>
+                      ) : (
+                        <div className="space-y-4">
+                          {diffs.map((diff, index) => (
+                            <div key={index} className="rounded-lg border border-border p-3" data-testid={`diff-field-${diff.field.toLowerCase().replace(' ', '-')}`}>
+                              <h4 className="font-medium text-text-primary mb-2">{diff.field}</h4>
+                              <div className="grid gap-2">
+                                <div className="rounded bg-danger/10 p-2 border-l-4 border-danger" data-testid="diff-deletion">
+                                  <span className="text-xs font-medium text-danger">- Removed (v{v1.version})</span>
+                                  <p className="text-sm text-text-primary mt-1 whitespace-pre-wrap">{diff.oldValue || '(empty)'}</p>
+                                </div>
+                                <div className="rounded bg-success/10 p-2 border-l-4 border-success" data-testid="diff-addition">
+                                  <span className="text-xs font-medium text-success">+ Added (v{v2.version})</span>
+                                  <p className="text-sm text-text-primary mt-1 whitespace-pre-wrap">{diff.newValue || '(empty)'}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            )}
+
             {showVersionHistory && versions.length > 0 && (
               <CardContent>
+                {versions.length >= 2 && (
+                  <p className="text-sm text-text-muted mb-3">
+                    Select 2 versions to compare ({selectedVersions.length}/2 selected)
+                  </p>
+                )}
                 <div className="space-y-3" data-testid="version-history-list">
                   {versions.map((version, index) => (
                     <div
                       key={version.id}
-                      className="rounded-lg border border-border bg-surface-muted p-4"
+                      className={`rounded-lg border p-4 cursor-pointer transition-colors ${
+                        selectedVersions.includes(version.id)
+                          ? 'border-brand bg-brand/5'
+                          : 'border-border bg-surface-muted hover:border-brand/50'
+                      }`}
                       data-testid={`version-entry-${version.version}`}
+                      onClick={() => handleVersionSelect(version.id)}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-text-primary">
-                          Version {version.version}
-                          {index === 0 && (
-                            <span className="ml-2 text-xs bg-brand/10 text-brand px-2 py-0.5 rounded-full">
-                              Latest
-                            </span>
-                          )}
-                        </span>
-                        <span className="text-sm text-text-muted">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedVersions.includes(version.id)}
+                            onChange={() => handleVersionSelect(version.id)}
+                            className="w-4 h-4 rounded border-border text-brand focus:ring-brand"
+                            data-testid={`version-checkbox-${version.version}`}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <span className="font-medium text-text-primary">
+                            Version {version.version}
+                            {index === 0 && (
+                              <span className="ml-2 text-xs bg-brand/10 text-brand px-2 py-0.5 rounded-full">
+                                Latest
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <span className="text-sm text-text-muted" data-testid={`version-timestamp-${version.version}`}>
                           {new Date(version.createdAt).toLocaleString()}
                         </span>
                       </div>
-                      <div className="text-sm text-text-secondary">
+                      <div className="text-sm text-text-secondary ml-7">
                         <p><strong>Name:</strong> {version.name}</p>
                         <p><strong>Modality:</strong> {version.modality} - {version.bodyPart}</p>
                         {version.description && (
