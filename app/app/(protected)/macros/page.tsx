@@ -24,6 +24,12 @@ interface MacroCategory {
   createdAt: string;
 }
 
+// Context expansion interface
+interface ContextExpansion {
+  bodyPart: string;
+  text: string;
+}
+
 // Macro interface
 interface Macro {
   id: string;
@@ -33,6 +39,9 @@ interface Macro {
   isGlobal: boolean;
   createdAt: string;
   categoryId?: string;
+  // Smart macro support
+  isSmartMacro?: boolean;
+  contextExpansions?: ContextExpansion[];
 }
 
 // Global macros (available to all users)
@@ -114,6 +123,11 @@ export default function MacrosPage() {
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [macroToMove, setMacroToMove] = useState<Macro | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  // Smart macro state
+  const [isSmartMacro, setIsSmartMacro] = useState(false);
+  const [contextExpansions, setContextExpansions] = useState<ContextExpansion[]>([]);
+  const [newContextBodyPart, setNewContextBodyPart] = useState('');
+  const [newContextText, setNewContextText] = useState('');
 
   // Load macros and categories on mount and when user changes
   useEffect(() => {
@@ -135,6 +149,8 @@ export default function MacrosPage() {
       isActive: true,
       isGlobal: false,
       createdAt: new Date().toISOString(),
+      isSmartMacro: isSmartMacro && contextExpansions.length > 0,
+      contextExpansions: isSmartMacro && contextExpansions.length > 0 ? contextExpansions : undefined,
     };
 
     const updatedMacros = [newMacro, ...macros];
@@ -142,7 +158,29 @@ export default function MacrosPage() {
     saveMacros(updatedMacros, user?.id);
     setNewMacroName('');
     setNewMacroText('');
+    setIsSmartMacro(false);
+    setContextExpansions([]);
     setIsDialogOpen(false);
+
+    if (newMacro.isSmartMacro) {
+      showToast(`Smart macro "${newMacro.name}" created with ${contextExpansions.length} context expansion(s)!`, 'success');
+    }
+  };
+
+  // Add context expansion for smart macro
+  const addContextExpansion = () => {
+    if (!newContextBodyPart.trim() || !newContextText.trim()) return;
+    setContextExpansions([
+      ...contextExpansions,
+      { bodyPart: newContextBodyPart.trim(), text: newContextText.trim() }
+    ]);
+    setNewContextBodyPart('');
+    setNewContextText('');
+  };
+
+  // Remove context expansion
+  const removeContextExpansion = (index: number) => {
+    setContextExpansions(contextExpansions.filter((_, i) => i !== index));
   };
 
   const toggleMacro = (id: string) => {
@@ -278,7 +316,7 @@ export default function MacrosPage() {
                 Define a shortcut that expands to longer text during transcription
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 px-6 py-4">
+            <div className="space-y-4 px-6 py-4 max-h-[60vh] overflow-y-auto">
               <div>
                 <label htmlFor="macro-name" className="mb-2 block text-sm font-medium text-text-primary">
                   Shortcut
@@ -296,7 +334,7 @@ export default function MacrosPage() {
               </div>
               <div>
                 <label htmlFor="macro-text" className="mb-2 block text-sm font-medium text-text-primary">
-                  Expansion Text
+                  {isSmartMacro ? 'Default Expansion Text' : 'Expansion Text'}
                 </label>
                 <Textarea
                   id="macro-text"
@@ -306,9 +344,88 @@ export default function MacrosPage() {
                   data-testid="macro-text-input"
                 />
                 <p className="mt-1 text-xs text-text-secondary">
-                  The full text that replaces the shortcut
+                  {isSmartMacro ? 'Used when no specific body part context matches' : 'The full text that replaces the shortcut'}
                 </p>
               </div>
+              {/* Smart Macro Toggle */}
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3 bg-surface-muted">
+                <input
+                  type="checkbox"
+                  id="smart-macro"
+                  checked={isSmartMacro}
+                  onChange={(e) => setIsSmartMacro(e.target.checked)}
+                  className="h-4 w-4 rounded border-border"
+                  data-testid="smart-macro-checkbox"
+                />
+                <div>
+                  <label htmlFor="smart-macro" className="text-sm font-medium text-text-primary cursor-pointer">
+                    🧠 Smart Macro (Context-Aware)
+                  </label>
+                  <p className="text-xs text-text-secondary">
+                    Expands differently based on the body part being examined
+                  </p>
+                </div>
+              </div>
+              {/* Context Expansions for Smart Macros */}
+              {isSmartMacro && (
+                <div className="space-y-3 rounded-lg border border-brand/30 p-4 bg-brand/5">
+                  <h4 className="text-sm font-medium text-text-primary">Context-Specific Expansions</h4>
+                  <p className="text-xs text-text-secondary">
+                    Add different expansions for specific body parts (e.g., Chest, Abdomen, Head)
+                  </p>
+                  {/* Existing context expansions */}
+                  {contextExpansions.map((ctx, index) => (
+                    <div key={index} className="flex items-start gap-2 rounded bg-surface p-2">
+                      <div className="flex-1">
+                        <span className="text-xs font-semibold text-brand">{ctx.bodyPart}</span>
+                        <p className="text-sm text-text-secondary">{ctx.text}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeContextExpansion(index)}
+                        className="text-danger"
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  ))}
+                  {/* Add new context expansion */}
+                  <div className="space-y-2">
+                    <select
+                      value={newContextBodyPart}
+                      onChange={(e) => setNewContextBodyPart(e.target.value)}
+                      className="w-full h-9 rounded-xl border border-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand"
+                      data-testid="context-bodypart-select"
+                    >
+                      <option value="">Select body part...</option>
+                      <option value="Head">Head</option>
+                      <option value="Neck">Neck</option>
+                      <option value="Chest">Chest</option>
+                      <option value="Abdomen">Abdomen</option>
+                      <option value="Pelvis">Pelvis</option>
+                      <option value="Spine">Spine</option>
+                      <option value="Upper Extremity">Upper Extremity</option>
+                      <option value="Lower Extremity">Lower Extremity</option>
+                    </select>
+                    <Input
+                      placeholder="Context-specific expansion text"
+                      value={newContextText}
+                      onChange={(e) => setNewContextText(e.target.value)}
+                      data-testid="context-text-input"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={addContextExpansion}
+                      disabled={!newContextBodyPart || !newContextText.trim()}
+                      data-testid="add-context-btn"
+                    >
+                      + Add Context Expansion
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -432,7 +549,7 @@ export default function MacrosPage() {
                 <CardContent className="py-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <code className="rounded bg-surface-muted px-2 py-1 text-sm font-semibold text-brand">
                           {macro.name}
                         </code>
@@ -441,10 +558,20 @@ export default function MacrosPage() {
                             Global
                           </span>
                         )}
+                        {macro.isSmartMacro && (
+                          <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning" data-testid={`smart-badge-${macro.id}`}>
+                            🧠 Smart
+                          </span>
+                        )}
                       </div>
                       <p className="mt-2 text-sm text-text-secondary">
                         {macro.replacementText}
                       </p>
+                      {macro.isSmartMacro && macro.contextExpansions && macro.contextExpansions.length > 0 && (
+                        <div className="mt-2 text-xs text-text-muted">
+                          Context expansions: {macro.contextExpansions.map(c => c.bodyPart).join(', ')}
+                        </div>
+                      )}
                     </div>
                     {!macro.isGlobal && (
                       <div className="flex gap-1">

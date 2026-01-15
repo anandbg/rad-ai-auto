@@ -72,6 +72,50 @@ function detectModality(text: string): ModalityDetection | null {
   };
 }
 
+// Body part detection patterns
+const BODY_PART_PATTERNS: { bodyPart: string; keywords: string[] }[] = [
+  { bodyPart: 'Head', keywords: ['head', 'brain', 'skull', 'cranial', 'intracranial', 'cerebral'] },
+  { bodyPart: 'Neck', keywords: ['neck', 'cervical', 'thyroid', 'carotid', 'larynx'] },
+  { bodyPart: 'Chest', keywords: ['chest', 'thorax', 'thoracic', 'lung', 'pulmonary', 'cardiac', 'heart', 'mediastinal', 'pleural'] },
+  { bodyPart: 'Abdomen', keywords: ['abdomen', 'abdominal', 'liver', 'spleen', 'kidney', 'renal', 'pancreas', 'gallbladder', 'intestine', 'bowel', 'colon'] },
+  { bodyPart: 'Pelvis', keywords: ['pelvis', 'pelvic', 'bladder', 'prostate', 'uterus', 'ovary', 'rectum', 'hip'] },
+  { bodyPart: 'Spine', keywords: ['spine', 'spinal', 'vertebra', 'disc', 'lumbar', 'thoracic spine', 'cervical spine', 'sacral'] },
+  { bodyPart: 'Upper Extremity', keywords: ['arm', 'shoulder', 'elbow', 'wrist', 'hand', 'humerus', 'radius', 'ulna'] },
+  { bodyPart: 'Lower Extremity', keywords: ['leg', 'knee', 'ankle', 'foot', 'femur', 'tibia', 'fibula', 'thigh', 'calf'] },
+];
+
+// Function to detect body part from text
+function detectBodyPart(text: string): string | null {
+  if (!text || text.trim().length < 10) return null;
+
+  const lowerText = text.toLowerCase();
+  const results: { bodyPart: string; score: number }[] = [];
+
+  for (const pattern of BODY_PART_PATTERNS) {
+    let score = 0;
+    for (const keyword of pattern.keywords) {
+      const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+      const matches = lowerText.match(regex);
+      if (matches) {
+        score += matches.length;
+      }
+    }
+    if (score > 0) {
+      results.push({ bodyPart: pattern.bodyPart, score });
+    }
+  }
+
+  if (results.length === 0) return null;
+  results.sort((a, b) => b.score - a.score);
+  return results[0].bodyPart;
+}
+
+// Context expansion interface
+interface ContextExpansion {
+  bodyPart: string;
+  text: string;
+}
+
 // Macro interface
 interface Macro {
   id: string;
@@ -80,6 +124,9 @@ interface Macro {
   isActive: boolean;
   isGlobal: boolean;
   createdAt: string;
+  // Smart macro support
+  isSmartMacro?: boolean;
+  contextExpansions?: ContextExpansion[];
 }
 
 // Global macros (available to all users)
@@ -139,15 +186,26 @@ export default function TranscribePage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [macros, setMacros] = useState<Macro[]>([]);
   const [detectedModality, setDetectedModality] = useState<ModalityDetection | null>(null);
+  const [detectedBodyPart, setDetectedBodyPart] = useState<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Detect modality when transcribed text changes and YOLO mode is enabled
+  // Detect modality and body part when transcribed text changes
   useEffect(() => {
-    if (preferences.yoloMode && transcribedText && !isProcessing) {
-      const detection = detectModality(transcribedText);
-      setDetectedModality(detection);
-    } else if (!preferences.yoloMode) {
+    if (transcribedText && !isProcessing) {
+      // Always detect body part for smart macros
+      const bodyPart = detectBodyPart(transcribedText);
+      setDetectedBodyPart(bodyPart);
+
+      // Detect modality only when YOLO mode is enabled
+      if (preferences.yoloMode) {
+        const detection = detectModality(transcribedText);
+        setDetectedModality(detection);
+      } else {
+        setDetectedModality(null);
+      }
+    } else if (!transcribedText) {
+      setDetectedBodyPart(null);
       setDetectedModality(null);
     }
   }, [transcribedText, preferences.yoloMode, isProcessing]);
@@ -168,13 +226,30 @@ export default function TranscribePage() {
     };
   }, []);
 
-  // Apply macro expansion to text
-  const applyMacros = (text: string): string => {
+  // Apply macro expansion to text with context awareness
+  const applyMacros = (text: string, bodyPartContext?: string | null): string => {
     let expandedText = text;
+    const currentBodyPart = bodyPartContext || detectedBodyPart;
+
     for (const macro of macros) {
       // Create regex that matches the macro name as a whole word (case-insensitive)
       const regex = new RegExp(`\\b${macro.name}\\b`, 'gi');
-      expandedText = expandedText.replace(regex, macro.replacementText);
+
+      // Determine the replacement text
+      let replacement = macro.replacementText;
+
+      // If smart macro with context expansions, check for matching body part
+      if (macro.isSmartMacro && macro.contextExpansions && macro.contextExpansions.length > 0 && currentBodyPart) {
+        const contextMatch = macro.contextExpansions.find(
+          ctx => ctx.bodyPart.toLowerCase() === currentBodyPart.toLowerCase()
+        );
+        if (contextMatch) {
+          replacement = contextMatch.text;
+          console.log(`[Smart Macro] "${macro.name}" expanded with ${currentBodyPart} context: "${replacement}"`);
+        }
+      }
+
+      expandedText = expandedText.replace(regex, replacement);
     }
     return expandedText;
   };
@@ -421,9 +496,34 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                   </Button>
                 </div>
                 {macros.length > 0 && (
-                  <p className="text-xs text-text-secondary">
-                    {macros.length} macro{macros.length !== 1 ? 's' : ''} available: {macros.map(m => m.name).join(', ')}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-text-secondary">
+                      {macros.length} macro{macros.length !== 1 ? 's' : ''} available: {macros.map(m => m.name).join(', ')}
+                    </p>
+                    {macros.some(m => m.isSmartMacro) && (
+                      <p className="text-xs text-warning" data-testid="smart-macros-available">
+                        🧠 {macros.filter(m => m.isSmartMacro).length} smart macro(s) with context-aware expansion
+                      </p>
+                    )}
+                  </div>
+                )}
+                {/* Body Part Detection for Smart Macros */}
+                {detectedBodyPart && macros.some(m => m.isSmartMacro) && (
+                  <div
+                    className="mt-2 rounded-lg border border-warning/30 bg-warning/5 p-3"
+                    data-testid="body-part-detection"
+                  >
+                    <div className="flex items-center gap-2 text-sm">
+                      <span>🧠</span>
+                      <span className="text-text-secondary">Detected body part:</span>
+                      <span className="font-semibold text-warning" data-testid="detected-body-part">
+                        {detectedBodyPart}
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-muted mt-1">
+                      Smart macros will use context-specific expansions for {detectedBodyPart}
+                    </p>
+                  </div>
                 )}
                 {/* YOLO Mode - Modality Detection */}
                 {preferences.yoloMode && detectedModality && (
