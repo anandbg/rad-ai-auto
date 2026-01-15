@@ -324,6 +324,127 @@ export default function MacrosPage() {
     showToast(`Exported ${macros.length} macros successfully!`, 'success');
   };
 
+  // Import macros from JSON file
+  const handleImportMacros = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const importData = JSON.parse(content);
+
+        // Validate the import structure
+        if (!importData.macros || !importData.macros.personal) {
+          showToast('Invalid file format. Please select a valid macros export file.', 'error');
+          return;
+        }
+
+        // Import categories first (if any)
+        let importedCategoriesCount = 0;
+        const categoryIdMap: Record<string, string> = {};
+
+        if (importData.categories && Array.isArray(importData.categories)) {
+          const newCategories: MacroCategory[] = [];
+          importData.categories.forEach((cat: { name: string; createdAt?: string }) => {
+            // Check if category with same name already exists
+            const existing = categories.find(c => c.name.toLowerCase() === cat.name.toLowerCase());
+            if (existing) {
+              categoryIdMap[cat.name] = existing.id;
+            } else {
+              const newCat: MacroCategory = {
+                id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                name: cat.name,
+                createdAt: cat.createdAt || new Date().toISOString(),
+              };
+              newCategories.push(newCat);
+              categoryIdMap[cat.name] = newCat.id;
+              importedCategoriesCount++;
+            }
+          });
+
+          if (newCategories.length > 0) {
+            const updatedCategories = [...categories, ...newCategories];
+            setCategories(updatedCategories);
+            saveCategories(updatedCategories, user?.id);
+          }
+        }
+
+        // Import personal macros
+        let importedCount = 0;
+        let skippedCount = 0;
+        const newMacros: Macro[] = [];
+
+        importData.macros.personal.forEach((m: {
+          name: string;
+          replacementText: string;
+          isActive?: boolean;
+          categoryId?: string;
+          isSmartMacro?: boolean;
+          contextExpansions?: ContextExpansion[];
+          createdAt?: string;
+        }) => {
+          // Check if macro with same name already exists
+          const existingMacro = macros.find(existing => existing.name.toLowerCase() === m.name.toLowerCase());
+          if (existingMacro) {
+            skippedCount++;
+            return;
+          }
+
+          // Find new category ID if this macro had a category
+          let newCategoryId: string | undefined;
+          if (m.categoryId && importData.categories) {
+            const originalCategory = importData.categories.find((c: { name: string }) =>
+              categoryIdMap[c.name]
+            );
+            if (originalCategory) {
+              newCategoryId = categoryIdMap[originalCategory.name];
+            }
+          }
+
+          const newMacro: Macro = {
+            id: `macro-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: m.name,
+            replacementText: m.replacementText,
+            isActive: m.isActive ?? true,
+            isGlobal: false,
+            createdAt: m.createdAt || new Date().toISOString(),
+            categoryId: newCategoryId,
+            isSmartMacro: m.isSmartMacro,
+            contextExpansions: m.contextExpansions,
+          };
+          newMacros.push(newMacro);
+          importedCount++;
+        });
+
+        if (newMacros.length > 0) {
+          const updatedMacros = [...newMacros, ...macros];
+          setMacros(updatedMacros);
+          saveMacros(updatedMacros, user?.id);
+        }
+
+        // Build success message
+        let message = `Imported ${importedCount} macro${importedCount !== 1 ? 's' : ''}`;
+        if (importedCategoriesCount > 0) {
+          message += ` and ${importedCategoriesCount} categor${importedCategoriesCount !== 1 ? 'ies' : 'y'}`;
+        }
+        if (skippedCount > 0) {
+          message += ` (${skippedCount} skipped - already exist)`;
+        }
+        message += '!';
+
+        showToast(message, 'success');
+      } catch {
+        showToast('Failed to parse import file. Please ensure it is valid JSON.', 'error');
+      }
+    };
+
+    reader.readAsText(file);
+    // Reset the input so the same file can be selected again
+    event.target.value = '';
+  };
+
   // Group active macros by category
   const uncategorizedMacros = activeMacros.filter(m => !m.categoryId);
   const categorizedMacros = categories.map(cat => ({
@@ -341,6 +462,21 @@ export default function MacrosPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <input
+            type="file"
+            id="import-macros-input"
+            accept=".json"
+            onChange={handleImportMacros}
+            className="hidden"
+            data-testid="import-macros-input"
+          />
+          <Button
+            variant="outline"
+            onClick={() => document.getElementById('import-macros-input')?.click()}
+            data-testid="import-macros-button"
+          >
+            Import
+          </Button>
           <Button
             variant="outline"
             onClick={handleExportMacros}
