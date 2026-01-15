@@ -6,6 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
 import { usePreferences } from '@/lib/preferences/preferences-context';
+import { useToast } from '@/components/ui/toast';
+
+// Supported audio file types and size limits
+const SUPPORTED_FILE_TYPES = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav', 'audio/m4a', 'audio/mp4', 'audio/x-m4a'];
+const SUPPORTED_EXTENSIONS = ['.mp3', '.wav', '.m4a'];
+const MAX_FILE_SIZE_MB = 25;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 // Modality detection result interface
 interface ModalityDetection {
@@ -179,12 +186,14 @@ function addTranscriptionMinutes(minutes: number) {
 export default function TranscribePage() {
   const { user } = useAuth();
   const { preferences } = usePreferences();
+  const { showToast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcribedText, setTranscribedText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [fileUploadError, setFileUploadError] = useState<string | null>(null);
   const [macros, setMacros] = useState<Macro[]>([]);
   const [detectedModality, setDetectedModality] = useState<ModalityDetection | null>(null);
   const [detectedBodyPart, setDetectedBodyPart] = useState<string | null>(null);
@@ -361,6 +370,38 @@ IMPRESSION: No acute findings on CT. Recommend continued monitoring as clinicall
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Clear previous error
+    setFileUploadError(null);
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      const errorMsg = `File too large (${fileSizeMB}MB). Maximum file size is ${MAX_FILE_SIZE_MB}MB.`;
+      setFileUploadError(errorMsg);
+      showToast(errorMsg, 'error');
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Validate file type
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    const isValidType = SUPPORTED_FILE_TYPES.includes(file.type) ||
+                       SUPPORTED_EXTENSIONS.includes(fileExtension);
+
+    if (!isValidType) {
+      const errorMsg = `Invalid file type. Supported formats: ${SUPPORTED_EXTENSIONS.join(', ')}`;
+      setFileUploadError(errorMsg);
+      showToast(errorMsg, 'error');
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
     setUploadedFile(file);
     setIsProcessing(true);
     setTranscribedText('');
@@ -498,13 +539,13 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                 className="hidden"
                 data-testid="file-upload-input"
               />
-              <div className="flex flex-col items-center space-y-4 rounded-lg border-2 border-dashed border-border p-6">
+              <div className={`flex flex-col items-center space-y-4 rounded-lg border-2 border-dashed p-6 ${fileUploadError ? 'border-error bg-error/5' : 'border-border'}`}>
                 <span className="text-4xl">📁</span>
                 <div className="text-center">
                   <p className="text-sm text-text-secondary">
                     {uploadedFile ? uploadedFile.name : 'Click to upload or drag and drop'}
                   </p>
-                  <p className="text-xs text-text-muted">MP3, WAV, M4A up to 25MB</p>
+                  <p className="text-xs text-text-muted">Supported formats: MP3, WAV, M4A (max 25MB)</p>
                 </div>
                 <Button
                   variant="outline"
@@ -515,6 +556,17 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                   Select File
                 </Button>
               </div>
+              {/* File upload error message */}
+              {fileUploadError && (
+                <div
+                  className="mt-3 flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-sm text-error"
+                  role="alert"
+                  data-testid="file-upload-error"
+                >
+                  <span>⚠️</span>
+                  <span>{fileUploadError}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

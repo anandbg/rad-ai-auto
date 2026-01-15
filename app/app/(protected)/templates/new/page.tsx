@@ -322,6 +322,21 @@ export default function NewTemplatePage() {
       });
     }
 
+    // Check for duplicate template name
+    if (formData.name.trim()) {
+      const existingTemplates = getStoredTemplates(user?.id);
+      const globalTemplates = getGlobalTemplates();
+      const allTemplates = [...existingTemplates, ...globalTemplates];
+
+      const duplicateName = allTemplates.find(
+        t => t.name.toLowerCase() === formData.name.trim().toLowerCase()
+      );
+
+      if (duplicateName) {
+        newErrors.name = `A template named "${duplicateName.name}" already exists. Please use a different name.`;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
