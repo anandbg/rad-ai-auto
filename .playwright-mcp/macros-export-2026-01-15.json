@@ -1,8 +1,20 @@
 {
-  "exportedAt": "2026-01-15T10:15:21.154Z",
+  "exportedAt": "2026-01-15T10:18:54.954Z",
   "version": "1.0",
   "macros": {
     "personal": [
+      {
+        "name": "wnl",
+        "replacementText": "within normal limits",
+        "isActive": true,
+        "createdAt": "2026-01-15T09:00:00.000Z"
+      },
+      {
+        "name": "nsr",
+        "replacementText": "no significant radiographic findings",
+        "isActive": true,
+        "createdAt": "2026-01-15T09:00:00.000Z"
+      },
       {
         "name": "casctest",
         "replacementText": "This is a test macro for cascade delete testing",
@@ -25,7 +37,11 @@
     {
       "name": "Test Category for Cascade Delete",
       "createdAt": "2026-01-15T06:25:41.461Z"
+    },
+    {
+      "name": "Imported Category",
+      "createdAt": "2026-01-15T09:00:00.000Z"
     }
   ],
-  "totalCount": 2
+  "totalCount": 4
 }
