@@ -78,6 +78,7 @@ export default function NewBrandTemplatePage() {
     primaryColor: '#7C3AED',
     secondaryColor: '#A78BFA',
     fontFamily: 'Inter',
+    fontSize: '12',
     institutionName: '',
     institutionAddress: '',
     footerText: 'This report is confidential and intended for medical professionals only.',
@@ -95,6 +96,14 @@ export default function NewBrandTemplatePage() {
 
     if (!formData.institutionName.trim()) {
       newErrors.institutionName = 'Institution name is required';
+    }
+
+    // Validate font size is a number between 8 and 24
+    const fontSizeNum = parseInt(formData.fontSize, 10);
+    if (isNaN(fontSizeNum)) {
+      newErrors.fontSize = 'Font size must be a number';
+    } else if (fontSizeNum < 8 || fontSizeNum > 24) {
+      newErrors.fontSize = 'Font size must be between 8 and 24';
     }
 
     setErrors(newErrors);
@@ -276,23 +285,45 @@ export default function NewBrandTemplatePage() {
             {/* Typography */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-text-primary">Typography</h3>
-              <div>
-                <label htmlFor="fontFamily" className="mb-2 block text-sm font-medium text-text-primary">
-                  Font Family
-                </label>
-                <select
-                  id="fontFamily"
-                  value={formData.fontFamily}
-                  onChange={(e) => handleChange('fontFamily', e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                  data-testid="brand-template-font-select"
-                >
-                  {fontFamilyOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="fontFamily" className="mb-2 block text-sm font-medium text-text-primary">
+                    Font Family
+                  </label>
+                  <select
+                    id="fontFamily"
+                    value={formData.fontFamily}
+                    onChange={(e) => handleChange('fontFamily', e.target.value)}
+                    className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                    data-testid="brand-template-font-select"
+                  >
+                    {fontFamilyOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="fontSize" className="mb-2 block text-sm font-medium text-text-primary">
+                    Font Size (pt)
+                  </label>
+                  <Input
+                    id="fontSize"
+                    type="text"
+                    placeholder="12"
+                    value={formData.fontSize}
+                    onChange={(e) => handleChange('fontSize', e.target.value)}
+                    data-testid="brand-template-font-size"
+                    className={errors.fontSize ? 'border-error' : ''}
+                  />
+                  {errors.fontSize && (
+                    <p className="mt-1 text-sm text-error" data-testid="font-size-error">{errors.fontSize}</p>
+                  )}
+                  <p className="mt-1 text-xs text-text-secondary">
+                    Enter a number between 8 and 24
+                  </p>
+                </div>
               </div>
             </div>
 
