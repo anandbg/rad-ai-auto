@@ -5,6 +5,72 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
+import { usePreferences } from '@/lib/preferences/preferences-context';
+
+// Modality detection result interface
+interface ModalityDetection {
+  modality: string;
+  confidence: number;
+  keywords: string[];
+}
+
+// Modality detection keywords and patterns
+const MODALITY_PATTERNS: { modality: string; keywords: string[]; weight: number }[] = [
+  { modality: 'CT', keywords: ['ct', 'ct scan', 'computed tomography', 'cat scan', 'hounsfield', 'contrast enhanced ct', 'cect', 'non-contrast ct', 'ncct'], weight: 1.0 },
+  { modality: 'MRI', keywords: ['mri', 'mr', 'magnetic resonance', 't1', 't2', 'flair', 'dwi', 'diffusion weighted', 'gadolinium', 't1w', 't2w'], weight: 1.0 },
+  { modality: 'X-Ray', keywords: ['x-ray', 'xray', 'radiograph', 'plain film', 'chest x-ray', 'cxr', 'pa view', 'lateral view', 'ap view'], weight: 1.0 },
+  { modality: 'Ultrasound', keywords: ['ultrasound', 'us', 'sonogram', 'sonography', 'doppler', 'echocardiogram', 'echo', 'transducer'], weight: 1.0 },
+  { modality: 'PET', keywords: ['pet', 'pet scan', 'pet-ct', 'positron emission', 'fdg', 'suv', 'metabolic activity'], weight: 1.0 },
+  { modality: 'Mammography', keywords: ['mammogram', 'mammography', 'breast imaging', 'birads', 'bi-rads', 'breast screening'], weight: 1.0 },
+  { modality: 'Fluoroscopy', keywords: ['fluoroscopy', 'fluoro', 'barium', 'swallow study', 'upper gi', 'lower gi', 'real-time imaging'], weight: 1.0 },
+  { modality: 'Nuclear Medicine', keywords: ['nuclear', 'scintigraphy', 'bone scan', 'thyroid scan', 'spect', 'gamma camera', 'radiotracer'], weight: 1.0 },
+];
+
+// Function to detect modality from text
+function detectModality(text: string): ModalityDetection | null {
+  if (!text || text.trim().length < 10) return null;
+
+  const lowerText = text.toLowerCase();
+  const results: { modality: string; score: number; matchedKeywords: string[] }[] = [];
+
+  for (const pattern of MODALITY_PATTERNS) {
+    const matchedKeywords: string[] = [];
+    let score = 0;
+
+    for (const keyword of pattern.keywords) {
+      // Use word boundary matching for more accurate detection
+      const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+      const matches = lowerText.match(regex);
+      if (matches) {
+        score += matches.length * pattern.weight;
+        if (!matchedKeywords.includes(keyword)) {
+          matchedKeywords.push(keyword);
+        }
+      }
+    }
+
+    if (score > 0) {
+      results.push({ modality: pattern.modality, score, matchedKeywords });
+    }
+  }
+
+  if (results.length === 0) return null;
+
+  // Sort by score descending
+  results.sort((a, b) => b.score - a.score);
+
+  const bestMatch = results[0];
+  const totalScore = results.reduce((sum, r) => sum + r.score, 0);
+
+  // Calculate confidence as percentage of total score
+  const confidence = Math.min(99, Math.round((bestMatch.score / Math.max(totalScore, 1)) * 100));
+
+  return {
+    modality: bestMatch.modality,
+    confidence,
+    keywords: bestMatch.matchedKeywords,
+  };
+}
 
 // Macro interface
 interface Macro {
@@ -65,14 +131,26 @@ function addTranscriptionMinutes(minutes: number) {
 
 export default function TranscribePage() {
   const { user } = useAuth();
+  const { preferences } = usePreferences();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcribedText, setTranscribedText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [macros, setMacros] = useState<Macro[]>([]);
+  const [detectedModality, setDetectedModality] = useState<ModalityDetection | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Detect modality when transcribed text changes and YOLO mode is enabled
+  useEffect(() => {
+    if (preferences.yoloMode && transcribedText && !isProcessing) {
+      const detection = detectModality(transcribedText);
+      setDetectedModality(detection);
+    } else if (!preferences.yoloMode) {
+      setDetectedModality(null);
+    }
+  }, [transcribedText, preferences.yoloMode, isProcessing]);
 
   // Load macros on mount
   useEffect(() => {
@@ -135,15 +213,18 @@ export default function TranscribePage() {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Generate sample transcription based on recording duration
+    // Include modality keywords for YOLO mode detection testing
     const sampleTranscription = `[Transcribed audio - ${recordingTime} seconds]
 
-The patient presents for follow-up imaging study. Clinical history indicates prior examination showed areas of concern.
+The patient presents for CT scan of the chest. Clinical history indicates prior CT examination showed areas of concern in the lung fields.
 
-EXAMINATION: The study was performed using standard protocol.
+EXAMINATION: CT scan of the chest was performed using standard protocol with IV contrast.
 
-FINDINGS: Initial review demonstrates no significant interval changes. The previously noted areas appear stable.
+TECHNIQUE: Helical CT scan from thoracic inlet to adrenal glands with 5mm slice thickness.
 
-IMPRESSION: No acute findings. Recommend continued monitoring as clinically indicated.`;
+FINDINGS: Initial CT review demonstrates no significant interval changes. The previously noted pulmonary nodule appears stable.
+
+IMPRESSION: No acute findings on CT. Recommend continued monitoring as clinically indicated.`;
 
     setTranscribedText(sampleTranscription);
     setIsProcessing(false);
@@ -327,6 +408,70 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                   <p className="text-xs text-text-secondary">
                     {macros.length} macro{macros.length !== 1 ? 's' : ''} available: {macros.map(m => m.name).join(', ')}
                   </p>
+                )}
+                {/* YOLO Mode - Modality Detection */}
+                {preferences.yoloMode && detectedModality && (
+                  <div
+                    className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4"
+                    data-testid="yolo-modality-detection"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">🚀</span>
+                      <span className="font-semibold text-primary">YOLO Mode - Modality Detected</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <span className="text-sm text-text-secondary">Detected Modality:</span>
+                        <span
+                          className="ml-2 font-bold text-lg text-text-primary"
+                          data-testid="detected-modality"
+                        >
+                          {detectedModality.modality}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-text-secondary">Confidence:</span>
+                        <div className="flex items-center gap-1">
+                          <div className="h-2 w-24 rounded-full bg-surface-muted overflow-hidden">
+                            <div
+                              className="h-full bg-primary rounded-full transition-all duration-500"
+                              style={{ width: `${detectedModality.confidence}%` }}
+                            />
+                          </div>
+                          <span
+                            className="text-sm font-medium text-primary"
+                            data-testid="detection-confidence"
+                          >
+                            {detectedModality.confidence}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {detectedModality.keywords.length > 0 && (
+                      <div className="mt-2 text-xs text-text-muted">
+                        Keywords found: {detectedModality.keywords.join(', ')}
+                      </div>
+                    )}
+                    <div className="mt-3">
+                      <Button
+                        size="sm"
+                        asChild
+                        data-testid="yolo-generate-report"
+                      >
+                        <a href={`/generate?modality=${encodeURIComponent(detectedModality.modality)}&yolo=true`}>
+                          🚀 Auto-Generate Report with {detectedModality.modality}
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {preferences.yoloMode && !detectedModality && transcribedText && (
+                  <div className="mt-4 rounded-lg border border-warning/30 bg-warning/5 p-3">
+                    <div className="flex items-center gap-2 text-sm text-warning">
+                      <span>⚠️</span>
+                      <span>YOLO Mode active but no modality detected. Add modality keywords (CT, MRI, X-Ray, etc.) to enable auto-detection.</span>
+                    </div>
+                  </div>
                 )}
               </div>
             ) : (
