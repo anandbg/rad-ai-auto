@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MOCK_AUTH_COOKIE, MOCK_USERS } from '@/lib/auth/mock-auth';
+import { useCsrf } from '@/lib/hooks/use-csrf';
 
 // Check if Supabase is configured
 function isSupabaseConfigured(): boolean {
@@ -21,6 +22,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/dashboard';
+  const { CsrfInput, validateToken } = useCsrf();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,9 +34,20 @@ export default function LoginPage() {
     setIsDev(!isSupabaseConfigured());
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+
+    // Validate CSRF token
+    const formData = new FormData(e.currentTarget);
+    const csrfToken = formData.get('_csrf') as string;
+
+    if (!validateToken(csrfToken)) {
+      setError('Security validation failed. Please refresh the page and try again.');
+      console.error('[CSRF] Token validation failed on login form');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -91,6 +104,8 @@ export default function LoginPage() {
 
         <div className="card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* CSRF Token */}
+            <CsrfInput />
             {error && (
               <div
                 className="rounded-lg border border-danger/50 bg-danger/10 p-3 text-sm text-danger"

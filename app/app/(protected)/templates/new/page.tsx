@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast';
+import { useCsrf } from '@/lib/hooks/use-csrf';
 
 // Form draft storage key
 const FORM_DRAFT_KEY = 'ai-rad-template-draft';
@@ -158,6 +159,7 @@ export default function NewTemplatePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { CsrfInput, validateToken } = useCsrf();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [draftRestored, setDraftRestored] = useState(false);
@@ -292,8 +294,18 @@ export default function NewTemplatePage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validate CSRF token
+    const formDataObj = new FormData(e.currentTarget);
+    const csrfToken = formDataObj.get('_csrf') as string;
+
+    if (!validateToken(csrfToken)) {
+      showToast('Security validation failed. Please refresh and try again.', 'error');
+      console.error('[CSRF] Token validation failed on form submission');
+      return;
+    }
 
     if (!validateForm()) {
       return;
@@ -382,6 +394,8 @@ export default function NewTemplatePage() {
       )}
 
       <form onSubmit={handleSubmit}>
+        {/* CSRF Token */}
+        <CsrfInput />
         <Card>
           <CardHeader>
             <CardTitle>Create New Template</CardTitle>
