@@ -6,6 +6,8 @@ import { usePreferences, type Theme } from '@/lib/preferences/preferences-contex
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 // Scroll to hash on page load
 function useHashScroll(isReady: boolean) {
@@ -61,6 +63,9 @@ export default function SettingsPage() {
   const { showToast } = useToast();
   const [saving, setSaving] = useState<string | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Handle hash navigation (wait until preferences are loaded)
   useHashScroll(!isLoading);
@@ -123,6 +128,67 @@ export default function SettingsPage() {
       showToast('Failed to save default template', 'error');
     } finally {
       setSaving(null);
+    }
+  };
+
+  // Delete account and all associated user data (cascade delete)
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE' || !user?.id) return;
+
+    setIsDeleting(true);
+    try {
+      const userId = user.id;
+      const keysToDelete: string[] = [];
+
+      // Find all localStorage keys associated with this user
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.includes(userId)) {
+          keysToDelete.push(key);
+        }
+      }
+
+      // Also delete known user-specific keys
+      const userSpecificKeys = [
+        `ai-rad-templates-${userId}`,
+        `ai-rad-macros-${userId}`,
+        `ai-rad-brand-templates-${userId}`,
+        `ai-rad-preferences-${userId}`,
+        `ai-rad-usage-${userId}`,
+        `ai-rad-reports-${userId}`,
+        `ai-rad-drafts-${userId}`,
+      ];
+
+      userSpecificKeys.forEach(key => {
+        if (!keysToDelete.includes(key)) {
+          keysToDelete.push(key);
+        }
+      });
+
+      // Delete all user data
+      keysToDelete.forEach(key => {
+        localStorage.removeItem(key);
+      });
+
+      // Log deletion for verification
+      console.log(`[CASCADE DELETE] Deleted ${keysToDelete.length} data items for user ${userId}:`, keysToDelete);
+
+      // Show success message
+      showToast('Account and all data deleted successfully', 'success');
+
+      // Close dialog
+      setDeleteDialogOpen(false);
+      setDeleteConfirmText('');
+
+      // Sign out after deletion
+      // In a real app, this would call the auth provider's logout
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+    } catch {
+      showToast('Failed to delete account', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -353,7 +419,84 @@ export default function SettingsPage() {
             </pre>
           </CardContent>
         </Card>
+
+        {/* Danger Zone */}
+        <Card id="danger" className="border-danger/50">
+          <CardHeader>
+            <CardTitle className="text-danger">Danger Zone</CardTitle>
+            <CardDescription>Irreversible actions that affect your account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="label">Delete Account</label>
+                  <p className="text-sm text-text-muted">
+                    Permanently delete your account and all associated data including templates, macros, brand templates, and preferences.
+                  </p>
+                </div>
+                <Button
+                  variant="danger"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  data-testid="delete-account-button"
+                >
+                  Delete Account
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent data-testid="delete-account-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-danger">Delete Account</DialogTitle>
+            <DialogDescription>
+              This action is permanent and cannot be undone. All your data will be deleted including:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <ul className="list-disc list-inside text-sm text-text-secondary space-y-1 mb-4">
+              <li>Personal templates</li>
+              <li>Macros and macro categories</li>
+              <li>Brand templates</li>
+              <li>Preferences and settings</li>
+              <li>Usage history and reports</li>
+            </ul>
+            <p className="text-sm text-text-primary font-medium mb-2">
+              Type <span className="font-mono bg-danger/10 text-danger px-1 rounded">DELETE</span> to confirm:
+            </p>
+            <Input
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="Type DELETE"
+              data-testid="delete-confirm-input"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setDeleteConfirmText('');
+              }}
+              data-testid="cancel-delete-account"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmText !== 'DELETE' || isDeleting}
+              data-testid="confirm-delete-account"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete My Account'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
