@@ -675,3 +675,69 @@ Continued implementing E2E workflow features and error handling tests. Created b
 
 3. **URL & Direct Access Features**
    - H. URL & Direct Access category
+
+---
+
+# Session 7 - Coding Agent
+
+## Date: 2026-01-15
+
+## Session Summary
+Continued feature implementation, focusing on State & Persistence and URL & Direct Access features. Implemented default template preferences, draft persistence for generate page, and verified various URL access control features.
+
+## Tasks Completed
+
+### 1. Feature #120-125: State & Persistence
+- #120: Two tabs same user sync gracefully - verified
+- #121: Browser back after submit no duplicate - verified
+- #122: Bookmark page works with auth - verified
+- #123: LocalStorage cleared prompts reauth - verified
+- #124: Unsaved changes warning on navigate - implemented
+- #125: Theme preference persists - verified
+
+### 2. Feature #126: Default template preference persists
+- Added default template selector in Settings page
+- Updated Generate page to pre-select default template
+- Verified preference persists across sign out/in
+
+### 3. Feature #127: Report draft in progress survives refresh
+- Implemented draft persistence for Generate page
+- Saves template ID and findings with debounce
+- Shows "Draft Restored" notice on page load
+
+### 4. Features #128-133: URL & Direct Access
+- #128: URL ID manipulation blocked - 404 for non-existent IDs
+- #129: Direct admin URL blocked - redirect with "Access Denied"
+- #130: Malformed URL params handled - no crash, no XSS
+- #131: Very long URL handled - 5000+ chars works
+- #132: SQL injection in URL rejected - safely handled
+- #133: Deep link to deleted entity - shows 404
+
+## Current State
+
+### Feature Progress
+- Total Features: 280
+- Passing: 79
+- In Progress: 0
+- Percentage: 28.2%
+
+### Git Commits This Session
+- "feat: Add unsaved changes warning when navigating away from edited template"
+- "feat: Add default template preference with persistence"
+- "feat: Add draft persistence for generate report page"
+
+## Files Created/Modified This Session
+
+### Created Files
+- `app/lib/hooks/use-unsaved-changes.ts`
+- `app/components/ui/unsaved-changes-dialog.tsx`
+
+### Modified Files
+- `app/app/(protected)/templates/[id]/page.tsx`
+- `app/app/(protected)/settings/page.tsx`
+- `app/app/(protected)/generate/page.tsx`
+
+## Next Steps
+1. Continue URL & Direct Access Features (#134+)
+2. Double-Action & Idempotency Features
+3. Data Cleanup & Cascade Features

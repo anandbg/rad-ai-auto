@@ -7,6 +7,23 @@ import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+// Scroll to hash on page load
+function useHashScroll(isReady: boolean) {
+  useEffect(() => {
+    if (!isReady) return;
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash.slice(1);
+      const element = document.getElementById(hash);
+      if (element) {
+        // Delay to ensure DOM is fully rendered after loading
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 200);
+      }
+    }
+  }, [isReady]);
+}
+
 // Template interface matching other pages
 interface Template {
   id: string;
@@ -44,6 +61,9 @@ export default function SettingsPage() {
   const { showToast } = useToast();
   const [saving, setSaving] = useState<string | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
+
+  // Handle hash navigation (wait until preferences are loaded)
+  useHashScroll(!isLoading);
 
   // Load templates for default template selector
   useEffect(() => {
@@ -122,8 +142,8 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* Appearance Section */}
-        <Card>
+        {/* Appearance/Preferences Section */}
+        <Card id="preferences">
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
             <CardDescription>Customize how AI Radiologist looks</CardDescription>
@@ -185,7 +205,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* Editor Settings */}
-        <Card>
+        <Card id="editor">
           <CardHeader>
             <CardTitle>Editor Settings</CardTitle>
             <CardDescription>Configure report editing behavior</CardDescription>
@@ -209,7 +229,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* Report Generation Settings */}
-        <Card>
+        <Card id="reports">
           <CardHeader>
             <CardTitle>Report Generation</CardTitle>
             <CardDescription>Configure default template for report generation</CardDescription>
@@ -249,8 +269,47 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Security Section */}
+        <Card id="security">
+          <CardHeader>
+            <CardTitle>Security</CardTitle>
+            <CardDescription>Manage your account security settings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="label">Two-Factor Authentication</label>
+                  <p className="text-sm text-text-muted">Add an extra layer of security to your account</p>
+                </div>
+                <Button variant="outline" disabled>
+                  Coming Soon
+                </Button>
+              </div>
+              <div className="flex items-center justify-between border-t pt-4">
+                <div>
+                  <label className="label">Session Management</label>
+                  <p className="text-sm text-text-muted">View and manage active sessions</p>
+                </div>
+                <Button variant="outline" disabled>
+                  Coming Soon
+                </Button>
+              </div>
+              <div className="flex items-center justify-between border-t pt-4">
+                <div>
+                  <label className="label">Change Password</label>
+                  <p className="text-sm text-text-muted">Update your account password</p>
+                </div>
+                <Button variant="outline" disabled>
+                  Coming Soon
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Account Info */}
-        <Card>
+        <Card id="account">
           <CardHeader>
             <CardTitle>Account Information</CardTitle>
             <CardDescription>Your account details</CardDescription>
