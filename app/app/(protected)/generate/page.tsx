@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/lib/auth/auth-context';
+import { usePreferences } from '@/lib/preferences/preferences-context';
 
 // Template interface
 interface Template {
@@ -95,12 +96,14 @@ function incrementReportCount() {
 export default function GeneratePage() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { preferences } = usePreferences();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [findings, setFindings] = useState('');
   const [generatedReport, setGeneratedReport] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [defaultApplied, setDefaultApplied] = useState(false);
 
   // Load templates on mount and when user changes
   useEffect(() => {
@@ -114,6 +117,18 @@ export default function GeneratePage() {
     setTemplates(combinedTemplates);
     setIsLoading(false);
   }, [user?.id]);
+
+  // Apply default template from preferences on initial load
+  useEffect(() => {
+    if (!defaultApplied && !isLoading && templates.length > 0 && preferences.defaultTemplate) {
+      // Check if the default template exists in available templates
+      const templateExists = templates.some(t => t.id === preferences.defaultTemplate);
+      if (templateExists && selectedTemplateId === '') {
+        setSelectedTemplateId(preferences.defaultTemplate);
+      }
+      setDefaultApplied(true);
+    }
+  }, [defaultApplied, isLoading, templates, preferences.defaultTemplate, selectedTemplateId]);
 
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 

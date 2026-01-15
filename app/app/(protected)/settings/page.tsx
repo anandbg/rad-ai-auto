@@ -1,17 +1,60 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { usePreferences, type Theme } from '@/lib/preferences/preferences-context';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+// Template interface matching other pages
+interface Template {
+  id: string;
+  name: string;
+  modality: string;
+  bodyPart: string;
+  isGlobal: boolean;
+}
+
+// Mock templates for development
+const mockTemplates: Template[] = [
+  { id: 'tpl-001', name: 'Chest X-Ray Standard', modality: 'X-Ray', bodyPart: 'Chest', isGlobal: true },
+  { id: 'tpl-002', name: 'CT Abdomen', modality: 'CT', bodyPart: 'Abdomen', isGlobal: true },
+  { id: 'tpl-003', name: 'MRI Brain', modality: 'MRI', bodyPart: 'Head', isGlobal: false },
+];
+
+function getStorageKey(userId: string | undefined): string {
+  return userId ? `ai-rad-templates-${userId}` : 'ai-rad-templates';
+}
+
+function getStoredTemplates(userId: string | undefined): Template[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(getStorageKey(userId));
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
   const { preferences, updatePreference, resolvedTheme, isLoading } = usePreferences();
   const { showToast } = useToast();
   const [saving, setSaving] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<Template[]>([]);
+
+  // Load templates for default template selector
+  useEffect(() => {
+    const storedTemplates = getStoredTemplates(user?.id);
+    const storedIds = new Set(storedTemplates.map(t => t.id));
+    const combinedTemplates = [
+      ...storedTemplates,
+      ...mockTemplates.filter(t => !storedIds.has(t.id)),
+    ];
+    setTemplates(combinedTemplates);
+  }, [user?.id]);
 
   const handleThemeChange = async (newTheme: Theme) => {
     setSaving('theme');
@@ -44,6 +87,20 @@ export default function SettingsPage() {
       showToast(`Compact mode ${!preferences.compactMode ? 'enabled' : 'disabled'}`, 'success');
     } catch {
       showToast('Failed to save preference', 'error');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleDefaultTemplateChange = async (templateId: string) => {
+    setSaving('defaultTemplate');
+    try {
+      const value = templateId === '' ? null : templateId;
+      await updatePreference('defaultTemplate', value);
+      const templateName = templates.find(t => t.id === templateId)?.name || 'None';
+      showToast(`Default template set to ${templateName}`, 'success');
+    } catch {
+      showToast('Failed to save default template', 'error');
     } finally {
       setSaving(null);
     }
@@ -147,6 +204,47 @@ export default function SettingsPage() {
               >
                 {preferences.autoSave ? 'On' : 'Off'}
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Report Generation Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Report Generation</CardTitle>
+            <CardDescription>Configure default template for report generation</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <label className="label mb-2 block">Default Template</label>
+                <select
+                  value={preferences.defaultTemplate || ''}
+                  onChange={(e) => handleDefaultTemplateChange(e.target.value)}
+                  disabled={saving === 'defaultTemplate'}
+                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-text-primary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                  data-testid="default-template-select"
+                >
+                  <option value="">No default template</option>
+                  <optgroup label="Personal Templates">
+                    {templates.filter(t => !t.isGlobal).map(template => (
+                      <option key={template.id} value={template.id}>
+                        {template.name} ({template.modality} - {template.bodyPart})
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Global Templates">
+                    {templates.filter(t => t.isGlobal).map(template => (
+                      <option key={template.id} value={template.id}>
+                        {template.name} ({template.modality} - {template.bodyPart})
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+                <p className="mt-2 text-sm text-text-muted">
+                  This template will be pre-selected when generating new reports
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

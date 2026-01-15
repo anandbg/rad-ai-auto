@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast';
+
+// Form draft storage key
+const FORM_DRAFT_KEY = 'ai-rad-template-draft';
 
 // Section interface for template sections
 interface TemplateSection {
@@ -106,12 +109,59 @@ function generateId(): string {
   return 'tpl-' + Math.random().toString(36).substring(2, 9);
 }
 
+// Draft data interface
+interface FormDraft {
+  formData: {
+    name: string;
+    modality: string;
+    bodyPart: string;
+    description: string;
+    content: string;
+  };
+  sections: TemplateSection[];
+  isGlobal: boolean;
+  savedAt: string;
+}
+
+// Get user-specific draft key
+function getDraftKey(userId: string | undefined): string {
+  return userId ? `${FORM_DRAFT_KEY}-${userId}` : FORM_DRAFT_KEY;
+}
+
+// Save draft to localStorage
+function saveDraft(draft: FormDraft, userId: string | undefined): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(getDraftKey(userId), JSON.stringify(draft));
+  console.log('[Form Draft] Saved draft at', draft.savedAt);
+}
+
+// Load draft from localStorage
+function loadDraft(userId: string | undefined): FormDraft | null {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem(getDraftKey(userId));
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return null;
+  }
+}
+
+// Clear draft from localStorage
+function clearDraft(userId: string | undefined): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(getDraftKey(userId));
+  console.log('[Form Draft] Draft cleared');
+}
+
 export default function NewTemplatePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -129,6 +179,67 @@ export default function NewTemplatePage() {
 
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
+
+  // Load draft on mount
+  useEffect(() => {
+    const draft = loadDraft(user?.id);
+    if (draft) {
+      // Check if draft has any meaningful data
+      const hasData = draft.formData.name || draft.formData.modality ||
+                      draft.formData.bodyPart || draft.formData.description ||
+                      draft.formData.content || draft.sections.length > 0;
+
+      if (hasData) {
+        setFormData(draft.formData);
+        setSections(draft.sections);
+        setIsGlobal(draft.isGlobal);
+        setDraftRestored(true);
+        setDraftSavedAt(draft.savedAt);
+        console.log('[Form Draft] Restored draft from', draft.savedAt);
+      }
+    }
+  }, [user?.id]);
+
+  // Save draft when form data changes (debounced)
+  const saveCurrentDraft = useCallback(() => {
+    const draft: FormDraft = {
+      formData,
+      sections,
+      isGlobal,
+      savedAt: new Date().toISOString(),
+    };
+    saveDraft(draft, user?.id);
+  }, [formData, sections, isGlobal, user?.id]);
+
+  // Auto-save draft on form changes
+  useEffect(() => {
+    // Don't save empty forms
+    const hasData = formData.name || formData.modality ||
+                    formData.bodyPart || formData.description ||
+                    formData.content || sections.length > 0;
+
+    if (hasData) {
+      const timeoutId = setTimeout(saveCurrentDraft, 500); // Debounce 500ms
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData, sections, isGlobal, saveCurrentDraft]);
+
+  // Clear draft handler
+  const handleClearDraft = () => {
+    clearDraft(user?.id);
+    setFormData({
+      name: '',
+      modality: '',
+      bodyPart: '',
+      description: '',
+      content: '',
+    });
+    setSections([]);
+    setIsGlobal(false);
+    setDraftRestored(false);
+    setDraftSavedAt(null);
+    showToast('Draft cleared', 'info');
+  };
 
   // Add a new section
   const handleAddSection = () => {
@@ -214,6 +325,9 @@ export default function NewTemplatePage() {
       saveTemplates([newTemplate, ...existingTemplates], user?.id);
     }
 
+    // Clear draft on successful submission
+    clearDraft(user?.id);
+
     // Show success toast
     showToast(`Template "${newTemplate.name}" created successfully!`, 'success');
 
@@ -239,6 +353,33 @@ export default function NewTemplatePage() {
         <span>/</span>
         <span className="text-text-primary">New Template</span>
       </div>
+
+      {/* Draft Restoration Notice */}
+      {draftRestored && (
+        <div
+          className="mb-4 flex items-center justify-between rounded-lg border border-info/30 bg-info/10 p-4"
+          data-testid="draft-restored-notice"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-info text-lg">📝</span>
+            <div>
+              <p className="text-sm font-medium text-text-primary">Draft Restored</p>
+              <p className="text-xs text-text-secondary">
+                Your previous work was saved {draftSavedAt ? new Date(draftSavedAt).toLocaleString() : 'recently'}
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleClearDraft}
+            data-testid="clear-draft-button"
+          >
+            Clear Draft
+          </Button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Card>
