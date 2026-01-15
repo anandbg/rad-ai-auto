@@ -115,18 +115,20 @@ export default function DashboardPage() {
               <button
                 onClick={handleYoloModeToggle}
                 disabled={savingYolo}
-                className={`relative h-7 w-12 rounded-full transition-colors ${
+                className={`relative h-11 rounded-full transition-colors ${
                   preferences.yoloMode
                     ? 'bg-success'
                     : 'bg-surface-muted'
                 } ${savingYolo ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                style={{ width: '52px', minWidth: '52px' }}
                 data-testid="yolo-mode-toggle"
                 aria-label={preferences.yoloMode ? 'Disable YOLO mode' : 'Enable YOLO mode'}
               >
                 <span
-                  className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                    preferences.yoloMode ? 'translate-x-6' : 'translate-x-1'
+                  className={`absolute top-1.5 h-8 w-8 rounded-full bg-white shadow transition-transform ${
+                    preferences.yoloMode ? 'left-1' : ''
                   }`}
+                  style={{ transform: preferences.yoloMode ? 'translateX(18px)' : 'translateX(4px)' }}
                 />
               </button>
             </div>

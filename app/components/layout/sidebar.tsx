@@ -55,10 +55,10 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Mobile hamburger button - 44x44px minimum touch target */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="fixed top-4 left-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg bg-surface border shadow-md md:hidden"
+        className="fixed top-3 left-3 z-50 flex h-11 w-11 items-center justify-center rounded-lg bg-surface border shadow-md md:hidden"
         aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
         data-testid="mobile-menu-button"
       >
@@ -91,9 +91,9 @@ export function Sidebar() {
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
-      {/* Logo */}
-      <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="flex items-center gap-2">
+      {/* Logo - 44px minimum touch target */}
+      <div className="flex h-16 items-center border-b px-4">
+        <Link href="/dashboard" className="flex items-center gap-2 min-h-[44px] px-2 rounded-lg hover:bg-surface-muted transition-colors">
           <span className="text-xl">🩻</span>
           <span className="font-semibold">AI Radiologist</span>
         </Link>
@@ -109,7 +109,7 @@ export function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                  className={`flex items-center gap-3 rounded-lg px-3 py-3 min-h-[44px] text-sm transition-colors ${
                     isActive
                       ? 'bg-brand/10 text-brand font-medium'
                       : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
