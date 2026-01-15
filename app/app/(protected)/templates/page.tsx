@@ -425,6 +425,48 @@ export default function TemplatesPage() {
     setCloneName('');
   };
 
+  // Export templates to JSON file
+  const handleExportAll = () => {
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      version: '1.0',
+      templates: {
+        personal: personalTemplates.map(t => ({
+          name: t.name,
+          modality: t.modality,
+          bodyPart: t.bodyPart,
+          description: t.description,
+          content: t.content || '',
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt,
+        })),
+        global: globalTemplates.map(t => ({
+          name: t.name,
+          modality: t.modality,
+          bodyPart: t.bodyPart,
+          description: t.description,
+          content: t.content || '',
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt,
+        })),
+      },
+      totalCount: personalTemplates.length + globalTemplates.length,
+    };
+
+    // Create blob and download
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `templates-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast(`Exported ${exportData.totalCount} templates successfully!`, 'success');
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -446,11 +488,20 @@ export default function TemplatesPage() {
             Manage your radiology report templates
           </p>
         </div>
-        <Button asChild data-testid="create-template-button">
-          <Link href="/templates/new">
-            + Create Template
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportAll}
+            data-testid="export-templates-button"
+          >
+            Export All
+          </Button>
+          <Button asChild data-testid="create-template-button">
+            <Link href="/templates/new">
+              + Create Template
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filters */}

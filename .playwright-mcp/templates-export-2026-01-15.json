@@ -1,0 +1,92 @@
+{
+  "exportedAt": "2026-01-15T10:14:04.203Z",
+  "version": "1.0",
+  "templates": {
+    "personal": [
+      {
+        "name": "<script>alert('xss')</script>",
+        "modality": "CT",
+        "bodyPart": "Head",
+        "description": "XSS test template with <img src=x onerror=alert('xss2')>",
+        "content": "",
+        "createdAt": "2026-01-15T06:06:35.204Z",
+        "updatedAt": "2026-01-15T06:06:35.204Z"
+      },
+      {
+        "name": "Chest X-Ray Standard (Copy)",
+        "modality": "X-Ray",
+        "bodyPart": "Chest",
+        "description": "Standard chest X-ray report template with PA and lateral views",
+        "content": "",
+        "createdAt": "2026-01-15T02:26:36.277Z",
+        "updatedAt": "2026-01-15T03:08:50.753Z"
+      },
+      {
+        "name": "Duplicate Test",
+        "modality": "CT",
+        "bodyPart": "Chest",
+        "description": "Second template with duplicate name",
+        "content": "",
+        "createdAt": "2026-01-15T06:17:21.181Z",
+        "updatedAt": "2026-01-15T06:17:21.181Z"
+      },
+      {
+        "name": "Duplicate Test",
+        "modality": "CT",
+        "bodyPart": "Chest",
+        "description": "First template for duplicate test",
+        "content": "",
+        "createdAt": "2026-01-15T06:16:31.420Z",
+        "updatedAt": "2026-01-15T06:16:31.420Z"
+      },
+      {
+        "name": "SECURITY_TEST_TEMPLATE_AAAA",
+        "modality": "CT",
+        "bodyPart": "Chest",
+        "description": "This template tests user data isolation security",
+        "content": "",
+        "createdAt": "2026-01-15T06:01:27.088Z",
+        "updatedAt": "2026-01-15T06:01:27.088Z"
+      },
+      {
+        "name": "This Is A Very Long Template Name That Should Definitely Truncate With Ellipsis When Displayed In The List View Because It Exceeds One Hundred Characters",
+        "modality": "CT",
+        "bodyPart": "Chest",
+        "description": "Test template to verify long name truncation",
+        "content": "",
+        "createdAt": "2026-01-15T01:51:49.129Z",
+        "updatedAt": "2026-01-15T01:51:49.129Z"
+      },
+      {
+        "name": "Timestamp Test Template",
+        "modality": "CT",
+        "bodyPart": "Chest",
+        "description": "Trying to save deleted template",
+        "content": "",
+        "createdAt": "2026-01-15T02:03:06.504Z",
+        "updatedAt": "2026-01-15T07:34:09.387Z"
+      }
+    ],
+    "global": [
+      {
+        "name": "Chest X-Ray Standard",
+        "modality": "X-Ray",
+        "bodyPart": "Chest",
+        "description": "Standard chest X-ray report template with PA and lateral views",
+        "content": "",
+        "createdAt": "2024-01-10T10:00:00Z",
+        "updatedAt": "2024-01-10T10:00:00Z"
+      },
+      {
+        "name": "CT Abdomen",
+        "modality": "CT",
+        "bodyPart": "Abdomen",
+        "description": "CT scan of abdomen and pelvis with and without contrast",
+        "content": "",
+        "createdAt": "2024-01-12T14:30:00Z",
+        "updatedAt": "2024-01-12T14:30:00Z"
+      }
+    ]
+  },
+  "totalCount": 9
+}
