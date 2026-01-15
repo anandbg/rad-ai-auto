@@ -683,8 +683,20 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                   <Button variant="outline" size="sm" onClick={copyToClipboard}>
                     Copy to Clipboard
                   </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href="/generate">Use in Report</a>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Save transcript to localStorage for the generate page to pick up
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('ai-rad-transcribe-to-generate', transcribedText);
+                      }
+                      // Navigate to generate page
+                      window.location.href = '/generate?from_transcribe=true';
+                    }}
+                    data-testid="use-in-report-btn"
+                  >
+                    Use in Report →
                   </Button>
                   <Button
                     variant="ghost"

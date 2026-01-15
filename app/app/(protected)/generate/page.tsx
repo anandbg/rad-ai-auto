@@ -271,16 +271,30 @@ export default function GeneratePage() {
     }
   }, [user?.id]);
 
-  // Check for YOLO mode URL parameters
+  // Check for YOLO mode URL parameters and transcript from transcribe page
   useEffect(() => {
     const modality = searchParams.get('modality');
     const isYolo = searchParams.get('yolo') === 'true';
+    const fromTranscribe = searchParams.get('from_transcribe') === 'true';
 
     if (isYolo && modality) {
       setYoloMode(true);
       setYoloModality(modality);
     }
-  }, [searchParams]);
+
+    // Check if navigating from transcription page with transcript data
+    if (fromTranscribe && typeof window !== 'undefined') {
+      const transcript = localStorage.getItem('ai-rad-transcribe-to-generate');
+      if (transcript) {
+        setFindings(transcript);
+        setDraftRestored(true);
+        setDraftSavedAt(new Date().toISOString());
+        // Clear the transfer storage to avoid re-populating on page refresh
+        localStorage.removeItem('ai-rad-transcribe-to-generate');
+        showToast('Transcript loaded from transcription', 'success');
+      }
+    }
+  }, [searchParams, showToast]);
 
   // YOLO Mode: Auto-select template based on modality
   useEffect(() => {
