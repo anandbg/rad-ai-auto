@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
 import { AuthProvider } from '@/lib/auth/auth-context';
+import { PreferencesProvider } from '@/lib/preferences/preferences-context';
 import { ToastProvider } from '@/components/ui/toast';
 
 export const metadata: Metadata = {
@@ -23,7 +24,9 @@ export default function RootLayout({
           Skip to main content
         </a>
         <AuthProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <PreferencesProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </PreferencesProvider>
         </AuthProvider>
       </body>
     </html>

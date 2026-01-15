@@ -1,14 +1,201 @@
 'use client';
 
+import { useState } from 'react';
+import { useAuth } from '@/lib/auth/auth-context';
+import { usePreferences, type Theme } from '@/lib/preferences/preferences-context';
+import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const { preferences, updatePreference, resolvedTheme, isLoading } = usePreferences();
+  const { showToast } = useToast();
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const handleThemeChange = async (newTheme: Theme) => {
+    setSaving('theme');
+    try {
+      await updatePreference('theme', newTheme);
+      showToast(`Theme changed to ${newTheme}`, 'success');
+    } catch {
+      showToast('Failed to save theme preference', 'error');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleAutoSaveToggle = async () => {
+    setSaving('autoSave');
+    try {
+      await updatePreference('autoSave', !preferences.autoSave);
+      showToast(`Auto-save ${!preferences.autoSave ? 'enabled' : 'disabled'}`, 'success');
+    } catch {
+      showToast('Failed to save preference', 'error');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleCompactModeToggle = async () => {
+    setSaving('compactMode');
+    try {
+      await updatePreference('compactMode', !preferences.compactMode);
+      showToast(`Compact mode ${!preferences.compactMode ? 'enabled' : 'disabled'}`, 'success');
+    } catch {
+      showToast('Failed to save preference', 'error');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center p-8">
+        <div className="animate-pulse text-text-secondary">Loading settings...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-8">
-      <div className="text-center">
-        <div className="mb-4 text-6xl">⚙️</div>
-        <h1 className="mb-2 text-3xl font-bold">Settings</h1>
-        <p className="text-text-secondary">
-          User settings interface coming soon
-        </p>
+    <div className="mx-auto max-w-4xl p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Settings</h1>
+        <p className="text-text-secondary">Manage your preferences and account settings</p>
+      </div>
+
+      <div className="space-y-6">
+        {/* Appearance Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>Customize how AI Radiologist looks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <label className="label mb-2 block">Theme</label>
+                <div className="flex gap-2" data-testid="theme-selector">
+                  <Button
+                    variant={preferences.theme === 'light' ? 'primary' : 'outline'}
+                    onClick={() => handleThemeChange('light')}
+                    disabled={saving === 'theme'}
+                    data-testid="theme-light"
+                  >
+                    <span className="mr-2">☀️</span>
+                    Light
+                  </Button>
+                  <Button
+                    variant={preferences.theme === 'dark' ? 'primary' : 'outline'}
+                    onClick={() => handleThemeChange('dark')}
+                    disabled={saving === 'theme'}
+                    data-testid="theme-dark"
+                  >
+                    <span className="mr-2">🌙</span>
+                    Dark
+                  </Button>
+                  <Button
+                    variant={preferences.theme === 'system' ? 'primary' : 'outline'}
+                    onClick={() => handleThemeChange('system')}
+                    disabled={saving === 'theme'}
+                    data-testid="theme-system"
+                  >
+                    <span className="mr-2">💻</span>
+                    System
+                  </Button>
+                </div>
+                <p className="mt-2 text-sm text-text-muted">
+                  Current resolved theme: <span data-testid="resolved-theme">{resolvedTheme}</span>
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between border-t pt-4">
+                <div>
+                  <label className="label">Compact Mode</label>
+                  <p className="text-sm text-text-muted">Use a more compact layout</p>
+                </div>
+                <Button
+                  variant={preferences.compactMode ? 'primary' : 'outline'}
+                  onClick={handleCompactModeToggle}
+                  disabled={saving === 'compactMode'}
+                  data-testid="compact-mode-toggle"
+                >
+                  {preferences.compactMode ? 'On' : 'Off'}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Editor Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Editor Settings</CardTitle>
+            <CardDescription>Configure report editing behavior</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="label">Auto-save</label>
+                <p className="text-sm text-text-muted">Automatically save changes as you type</p>
+              </div>
+              <Button
+                variant={preferences.autoSave ? 'primary' : 'outline'}
+                onClick={handleAutoSaveToggle}
+                disabled={saving === 'autoSave'}
+                data-testid="autosave-toggle"
+              >
+                {preferences.autoSave ? 'On' : 'Off'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Account Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Information</CardTitle>
+            <CardDescription>Your account details</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label text-sm">Name</label>
+                  <p className="text-text-primary" data-testid="user-name">{user?.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="label text-sm">Email</label>
+                  <p className="text-text-primary" data-testid="user-email">{user?.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="label text-sm">Role</label>
+                  <p className="text-text-primary capitalize" data-testid="user-role">{user?.role || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="label text-sm">User ID</label>
+                  <p className="text-text-muted text-xs" data-testid="user-id">{user?.id || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Debug Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Preferences Debug</CardTitle>
+            <CardDescription>Current preference values (for verification)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <pre
+              className="rounded bg-surface-muted p-4 text-xs overflow-auto"
+              data-testid="preferences-json"
+            >
+              {JSON.stringify(preferences, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
