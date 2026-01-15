@@ -298,8 +298,8 @@ export default function BillingPage() {
       <div>
         <h2 className="mb-4 text-lg font-semibold text-text-primary">Invoice History</h2>
         <Card>
-          <div className="overflow-hidden">
-            <table className="w-full">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-surface-muted">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Date</th>

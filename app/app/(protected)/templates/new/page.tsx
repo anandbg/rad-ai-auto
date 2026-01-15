@@ -403,9 +403,11 @@ export default function NewTemplatePage() {
                 onChange={(e) => handleChange('name', e.target.value)}
                 data-testid="template-name-input"
                 className={errors.name ? 'border-error' : ''}
+                aria-invalid={errors.name ? 'true' : undefined}
+                aria-describedby={errors.name ? 'name-error' : undefined}
               />
               {errors.name && (
-                <p className="mt-1 text-sm text-error">{errors.name}</p>
+                <p id="name-error" role="alert" className="mt-1 text-sm text-error">{errors.name}</p>
               )}
             </div>
 
@@ -421,6 +423,8 @@ export default function NewTemplatePage() {
                   onChange={(e) => handleChange('modality', e.target.value)}
                   data-testid="template-modality-select"
                   className={`w-full rounded-lg border ${errors.modality ? 'border-error' : 'border-border'} bg-surface px-4 py-2.5 text-text-primary focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20`}
+                  aria-invalid={errors.modality ? 'true' : undefined}
+                  aria-describedby={errors.modality ? 'modality-error' : undefined}
                 >
                   <option value="">Select modality</option>
                   {modalityOptions.map((option) => (
@@ -430,7 +434,7 @@ export default function NewTemplatePage() {
                   ))}
                 </select>
                 {errors.modality && (
-                  <p className="mt-1 text-sm text-error">{errors.modality}</p>
+                  <p id="modality-error" role="alert" className="mt-1 text-sm text-error">{errors.modality}</p>
                 )}
               </div>
 
@@ -444,6 +448,8 @@ export default function NewTemplatePage() {
                   onChange={(e) => handleChange('bodyPart', e.target.value)}
                   data-testid="template-bodypart-select"
                   className={`w-full rounded-lg border ${errors.bodyPart ? 'border-error' : 'border-border'} bg-surface px-4 py-2.5 text-text-primary focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20`}
+                  aria-invalid={errors.bodyPart ? 'true' : undefined}
+                  aria-describedby={errors.bodyPart ? 'bodypart-error' : undefined}
                 >
                   <option value="">Select body part</option>
                   {bodyPartOptions.map((option) => (
@@ -453,7 +459,7 @@ export default function NewTemplatePage() {
                   ))}
                 </select>
                 {errors.bodyPart && (
-                  <p className="mt-1 text-sm text-error">{errors.bodyPart}</p>
+                  <p id="bodypart-error" role="alert" className="mt-1 text-sm text-error">{errors.bodyPart}</p>
                 )}
               </div>
             </div>
@@ -471,9 +477,11 @@ export default function NewTemplatePage() {
                 data-testid="template-description-input"
                 rows={3}
                 className={errors.description ? 'border-error' : ''}
+                aria-invalid={errors.description ? 'true' : undefined}
+                aria-describedby={errors.description ? 'description-error' : undefined}
               />
               {errors.description && (
-                <p className="mt-1 text-sm text-error">{errors.description}</p>
+                <p id="description-error" role="alert" className="mt-1 text-sm text-error">{errors.description}</p>
               )}
             </div>
 
@@ -593,14 +601,15 @@ export default function NewTemplatePage() {
               </div>
             )}
           </CardContent>
-          <CardFooter className="justify-between">
-            <Button variant="ghost" asChild>
+          <CardFooter className="flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+            <Button variant="ghost" asChild className="w-full sm:w-auto">
               <Link href="/templates">Cancel</Link>
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
               data-testid="create-template-submit"
+              className="w-full sm:w-auto"
             >
               {isSubmitting ? 'Creating...' : 'Create Template'}
             </Button>

@@ -155,8 +155,8 @@ export default function AdminUsersPage() {
         <h2 className="mb-4 text-lg font-semibold text-text-primary">
           Active Users ({activeUsers.length})
         </h2>
-        <div className="overflow-hidden rounded-xl border">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-xl border">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-surface-muted">
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">User</th>
@@ -208,8 +208,8 @@ export default function AdminUsersPage() {
           <h2 className="mb-4 text-lg font-semibold text-text-secondary">
             Inactive Users ({inactiveUsers.length})
           </h2>
-          <div className="overflow-hidden rounded-xl border opacity-60">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-xl border opacity-60">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-surface-muted">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">User</th>

@@ -12,20 +12,20 @@
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-muted: #64748b;
 
   /* Brand colors - Burgundy */
   --brand: #7c2d3c;
   --brand-foreground: #ffffff;
 
-  /* Semantic colors */
-  --success: #16a34a;
+  /* Semantic colors - WCAG AA compliant (4.5:1 contrast with white) */
+  --success: #166534;
   --success-foreground: #ffffff;
-  --warning: #d97706;
+  --warning: #92400e;
   --warning-foreground: #ffffff;
-  --danger: #dc2626;
+  --danger: #b91c1c;
   --danger-foreground: #ffffff;
-  --info: #2563eb;
+  --info: #1d4ed8;
   --info-foreground: #ffffff;
 
   /* Focus */
@@ -49,10 +49,10 @@
 
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
-  --text-muted: #64748b;
+  --text-muted: #94a3b8;
 
-  --brand: #9f4556;
-  --brand-foreground: #ffffff;
+  --brand: #e08a98;
+  --brand-foreground: #0f172a;
 
   --border: #334155;
   --border-muted: #1e293b;
