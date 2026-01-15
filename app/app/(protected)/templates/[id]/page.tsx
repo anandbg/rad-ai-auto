@@ -29,10 +29,79 @@ interface Template {
   updatedAt: string;
   content?: string;
   sections?: TemplateSection[];
+  version?: number;
+}
+
+// Template version interface for version history
+interface TemplateVersion {
+  id: string;
+  templateId: string;
+  version: number;
+  name: string;
+  modality: string;
+  bodyPart: string;
+  description: string;
+  content?: string;
+  sections?: TemplateSection[];
+  createdAt: string;
+  createdBy?: string;
 }
 
 // Global templates storage key (shared across all users)
 const GLOBAL_TEMPLATES_KEY = 'ai-rad-global-templates';
+
+// Template versions storage key
+const TEMPLATE_VERSIONS_KEY = 'ai-rad-template-versions';
+
+// Helper to get template versions from localStorage
+function getTemplateVersions(templateId: string): TemplateVersion[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(TEMPLATE_VERSIONS_KEY);
+  if (!stored) return [];
+  try {
+    const allVersions: TemplateVersion[] = JSON.parse(stored);
+    return allVersions.filter(v => v.templateId === templateId).sort((a, b) => b.version - a.version);
+  } catch {
+    return [];
+  }
+}
+
+// Helper to save a new template version
+function saveTemplateVersion(template: Template, userId?: string): TemplateVersion {
+  if (typeof window === 'undefined') throw new Error('Window not available');
+
+  const stored = localStorage.getItem(TEMPLATE_VERSIONS_KEY);
+  const allVersions: TemplateVersion[] = stored ? JSON.parse(stored) : [];
+
+  // Get the current highest version number for this template
+  const existingVersions = allVersions.filter(v => v.templateId === template.id);
+  const maxVersion = existingVersions.length > 0
+    ? Math.max(...existingVersions.map(v => v.version))
+    : 0;
+
+  // Create new version record
+  const newVersion: TemplateVersion = {
+    id: `ver-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    templateId: template.id,
+    version: maxVersion + 1,
+    name: template.name,
+    modality: template.modality,
+    bodyPart: template.bodyPart,
+    description: template.description,
+    content: template.content,
+    sections: template.sections,
+    createdAt: new Date().toISOString(),
+    createdBy: userId,
+  };
+
+  allVersions.push(newVersion);
+  localStorage.setItem(TEMPLATE_VERSIONS_KEY, JSON.stringify(allVersions));
+
+  // Log for verification
+  console.log(`[Template Versions API] Created version ${newVersion.version} for template ${template.id}`);
+
+  return newVersion;
+}
 
 // Seed global templates (only used if no global templates exist in storage)
 const seedGlobalTemplates: Template[] = [
@@ -143,6 +212,8 @@ export default function TemplateDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [versions, setVersions] = useState<TemplateVersion[]>([]);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     modality: '',
@@ -167,6 +238,9 @@ export default function TemplateDetailPage() {
         description: foundTemplate.description,
         content: foundTemplate.content || '',
       });
+      // Load version history for this template
+      const templateVersions = getTemplateVersions(id);
+      setVersions(templateVersions);
     }
     setIsLoading(false);
   }, [id, user?.id]);
@@ -176,6 +250,12 @@ export default function TemplateDetailPage() {
 
     setIsSaving(true);
 
+    // Save the current state as a version BEFORE updating
+    const newVersion = saveTemplateVersion(template, user?.id);
+
+    // Get current version number for the template
+    const currentVersion = (template.version || 0) + 1;
+
     const updatedTemplate: Template = {
       ...template,
       name: formData.name,
@@ -184,6 +264,7 @@ export default function TemplateDetailPage() {
       description: formData.description,
       content: formData.content,
       updatedAt: new Date().toISOString(),
+      version: currentVersion,
     };
 
     // Update in appropriate localStorage storage
@@ -210,11 +291,13 @@ export default function TemplateDetailPage() {
     }
 
     setTemplate(updatedTemplate);
+    // Update versions list with the new version
+    setVersions(prev => [newVersion, ...prev]);
     setIsEditing(false);
     setIsSaving(false);
 
     // Show success toast
-    showToast(`Template "${updatedTemplate.name}" updated successfully!`, 'success');
+    showToast(`Template "${updatedTemplate.name}" updated successfully! (Version ${newVersion.version} saved)`, 'success');
   };
 
   const handleChange = (field: string, value: string) => {
@@ -457,6 +540,64 @@ export default function TemplateDetailPage() {
                 {template.content || 'No additional content defined.'}
               </pre>
             </CardContent>
+          </Card>
+
+          {/* Version History Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Version History</CardTitle>
+                <CardDescription>
+                  {versions.length > 0
+                    ? `${versions.length} version${versions.length !== 1 ? 's' : ''} saved`
+                    : 'No version history yet. Edit and save to create a version.'}
+                </CardDescription>
+              </div>
+              {versions.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowVersionHistory(!showVersionHistory)}
+                  data-testid="toggle-version-history"
+                >
+                  {showVersionHistory ? 'Hide' : 'Show'} History
+                </Button>
+              )}
+            </CardHeader>
+            {showVersionHistory && versions.length > 0 && (
+              <CardContent>
+                <div className="space-y-3" data-testid="version-history-list">
+                  {versions.map((version, index) => (
+                    <div
+                      key={version.id}
+                      className="rounded-lg border border-border bg-surface-muted p-4"
+                      data-testid={`version-entry-${version.version}`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-text-primary">
+                          Version {version.version}
+                          {index === 0 && (
+                            <span className="ml-2 text-xs bg-brand/10 text-brand px-2 py-0.5 rounded-full">
+                              Latest
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-sm text-text-muted">
+                          {new Date(version.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="text-sm text-text-secondary">
+                        <p><strong>Name:</strong> {version.name}</p>
+                        <p><strong>Modality:</strong> {version.modality} - {version.bodyPart}</p>
+                        {version.description && (
+                          <p className="truncate"><strong>Description:</strong> {version.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            )}
           </Card>
 
           {/* Actions */}
