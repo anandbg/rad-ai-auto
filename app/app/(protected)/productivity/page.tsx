@@ -193,12 +193,8 @@ function generateMostUsedTemplates(
   history: { date: string; template: string; duration: number }[]
 ): TemplateUsage[] {
   if (history.length === 0) {
-    // Return mock data for display
-    return [
-      { name: 'Chest X-Ray Standard', count: 5 },
-      { name: 'CT Abdomen', count: 3 },
-      { name: 'MRI Brain', count: 2 },
-    ];
+    // No history data - return empty array to show "No template usage data yet" message
+    return [];
   }
 
   // Count template usage

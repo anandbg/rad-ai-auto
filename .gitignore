@@ -54,3 +54,6 @@ assistant.db
 
 # Existing AI-RADIOLOGIST folder (baseline reference only)
 AI-RADIOLOGIST/
+
+# Auto Claude data directory
+.auto-claude/
