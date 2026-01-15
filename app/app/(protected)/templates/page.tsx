@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -97,6 +98,7 @@ function saveTemplates(templates: Template[], userId: string | undefined) {
 export default function TemplatesPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModality, setSelectedModality] = useState<string>('all');
@@ -107,6 +109,23 @@ export default function TemplatesPage() {
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [templateToClone, setTemplateToClone] = useState<Template | null>(null);
   const [cloneName, setCloneName] = useState('');
+
+  // Read URL query params on mount
+  useEffect(() => {
+    const modalityParam = searchParams.get('modality');
+    const searchParam = searchParams.get('search');
+    const sortParam = searchParams.get('sort');
+
+    if (modalityParam) {
+      setSelectedModality(modalityParam);
+    }
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+    if (sortParam && ['name-asc', 'name-desc', 'date-asc', 'date-desc'].includes(sortParam)) {
+      setSortBy(sortParam as 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc');
+    }
+  }, [searchParams]);
 
   // Load templates on mount and when user changes
   useEffect(() => {
