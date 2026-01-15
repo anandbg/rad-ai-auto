@@ -131,11 +131,21 @@ export default function DashboardPage() {
               </button>
             </div>
             {preferences.yoloMode && (
-              <div className="mt-4 rounded-lg bg-success/5 p-3 text-sm text-success">
-                <p className="font-medium">YOLO Mode is enabled!</p>
-                <p className="mt-1 text-success/80">
-                  Start transcribing and the system will automatically detect the best template and generate your report.
-                </p>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-lg bg-success/5 p-3 text-sm text-success">
+                  <p className="font-medium">YOLO Mode is enabled!</p>
+                  <p className="mt-1 text-success/80">
+                    Start transcribing and the system will automatically detect the best template and generate your report.
+                  </p>
+                </div>
+                <Link
+                  href="/transcribe?autostart=true"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-success px-6 py-3 font-semibold text-white transition-all hover:bg-success/90 hover:shadow-lg"
+                  data-testid="start-yolo-btn"
+                >
+                  <span className="text-xl">🚀</span>
+                  <span>Start YOLO Recording</span>
+                </Link>
               </div>
             )}
           </div>

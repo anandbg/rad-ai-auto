@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -185,7 +185,7 @@ export default function TranscribePage() {
     setTranscribedText(expanded);
   };
 
-  const startRecording = () => {
+  const startRecording = useCallback(() => {
     setIsRecording(true);
     setRecordingTime(0);
     setTranscribedText('');
@@ -194,7 +194,23 @@ export default function TranscribePage() {
     timerRef.current = setInterval(() => {
       setRecordingTime(prev => prev + 1);
     }, 1000);
-  };
+  }, []);
+
+  // Auto-start recording when ?autostart=true is in URL (YOLO one-click workflow)
+  useEffect(() => {
+    // Check URL directly to avoid suspense issues with useSearchParams
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldAutoStart = urlParams.get('autostart') === 'true';
+
+    if (shouldAutoStart && !isRecording && !isProcessing) {
+      // Small delay to ensure UI is ready
+      const timeoutId = setTimeout(() => {
+        startRecording();
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on mount
 
   const stopRecording = async () => {
     setIsRecording(false);

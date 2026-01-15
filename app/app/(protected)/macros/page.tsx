@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/toast';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,13 @@ import {
 } from '@/components/ui/dialog';
 import { useAuth } from '@/lib/auth/auth-context';
 
+// Category interface
+interface MacroCategory {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
 // Macro interface
 interface Macro {
   id: string;
@@ -24,6 +32,7 @@ interface Macro {
   isActive: boolean;
   isGlobal: boolean;
   createdAt: string;
+  categoryId?: string;
 }
 
 // Global macros (available to all users)
@@ -43,10 +52,27 @@ function getStorageKey(userId: string | undefined): string {
   return userId ? `ai-rad-macros-${userId}` : 'ai-rad-macros';
 }
 
+// Helper to get categories storage key
+function getCategoriesStorageKey(userId: string | undefined): string {
+  return userId ? `ai-rad-macro-categories-${userId}` : 'ai-rad-macro-categories';
+}
+
 // Helper to get macros from localStorage
 function getStoredMacros(userId: string | undefined): Macro[] {
   if (typeof window === 'undefined') return [];
   const stored = localStorage.getItem(getStorageKey(userId));
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+// Helper to get categories from localStorage
+function getStoredCategories(userId: string | undefined): MacroCategory[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(getCategoriesStorageKey(userId));
   if (!stored) return [];
   try {
     return JSON.parse(stored);
@@ -63,9 +89,17 @@ function saveMacros(macros: Macro[], userId: string | undefined) {
   localStorage.setItem(getStorageKey(userId), JSON.stringify(userMacros));
 }
 
+// Helper to save categories to localStorage
+function saveCategories(categories: MacroCategory[], userId: string | undefined) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(getCategoriesStorageKey(userId), JSON.stringify(categories));
+}
+
 export default function MacrosPage() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [macros, setMacros] = useState<Macro[]>([]);
+  const [categories, setCategories] = useState<MacroCategory[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newMacroName, setNewMacroName] = useState('');
   const [newMacroText, setNewMacroText] = useState('');
@@ -74,13 +108,21 @@ export default function MacrosPage() {
   const [editMacroText, setEditMacroText] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [macroToDelete, setMacroToDelete] = useState<Macro | null>(null);
+  // Category state
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
+  const [macroToMove, setMacroToMove] = useState<Macro | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
-  // Load macros on mount and when user changes
+  // Load macros and categories on mount and when user changes
   useEffect(() => {
     const storedMacros = getStoredMacros(user?.id);
+    const storedCategories = getStoredCategories(user?.id);
     // Combine user macros with global macros
     const allMacros = [...storedMacros, ...globalMacros];
     setMacros(allMacros);
+    setCategories(storedCategories);
   }, [user?.id]);
 
   const handleCreateMacro = () => {
@@ -146,8 +188,65 @@ export default function MacrosPage() {
     setEditMacroText('');
   };
 
+  // Category handlers
+  const handleCreateCategory = () => {
+    if (!newCategoryName.trim()) return;
+
+    const newCategory: MacroCategory = {
+      id: `cat-${Date.now()}`,
+      name: newCategoryName.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedCategories = [newCategory, ...categories];
+    setCategories(updatedCategories);
+    saveCategories(updatedCategories, user?.id);
+    setNewCategoryName('');
+    setIsCategoryDialogOpen(false);
+    showToast(`Category "${newCategory.name}" created!`, 'success');
+  };
+
+  const openMoveDialog = (macro: Macro) => {
+    setMacroToMove(macro);
+    setSelectedCategoryId(macro.categoryId || '');
+    setIsMoveDialogOpen(true);
+  };
+
+  const handleMoveMacro = () => {
+    if (!macroToMove) return;
+
+    const updatedMacros = macros.map(macro =>
+      macro.id === macroToMove.id
+        ? { ...macro, categoryId: selectedCategoryId || undefined }
+        : macro
+    );
+    setMacros(updatedMacros);
+    saveMacros(updatedMacros, user?.id);
+
+    const categoryName = selectedCategoryId
+      ? categories.find(c => c.id === selectedCategoryId)?.name || 'category'
+      : 'Uncategorized';
+    showToast(`Macro moved to "${categoryName}"`, 'success');
+
+    setIsMoveDialogOpen(false);
+    setMacroToMove(null);
+    setSelectedCategoryId('');
+  };
+
+  const getCategoryName = (categoryId: string | undefined): string => {
+    if (!categoryId) return '';
+    return categories.find(c => c.id === categoryId)?.name || '';
+  };
+
   const activeMacros = macros.filter(m => m.isActive);
   const inactiveMacros = macros.filter(m => !m.isActive);
+
+  // Group active macros by category
+  const uncategorizedMacros = activeMacros.filter(m => !m.categoryId);
+  const categorizedMacros = categories.map(cat => ({
+    category: cat,
+    macros: activeMacros.filter(m => m.categoryId === cat.id)
+  })).filter(group => group.macros.length > 0);
 
   return (
     <div className="mx-auto max-w-5xl p-6">
@@ -158,12 +257,20 @@ export default function MacrosPage() {
             Create shortcuts for commonly used terms and phrases
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="create-macro-button">
-              + Create Macro
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsCategoryDialogOpen(true)}
+            data-testid="create-category-button"
+          >
+            + Create Category
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button data-testid="create-macro-button">
+                + Create Macro
+              </Button>
+            </DialogTrigger>
           <DialogContent data-testid="create-macro-dialog">
             <DialogHeader>
               <DialogTitle>Create New Macro</DialogTitle>
@@ -217,16 +324,38 @@ export default function MacrosPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
-      {/* Active Macros */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">
-          Active Macros ({activeMacros.length})
-        </h2>
-        {activeMacros.length > 0 ? (
+      {/* Categories Section */}
+      {categories.length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-3 text-sm font-medium text-text-secondary uppercase tracking-wide">
+            Categories
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <span
+                key={cat.id}
+                className="rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand"
+                data-testid={`category-badge-${cat.id}`}
+              >
+                {cat.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Categorized Macros */}
+      {categorizedMacros.map(({ category, macros: categoryMacros }) => (
+        <div key={category.id} className="mb-8">
+          <h2 className="mb-4 text-lg font-semibold text-text-primary flex items-center gap-2">
+            <span className="text-brand">📁</span>
+            {category.name} ({categoryMacros.length})
+          </h2>
           <div className="grid gap-4 md:grid-cols-2">
-            {activeMacros.map((macro) => (
+            {categoryMacros.map((macro) => (
               <Card key={macro.id} data-testid={`macro-card-${macro.id}`}>
                 <CardContent className="py-4">
                   <div className="flex items-start justify-between">
@@ -247,6 +376,89 @@ export default function MacrosPage() {
                     </div>
                     {!macro.isGlobal && (
                       <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openMoveDialog(macro)}
+                          title="Move to category"
+                          data-testid={`move-macro-${macro.id}`}
+                        >
+                          Move
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(macro)}
+                          title="Edit macro"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleMacro(macro.id)}
+                          title="Disable macro"
+                        >
+                          Disable
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openDeleteDialog(macro)}
+                          className="text-danger hover:text-danger"
+                          title="Delete macro"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Uncategorized / Active Macros */}
+      <div className="mb-8">
+        <h2 className="mb-4 text-lg font-semibold text-text-primary">
+          {categories.length > 0 ? 'Uncategorized Macros' : 'Active Macros'} ({uncategorizedMacros.length})
+        </h2>
+        {uncategorizedMacros.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {uncategorizedMacros.map((macro) => (
+              <Card key={macro.id} data-testid={`macro-card-${macro.id}`}>
+                <CardContent className="py-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <code className="rounded bg-surface-muted px-2 py-1 text-sm font-semibold text-brand">
+                          {macro.name}
+                        </code>
+                        {macro.isGlobal && (
+                          <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info">
+                            Global
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-sm text-text-secondary">
+                        {macro.replacementText}
+                      </p>
+                    </div>
+                    {!macro.isGlobal && (
+                      <div className="flex gap-1">
+                        {categories.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openMoveDialog(macro)}
+                            title="Move to category"
+                            data-testid={`move-macro-${macro.id}`}
+                          >
+                            Move
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -283,7 +495,7 @@ export default function MacrosPage() {
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-text-secondary">No active macros</p>
+            <p className="text-sm text-text-secondary">No {categories.length > 0 ? 'uncategorized' : 'active'} macros</p>
           </div>
         )}
       </div>
@@ -406,6 +618,88 @@ export default function MacrosPage() {
               data-testid="confirm-delete-macro-button"
             >
               Delete Macro
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Category Dialog */}
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent data-testid="create-category-dialog">
+          <DialogHeader>
+            <DialogTitle>Create Category</DialogTitle>
+            <DialogDescription>
+              Create a new category to organize your macros
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 px-6 py-4">
+            <div>
+              <label htmlFor="category-name" className="mb-2 block text-sm font-medium text-text-primary">
+                Category Name
+              </label>
+              <Input
+                id="category-name"
+                placeholder="e.g., Anatomy, Findings, Impressions"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                data-testid="category-name-input"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateCategory}
+              disabled={!newCategoryName.trim()}
+              data-testid="save-category-button"
+            >
+              Create Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Move Macro to Category Dialog */}
+      <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
+        <DialogContent data-testid="move-macro-dialog">
+          <DialogHeader>
+            <DialogTitle>Move Macro</DialogTitle>
+            <DialogDescription>
+              Move &quot;{macroToMove?.name}&quot; to a category
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 px-6 py-4">
+            <div>
+              <label htmlFor="select-category" className="mb-2 block text-sm font-medium text-text-primary">
+                Select Category
+              </label>
+              <select
+                id="select-category"
+                value={selectedCategoryId}
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
+                className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand"
+                data-testid="select-category-dropdown"
+              >
+                <option value="">Uncategorized</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsMoveDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleMoveMacro}
+              data-testid="confirm-move-macro-button"
+            >
+              Move Macro
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -22,6 +22,10 @@ interface Template {
   createdAt: string;
   updatedAt: string;
   content?: string;
+  // Institution sharing
+  institutionId?: string;
+  isSharedWithInstitution?: boolean;
+  sharedBy?: string;
 }
 
 // Seed global templates (only used if no global templates exist in storage)
@@ -50,6 +54,70 @@ const seedGlobalTemplates: Template[] = [
 
 // Global templates storage key (shared across all users)
 const GLOBAL_TEMPLATES_KEY = 'ai-rad-global-templates';
+
+// Institution templates storage key
+const INSTITUTION_TEMPLATES_KEY = 'ai-rad-institution-templates';
+
+// Institution members storage key
+const INSTITUTION_MEMBERS_KEY = 'ai-rad-institution-members';
+
+// Institutions storage key
+const INSTITUTIONS_KEY = 'ai-rad-institutions';
+
+// Helper to get institution templates from localStorage
+function getInstitutionTemplates(institutionId: string): Template[] {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem(INSTITUTION_TEMPLATES_KEY);
+  if (!stored) return [];
+  try {
+    const allTemplates: Template[] = JSON.parse(stored);
+    return allTemplates.filter(t => t.institutionId === institutionId);
+  } catch {
+    return [];
+  }
+}
+
+// Helper to save institution template
+function saveInstitutionTemplate(template: Template) {
+  if (typeof window === 'undefined') return;
+  const stored = localStorage.getItem(INSTITUTION_TEMPLATES_KEY);
+  const allTemplates: Template[] = stored ? JSON.parse(stored) : [];
+  const existingIndex = allTemplates.findIndex(t => t.id === template.id);
+  if (existingIndex >= 0) {
+    allTemplates[existingIndex] = template;
+  } else {
+    allTemplates.push(template);
+  }
+  localStorage.setItem(INSTITUTION_TEMPLATES_KEY, JSON.stringify(allTemplates));
+}
+
+// Helper to get user's institution membership
+function getUserInstitution(userId: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem(INSTITUTION_MEMBERS_KEY);
+  if (!stored) return null;
+  try {
+    const members: { id: string; institutionId: string; userId: string }[] = JSON.parse(stored);
+    const membership = members.find(m => m.userId === userId);
+    return membership?.institutionId || null;
+  } catch {
+    return null;
+  }
+}
+
+// Helper to get institution name
+function getInstitutionName(institutionId: string): string {
+  if (typeof window === 'undefined') return '';
+  const stored = localStorage.getItem(INSTITUTIONS_KEY);
+  if (!stored) return '';
+  try {
+    const institutions = JSON.parse(stored);
+    const inst = institutions.find((i: { id: string; name: string }) => i.id === institutionId);
+    return inst?.name || '';
+  } catch {
+    return '';
+  }
+}
 
 // Helper to get global templates from localStorage
 function getGlobalTemplates(): Template[] {
@@ -114,6 +182,10 @@ export default function TemplatesPage() {
   const [templateToClone, setTemplateToClone] = useState<Template | null>(null);
   const [cloneName, setCloneName] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [userInstitutionId, setUserInstitutionId] = useState<string | null>(null);
+  const [institutionName, setInstitutionName] = useState('');
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [templateToShare, setTemplateToShare] = useState<Template | null>(null);
 
   // Read URL query params on mount
   useEffect(() => {
@@ -158,12 +230,45 @@ export default function TemplatesPage() {
   useEffect(() => {
     const storedTemplates = getStoredTemplates(user?.id);
     const globalTemplates = getGlobalTemplates();
-    // Combine user's personal templates with global templates
-    const globalIds = new Set(globalTemplates.map(t => t.id));
-    const combinedTemplates = [
-      ...storedTemplates.filter(t => !globalIds.has(t.id)), // personal templates only
-      ...globalTemplates,
-    ];
+
+    // Check if user belongs to an institution
+    const instId = user?.id ? getUserInstitution(user.id) : null;
+    setUserInstitutionId(instId);
+    if (instId) {
+      setInstitutionName(getInstitutionName(instId));
+    }
+
+    // Get institution templates if user belongs to one
+    const instTemplates = instId ? getInstitutionTemplates(instId) : [];
+
+    // Combine all templates (excluding duplicates)
+    const seenIds = new Set<string>();
+    const combinedTemplates: Template[] = [];
+
+    // Add personal templates first
+    for (const t of storedTemplates) {
+      if (!seenIds.has(t.id)) {
+        seenIds.add(t.id);
+        combinedTemplates.push(t);
+      }
+    }
+
+    // Add institution templates
+    for (const t of instTemplates) {
+      if (!seenIds.has(t.id)) {
+        seenIds.add(t.id);
+        combinedTemplates.push(t);
+      }
+    }
+
+    // Add global templates
+    for (const t of globalTemplates) {
+      if (!seenIds.has(t.id)) {
+        seenIds.add(t.id);
+        combinedTemplates.push(t);
+      }
+    }
+
     setTemplates(combinedTemplates);
     setIsLoading(false);
   }, [user?.id]);
@@ -200,8 +305,9 @@ export default function TemplatesPage() {
   // Get unique modalities for filter
   const modalities = ['all', ...new Set(templates.map(t => t.modality))];
 
-  // Personal vs Global templates (sorted)
-  const personalTemplates = sortTemplates(filteredTemplates.filter(t => !t.isGlobal));
+  // Personal vs Institution vs Global templates (sorted)
+  const personalTemplates = sortTemplates(filteredTemplates.filter(t => !t.isGlobal && !t.isSharedWithInstitution));
+  const institutionTemplates = sortTemplates(filteredTemplates.filter(t => t.isSharedWithInstitution));
   const globalTemplates = sortTemplates(filteredTemplates.filter(t => t.isGlobal));
 
   const handleDelete = (id: string) => {
@@ -248,6 +354,46 @@ export default function TemplatesPage() {
     setTemplateToClone(template);
     setCloneName(`${template.name} (Copy)`);
     setCloneDialogOpen(true);
+  };
+
+  const handleShareWithInstitution = (id: string) => {
+    const template = templates.find(t => t.id === id);
+    if (!template || !userInstitutionId) return;
+
+    // Open share dialog
+    setTemplateToShare(template);
+    setShareDialogOpen(true);
+  };
+
+  const confirmShare = () => {
+    if (!templateToShare || !userInstitutionId) return;
+
+    // Create a shared copy for the institution
+    const sharedTemplate: Template = {
+      ...templateToShare,
+      id: 'tpl-inst-' + Math.random().toString(36).substring(2, 9),
+      isSharedWithInstitution: true,
+      institutionId: userInstitutionId,
+      sharedBy: user?.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Save to institution templates
+    saveInstitutionTemplate(sharedTemplate);
+
+    // Update local state
+    setTemplates([sharedTemplate, ...templates]);
+
+    // Show success toast
+    showToast(`Template "${sharedTemplate.name}" shared with ${institutionName}!`, 'success');
+
+    // Log for verification
+    console.log(`[Institution Template] Template "${sharedTemplate.name}" shared with institution ${userInstitutionId}`);
+
+    // Close dialog
+    setShareDialogOpen(false);
+    setTemplateToShare(null);
   };
 
   const confirmClone = () => {
@@ -380,24 +526,92 @@ export default function TemplatesPage() {
                     {template.description}
                   </p>
                 </CardContent>
-                <CardFooter className="justify-between">
+                <CardFooter className="flex-wrap gap-2 justify-between">
                   <Button variant="ghost" size="sm" asChild>
                     <Link href={`/templates/${template.id}`}>Edit</Link>
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(template.id)}
-                    className="text-error hover:text-error"
-                  >
-                    Delete
-                  </Button>
+                  <div className="flex gap-2">
+                    {userInstitutionId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleShareWithInstitution(template.id)}
+                        data-testid={`share-template-${template.id}`}
+                      >
+                        Share
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(template.id)}
+                      className="text-error hover:text-error"
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             ))}
           </div>
         )}
       </div>
+
+      {/* Institution Templates */}
+      {userInstitutionId && (
+        <div className="mb-8">
+          <h2 className="mb-4 text-lg font-semibold text-text-primary">
+            {institutionName || 'Institution'} Templates ({institutionTemplates.length})
+          </h2>
+          {institutionTemplates.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="mb-4 text-5xl">🏢</div>
+                <h3 className="mb-2 text-lg font-semibold text-text-primary">No institution templates</h3>
+                <p className="mb-4 text-center text-sm text-text-secondary">
+                  Share your personal templates with your institution
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {institutionTemplates.map((template) => (
+                <Card key={template.id} data-testid={`template-card-${template.id}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
+                        <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
+                      </div>
+                      <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info" data-testid="institution-badge">
+                        Institution
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-text-secondary line-clamp-2">
+                      {template.description}
+                    </p>
+                  </CardContent>
+                  <CardFooter className="justify-between">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={`/templates/${template.id}`}>View</Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleClone(template.id)}
+                      data-testid={`clone-template-${template.id}`}
+                    >
+                      Clone
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Global Templates */}
       <div>
@@ -513,6 +727,38 @@ export default function TemplatesPage() {
               data-testid="confirm-clone-button"
             >
               Clone Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share with Institution Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent data-testid="share-template-dialog">
+          <DialogHeader>
+            <DialogTitle>Share with Institution</DialogTitle>
+            <DialogDescription>
+              Share &quot;{templateToShare?.name}&quot; with {institutionName}. All members of your institution will be able to view and use this template.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 rounded-lg bg-info/10 px-4">
+            <p className="text-sm text-info">
+              <strong>Note:</strong> A copy of this template will be shared with your institution. You will keep your original personal template.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setShareDialogOpen(false)}
+              data-testid="cancel-share-button"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmShare}
+              data-testid="confirm-share-button"
+            >
+              Share Template
             </Button>
           </DialogFooter>
         </DialogContent>
