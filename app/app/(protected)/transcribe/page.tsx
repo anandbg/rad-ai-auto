@@ -197,6 +197,9 @@ export default function TranscribePage() {
   const [macros, setMacros] = useState<Macro[]>([]);
   const [detectedModality, setDetectedModality] = useState<ModalityDetection | null>(null);
   const [detectedBodyPart, setDetectedBodyPart] = useState<string | null>(null);
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
+  const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -403,11 +406,27 @@ IMPRESSION: No acute findings on CT. Recommend continued monitoring as clinicall
     }
 
     setUploadedFile(file);
+    setLastUploadedFile(file);
     setIsProcessing(true);
     setTranscribedText('');
+    setTranscriptionError(null);
 
     // Simulate file processing (assume 1 minute for demo)
     await new Promise(resolve => setTimeout(resolve, 2500));
+
+    // Simulate occasional API failure (20% chance on first attempt, 0% on retry)
+    // Check URL param for forced error simulation
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceError = urlParams.get('simulate_error') === 'true';
+    const shouldFail = forceError || (retryCount === 0 && Math.random() < 0.2);
+
+    if (shouldFail) {
+      setIsProcessing(false);
+      const errorMsg = 'Transcription service temporarily unavailable. Please try again.';
+      setTranscriptionError(errorMsg);
+      showToast(errorMsg, 'error');
+      return;
+    }
 
     const sampleTranscription = `[Transcribed from: ${file.name}]
 
@@ -421,6 +440,37 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
 
     setTranscribedText(sampleTranscription);
     setIsProcessing(false);
+    setRetryCount(0); // Reset retry count on success
+
+    // Add 1 minute of transcription time for uploaded file
+    addTranscriptionMinutes(1);
+  };
+
+  // Retry transcription function
+  const handleRetryTranscription = async () => {
+    if (!lastUploadedFile) return;
+
+    setRetryCount(prev => prev + 1);
+    setTranscriptionError(null);
+    setIsProcessing(true);
+
+    // Simulate processing
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // On retry, always succeed (user experience improvement)
+    const sampleTranscription = `[Transcribed from: ${lastUploadedFile.name}]
+
+The patient presents with clinical findings. Examination was performed according to protocol.
+
+TECHNIQUE: Standard imaging technique was employed.
+
+FINDINGS: The examination reveals normal anatomical structures. No significant abnormalities are identified.
+
+IMPRESSION: Normal examination. No acute pathology identified.`;
+
+    setTranscribedText(sampleTranscription);
+    setIsProcessing(false);
+    showToast('Transcription completed successfully!', 'success');
 
     // Add 1 minute of transcription time for uploaded file
     addTranscriptionMinutes(1);
@@ -582,6 +632,34 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
               <div className="flex h-64 flex-col items-center justify-center">
                 <div className="mb-4 text-4xl animate-spin">⏳</div>
                 <p className="text-text-secondary">Processing transcription...</p>
+              </div>
+            ) : transcriptionError ? (
+              <div className="flex h-64 flex-col items-center justify-center text-center">
+                <div className="mb-4 text-5xl">⚠️</div>
+                <p className="text-error font-medium mb-2" data-testid="transcription-error">
+                  {transcriptionError}
+                </p>
+                <p className="text-text-secondary text-sm mb-4">
+                  The transcription service encountered an issue. You can retry the upload.
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleRetryTranscription}
+                    data-testid="retry-transcription-btn"
+                  >
+                    🔄 Retry Transcription
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setTranscriptionError(null);
+                      setUploadedFile(null);
+                      setLastUploadedFile(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
             ) : transcribedText ? (
               <div className="space-y-4">
