@@ -1308,3 +1308,57 @@ Continued feature verification focusing on Security & Access Control and Error H
 - Package Manager: pnpm
 - Framework: Next.js 14 (App Router)
 - Dev Server: http://localhost:3000
+
+---
+
+# Session 8 - Coding Agent (Continuation)
+
+## Date: 2026-01-15
+
+## Session Summary
+Continued feature implementation, focusing on Error Handling and UI-Backend Integration features.
+
+## Tasks Completed
+
+### 1. Feature #95: File upload errors show clear message
+- Tested file size validation (26MB file blocked with "File too large" message)
+- Tested invalid file type (.txt blocked with "Invalid file type" message)
+- Verified supported formats listed: "MP3, WAV, M4A (max 25MB)"
+- Both inline alerts and toast notifications displayed
+
+### 2. Feature #96: Duplicate entry errors are clear
+- Implemented duplicate template name validation
+- Error message: "A template named 'X' already exists. Please use a different name."
+- Checks both personal and global templates for duplicates
+
+### 3. Feature #97: Transcription API error with retry
+- Added error simulation via ?simulate_error=true parameter
+- Error shows: "Transcription service temporarily unavailable. Please try again."
+- Retry button available and functional
+- On retry, transcription succeeds
+
+### 4. Feature #112: Optimistic updates rollback on failure
+- Implemented optimistic update pattern in template edit
+- Added error simulation via ?simulate_save_error=true parameter
+- On failure, form reverts to original state (originalFormData)
+- Toast shows "Failed to save template. Changes have been reverted."
+
+## Features Skipped (External Dependencies)
+- #98: Credit exhaustion blocking (requires Stripe)
+- #99: Invalid OAuth callback handled (requires Google OAuth)
+- #100: Stripe payment failure handled (requires Stripe)
+- #106: Delete parent handles children correctly (macro categories not implemented)
+- #109: Pagination returns correct data (pagination not implemented)
+
+## Current State
+
+### Feature Progress
+- Total Features: 280
+- Passing: 233
+- In Progress: 0
+- Percentage: 83.2%
+
+### Git Commits This Session
+- "Add duplicate template name validation - Features #95 and #96 passing"
+- "Add transcription API error handling with retry - Feature #97 passing"
+- "Add optimistic update rollback on save failure - Feature #112 passing"
