@@ -25,6 +25,8 @@ interface Institution {
 
 // Storage key for institutions
 const INSTITUTIONS_KEY = 'ai-rad-institutions';
+const INSTITUTION_MEMBERS_KEY = 'ai-rad-institution-members';
+const INSTITUTION_TEMPLATES_KEY = 'ai-rad-institution-templates';
 
 // Helper to get institutions from localStorage
 function getInstitutions(): Institution[] {
@@ -113,15 +115,46 @@ export default function InstitutionsPage() {
     showToast(`Institution "${newInstitution.name}" created successfully!`, 'success');
   };
 
-  // Handle delete institution
+  // Handle delete institution (with cascade delete of members and templates)
   const handleDelete = () => {
     if (!deleteTarget) return;
 
+    // Delete institution from list
     const updatedInstitutions = institutions.filter(i => i.id !== deleteTarget.id);
     saveInstitutions(updatedInstitutions);
     setInstitutions(updatedInstitutions);
 
-    showToast(`Institution "${deleteTarget.name}" deleted successfully!`, 'success');
+    // Cascade delete: Remove all members of this institution
+    const membersData = localStorage.getItem(INSTITUTION_MEMBERS_KEY);
+    if (membersData) {
+      try {
+        const allMembers = JSON.parse(membersData);
+        const remainingMembers = allMembers.filter(
+          (member: { institutionId: string }) => member.institutionId !== deleteTarget.id
+        );
+        localStorage.setItem(INSTITUTION_MEMBERS_KEY, JSON.stringify(remainingMembers));
+        console.log(`[CASCADE DELETE] Removed ${allMembers.length - remainingMembers.length} member(s) from institution ${deleteTarget.id}`);
+      } catch {
+        console.error('Failed to cascade delete institution members');
+      }
+    }
+
+    // Cascade delete: Remove all institution templates
+    const templatesData = localStorage.getItem(INSTITUTION_TEMPLATES_KEY);
+    if (templatesData) {
+      try {
+        const allTemplates = JSON.parse(templatesData);
+        const remainingTemplates = allTemplates.filter(
+          (template: { institutionId: string }) => template.institutionId !== deleteTarget.id
+        );
+        localStorage.setItem(INSTITUTION_TEMPLATES_KEY, JSON.stringify(remainingTemplates));
+        console.log(`[CASCADE DELETE] Removed ${allTemplates.length - remainingTemplates.length} template(s) from institution ${deleteTarget.id}`);
+      } catch {
+        console.error('Failed to cascade delete institution templates');
+      }
+    }
+
+    showToast(`Institution "${deleteTarget.name}" and all associated data deleted successfully!`, 'success');
     setDeleteTarget(null);
     setShowDeleteDialog(false);
   };
