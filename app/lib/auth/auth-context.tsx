@@ -85,6 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadUser = async () => {
       // Check for mock auth first
       const mockUserKey = getCookie(MOCK_AUTH_COOKIE);
+
+      // Handle predefined mock users (radiologist, admin)
       if (mockUserKey && MOCK_USERS[mockUserKey]) {
         const mockUser = MOCK_USERS[mockUserKey];
         // Load profile data from localStorage (may override mock name)
@@ -99,6 +101,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         setIsLoading(false);
         return;
+      }
+
+      // Handle custom registered users (signed up via signup form)
+      if (mockUserKey && mockUserKey.startsWith('custom_')) {
+        const email = mockUserKey.replace('custom_', '');
+        // Load custom user data from localStorage
+        const customUserData = localStorage.getItem('ai-rad-custom-user');
+        if (customUserData) {
+          try {
+            const userData = JSON.parse(customUserData);
+            const userId = `custom-user-${email.replace(/[^a-z0-9]/gi, '-')}`;
+            const storedProfile = loadUserProfile(userId);
+            setUser({
+              id: userId,
+              email: userData.email || email,
+              name: storedProfile.name || userData.name || email.split('@')[0],
+              role: userData.role || 'radiologist',
+              specialty: storedProfile.specialty,
+              institution: storedProfile.institution,
+            });
+            setIsLoading(false);
+            return;
+          } catch {
+            // Invalid custom user data, continue to check Supabase
+          }
+        }
       }
 
       // Check for Supabase auth
