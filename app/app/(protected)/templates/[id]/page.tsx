@@ -259,10 +259,26 @@ export default function TemplateDetailPage() {
 
   // Load template on mount and when user changes
   useEffect(() => {
+    // Only attempt to load if user context is ready (not in initial loading state)
+    if (user === null && typeof window !== 'undefined') {
+      // User is loading, wait for auth context to settle
+      return;
+    }
+
     const storedTemplates = getStoredTemplates(user?.id);
     const globalTemplates = getGlobalTemplates();
-    const allTemplates = [...storedTemplates, ...globalTemplates.filter(g => !storedTemplates.some(s => s.id === g.id))];
-    const foundTemplate = allTemplates.find(t => t.id === id);
+
+    // First check if it's the user's own personal template
+    const personalTemplate = storedTemplates.find(t => t.id === id);
+
+    // Then check if it's a global template (accessible to all)
+    const globalTemplate = globalTemplates.find(t => t.id === id);
+
+    // Only allow access to:
+    // 1. User's own personal templates
+    // 2. Global templates (shared with everyone)
+    // Personal templates of OTHER users should NOT be accessible
+    const foundTemplate = personalTemplate || globalTemplate;
 
     if (foundTemplate) {
       setTemplate(foundTemplate);
