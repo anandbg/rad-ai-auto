@@ -218,6 +218,8 @@ export default function TemplateDetailPage() {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
   const [showDiffView, setShowDiffView] = useState(false);
+  const [rollbackVersion, setRollbackVersion] = useState<TemplateVersion | null>(null);
+  const [showRollbackConfirm, setShowRollbackConfirm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     modality: '',
@@ -384,6 +386,74 @@ export default function TemplateDetailPage() {
     return selected.sort((a, b) => a.version - b.version);
   };
 
+  // Handle rollback to a previous version
+  const handleRollback = (version: TemplateVersion) => {
+    setRollbackVersion(version);
+    setShowRollbackConfirm(true);
+  };
+
+  // Confirm and execute rollback
+  const confirmRollback = () => {
+    if (!rollbackVersion || !template) return;
+
+    // Save current state as a new version before rollback
+    const newVersion = saveTemplateVersion(template, user?.id);
+
+    // Update template with the rollback version's content
+    const rolledBackTemplate: Template = {
+      ...template,
+      name: rollbackVersion.name,
+      modality: rollbackVersion.modality,
+      bodyPart: rollbackVersion.bodyPart,
+      description: rollbackVersion.description,
+      content: rollbackVersion.content,
+      sections: rollbackVersion.sections,
+      updatedAt: new Date().toISOString(),
+      version: (template.version || 0) + 1,
+    };
+
+    // Save the rolled-back template
+    if (rolledBackTemplate.isGlobal) {
+      const globalTemplates = getGlobalTemplates();
+      const existingIndex = globalTemplates.findIndex(t => t.id === id);
+      if (existingIndex >= 0) {
+        globalTemplates[existingIndex] = rolledBackTemplate;
+      }
+      saveGlobalTemplates(globalTemplates);
+    } else {
+      const storedTemplates = getStoredTemplates(user?.id);
+      const existingIndex = storedTemplates.findIndex(t => t.id === id);
+      if (existingIndex >= 0) {
+        storedTemplates[existingIndex] = rolledBackTemplate;
+      }
+      saveTemplates(storedTemplates, user?.id);
+    }
+
+    // Update local state
+    setTemplate(rolledBackTemplate);
+    setVersions(prev => [newVersion, ...prev]);
+    setFormData({
+      name: rolledBackTemplate.name,
+      modality: rolledBackTemplate.modality,
+      bodyPart: rolledBackTemplate.bodyPart,
+      description: rolledBackTemplate.description,
+      content: rolledBackTemplate.content || '',
+    });
+    setOriginalFormData({
+      name: rolledBackTemplate.name,
+      modality: rolledBackTemplate.modality,
+      bodyPart: rolledBackTemplate.bodyPart,
+      description: rolledBackTemplate.description,
+      content: rolledBackTemplate.content || '',
+    });
+
+    // Clean up
+    setShowRollbackConfirm(false);
+    setRollbackVersion(null);
+
+    showToast(`Template rolled back to Version ${rollbackVersion.version} successfully!`, 'success');
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -424,6 +494,40 @@ export default function TemplateDetailPage() {
         onStay={handleStay}
         onLeave={handleLeave}
       />
+
+      {/* Rollback Confirmation Dialog */}
+      {showRollbackConfirm && rollbackVersion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-testid="rollback-confirm-dialog">
+          <div className="mx-4 w-full max-w-md rounded-lg bg-surface p-6 shadow-lg">
+            <h3 className="text-lg font-semibold text-text-primary mb-2">Confirm Rollback</h3>
+            <p className="text-text-secondary mb-4">
+              Are you sure you want to rollback to <strong>Version {rollbackVersion.version}</strong>?
+            </p>
+            <p className="text-sm text-text-muted mb-4">
+              This will restore the template to its state from {new Date(rollbackVersion.createdAt).toLocaleString()}.
+              The current state will be saved as a new version.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowRollbackConfirm(false);
+                  setRollbackVersion(null);
+                }}
+                data-testid="rollback-cancel-btn"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmRollback}
+                data-testid="rollback-confirm-btn"
+              >
+                Rollback
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Breadcrumb */}
       <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
@@ -754,6 +858,22 @@ export default function TemplateDetailPage() {
                           <p className="truncate"><strong>Description:</strong> {version.description}</p>
                         )}
                       </div>
+                      {/* Rollback button - only for non-latest versions */}
+                      {index > 0 && canEdit && (
+                        <div className="mt-3 ml-7">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRollback(version);
+                            }}
+                            data-testid={`rollback-btn-${version.version}`}
+                          >
+                            Rollback to this version
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
