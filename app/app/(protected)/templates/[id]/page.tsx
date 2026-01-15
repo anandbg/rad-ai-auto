@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast';
+import { useUnsavedChanges } from '@/lib/hooks/use-unsaved-changes';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 
 // Section interface for template sections
 interface TemplateSection {
@@ -221,6 +223,35 @@ export default function TemplateDetailPage() {
     description: '',
     content: '',
   });
+  const [originalFormData, setOriginalFormData] = useState({
+    name: '',
+    modality: '',
+    bodyPart: '',
+    description: '',
+    content: '',
+  });
+
+  // Check if form has unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    if (!isEditing) return false;
+    return (
+      formData.name !== originalFormData.name ||
+      formData.modality !== originalFormData.modality ||
+      formData.bodyPart !== originalFormData.bodyPart ||
+      formData.description !== originalFormData.description ||
+      formData.content !== originalFormData.content
+    );
+  }, [isEditing, formData, originalFormData]);
+
+  // Unsaved changes warning
+  const {
+    showDialog: showUnsavedDialog,
+    handleStay,
+    handleLeave,
+  } = useUnsavedChanges({
+    isDirty: hasUnsavedChanges,
+    message: 'You have unsaved changes. Are you sure you want to leave?',
+  });
 
   // Load template on mount and when user changes
   useEffect(() => {
@@ -231,13 +262,15 @@ export default function TemplateDetailPage() {
 
     if (foundTemplate) {
       setTemplate(foundTemplate);
-      setFormData({
+      const initialData = {
         name: foundTemplate.name,
         modality: foundTemplate.modality,
         bodyPart: foundTemplate.bodyPart,
         description: foundTemplate.description,
         content: foundTemplate.content || '',
-      });
+      };
+      setFormData(initialData);
+      setOriginalFormData(initialData);
       // Load version history for this template
       const templateVersions = getTemplateVersions(id);
       setVersions(templateVersions);
@@ -293,6 +326,8 @@ export default function TemplateDetailPage() {
     setTemplate(updatedTemplate);
     // Update versions list with the new version
     setVersions(prev => [newVersion, ...prev]);
+    // Reset original form data to match saved state (clears dirty flag)
+    setOriginalFormData({ ...formData });
     setIsEditing(false);
     setIsSaving(false);
 
@@ -338,6 +373,13 @@ export default function TemplateDetailPage() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
+      {/* Unsaved Changes Dialog */}
+      <UnsavedChangesDialog
+        open={showUnsavedDialog}
+        onStay={handleStay}
+        onLeave={handleLeave}
+      />
+
       {/* Breadcrumb */}
       <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
         <Link href="/templates" className="hover:text-text-primary">
