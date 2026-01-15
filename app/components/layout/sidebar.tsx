@@ -29,6 +29,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -42,13 +43,54 @@ export function Sidebar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   // Filter nav items based on user role
   const visibleNavItems = navItems.filter(
     (item) => !item.adminOnly || user?.role === 'admin'
   );
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r bg-surface">
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="fixed top-4 left-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg bg-surface border shadow-md md:hidden"
+        aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+        data-testid="mobile-menu-button"
+      >
+        {isMobileMenuOpen ? (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        )}
+      </button>
+
+      {/* Mobile overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r bg-surface
+          transform transition-transform duration-300 ease-in-out
+          md:relative md:translate-x-0
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/dashboard" className="flex items-center gap-2">
@@ -137,5 +179,6 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }

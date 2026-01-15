@@ -17,7 +17,7 @@ export default function ProtectedLayout({
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main id="main-content" className="flex-1 overflow-auto">
+      <main id="main-content" className="flex-1 overflow-auto pt-16 md:pt-0">
         {children}
       </main>
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={closeCommandPalette} />
