@@ -180,6 +180,7 @@ export default function TranscribePage() {
   const { user } = useAuth();
   const { preferences } = usePreferences();
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcribedText, setTranscribedText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -262,6 +263,7 @@ export default function TranscribePage() {
 
   const startRecording = useCallback(() => {
     setIsRecording(true);
+    setIsPaused(false);
     setRecordingTime(0);
     setTranscribedText('');
 
@@ -269,6 +271,36 @@ export default function TranscribePage() {
     timerRef.current = setInterval(() => {
       setRecordingTime(prev => prev + 1);
     }, 1000);
+  }, []);
+
+  const pauseRecording = useCallback(() => {
+    setIsPaused(true);
+    // Stop the timer while paused
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const resumeRecording = useCallback(() => {
+    setIsPaused(false);
+    // Resume the timer
+    timerRef.current = setInterval(() => {
+      setRecordingTime(prev => prev + 1);
+    }, 1000);
+  }, []);
+
+  const cancelRecording = useCallback(() => {
+    // Stop and discard recording without processing
+    setIsRecording(false);
+    setIsPaused(false);
+    setRecordingTime(0);
+    // Clear the timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    // No transcription minutes are added - recording is discarded
   }, []);
 
   // Auto-start recording when ?autostart=true is in URL (YOLO one-click workflow)
@@ -289,6 +321,7 @@ export default function TranscribePage() {
 
   const stopRecording = async () => {
     setIsRecording(false);
+    setIsPaused(false);
 
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -384,9 +417,10 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
             <CardContent className="space-y-4">
               <div className="flex flex-col items-center space-y-4">
                 <div className={`flex h-32 w-32 items-center justify-center rounded-full ${
-                  isRecording ? 'animate-pulse bg-danger/20' : 'bg-surface-muted'
+                  isRecording && !isPaused ? 'animate-pulse bg-danger/20' :
+                  isPaused ? 'bg-warning/20' : 'bg-surface-muted'
                 }`}>
-                  <span className="text-5xl">{isRecording ? '🔴' : '🎤'}</span>
+                  <span className="text-5xl">{isRecording ? (isPaused ? '⏸️' : '🔴') : '🎤'}</span>
                 </div>
 
                 {isRecording && (
@@ -394,7 +428,9 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                     <div className="text-3xl font-mono font-bold text-text-primary" data-testid="recording-time">
                       {formatTime(recordingTime)}
                     </div>
-                    <p className="text-sm text-text-secondary">Recording...</p>
+                    <p className="text-sm text-text-secondary" data-testid="recording-status">
+                      {isPaused ? 'Paused' : 'Recording...'}
+                    </p>
                   </div>
                 )}
 
@@ -408,13 +444,39 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                       Start Recording
                     </Button>
                   ) : (
-                    <Button
-                      variant="danger"
-                      onClick={stopRecording}
-                      data-testid="stop-recording-btn"
-                    >
-                      Stop Recording
-                    </Button>
+                    <>
+                      {!isPaused ? (
+                        <Button
+                          variant="secondary"
+                          onClick={pauseRecording}
+                          data-testid="pause-recording-btn"
+                        >
+                          ⏸️ Pause
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          onClick={resumeRecording}
+                          data-testid="resume-recording-btn"
+                        >
+                          ▶️ Resume
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={cancelRecording}
+                        data-testid="cancel-recording-btn"
+                      >
+                        ✕ Cancel
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={stopRecording}
+                        data-testid="stop-recording-btn"
+                      >
+                        Stop Recording
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -493,6 +555,19 @@ IMPRESSION: Normal examination. No acute pathology identified.`;
                   </Button>
                   <Button variant="outline" size="sm" asChild>
                     <a href="/generate">Use in Report</a>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setTranscribedText('');
+                      setUploadedFile(null);
+                      setDetectedModality(null);
+                      setDetectedBodyPart(null);
+                    }}
+                    data-testid="clear-transcription-btn"
+                  >
+                    🗑️ Clear
                   </Button>
                 </div>
                 {macros.length > 0 && (
