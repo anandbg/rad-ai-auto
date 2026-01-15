@@ -189,12 +189,16 @@ export default function TemplatesPage() {
   // Bulk selection state
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Read URL query params on mount
   useEffect(() => {
     const modalityParam = searchParams.get('modality');
     const searchParam = searchParams.get('search');
     const sortParam = searchParams.get('sort');
+    const pageParam = searchParams.get('page');
 
     if (modalityParam) {
       setSelectedModality(modalityParam);
@@ -205,15 +209,22 @@ export default function TemplatesPage() {
     if (sortParam && ['name-asc', 'name-desc', 'date-asc', 'date-desc'].includes(sortParam)) {
       setSortBy(sortParam as 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc');
     }
+    if (pageParam) {
+      const page = parseInt(pageParam, 10);
+      if (!isNaN(page) && page > 0) {
+        setCurrentPage(page);
+      }
+    }
     setIsInitialized(true);
   }, [searchParams]);
 
   // Sync URL when filters change (after initial load)
-  const updateUrlParams = useCallback((search: string, modality: string, sort: string) => {
+  const updateUrlParams = useCallback((search: string, modality: string, sort: string, page: number) => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (modality && modality !== 'all') params.set('modality', modality);
     if (sort && sort !== 'name-asc') params.set('sort', sort);
+    if (page > 1) params.set('page', page.toString());
 
     const queryString = params.toString();
     const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
@@ -224,10 +235,17 @@ export default function TemplatesPage() {
   useEffect(() => {
     if (!isInitialized) return;
     const timeoutId = setTimeout(() => {
-      updateUrlParams(searchQuery, selectedModality, sortBy);
+      updateUrlParams(searchQuery, selectedModality, sortBy, currentPage);
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, selectedModality, sortBy, isInitialized, updateUrlParams]);
+  }, [searchQuery, selectedModality, sortBy, currentPage, isInitialized, updateUrlParams]);
+
+  // Reset to page 1 when search/filter changes
+  useEffect(() => {
+    if (isInitialized) {
+      setCurrentPage(1);
+    }
+  }, [searchQuery, selectedModality]);
 
   // Load templates on mount and when user changes
   useEffect(() => {
@@ -309,9 +327,23 @@ export default function TemplatesPage() {
   const modalities = ['all', ...new Set(templates.map(t => t.modality))];
 
   // Personal vs Institution vs Global templates (sorted)
-  const personalTemplates = sortTemplates(filteredTemplates.filter(t => !t.isGlobal && !t.isSharedWithInstitution));
+  const allPersonalTemplates = sortTemplates(filteredTemplates.filter(t => !t.isGlobal && !t.isSharedWithInstitution));
   const institutionTemplates = sortTemplates(filteredTemplates.filter(t => t.isSharedWithInstitution));
   const globalTemplates = sortTemplates(filteredTemplates.filter(t => t.isGlobal));
+
+  // Pagination calculations for personal templates
+  const totalPersonalTemplates = allPersonalTemplates.length;
+  const totalPages = Math.ceil(totalPersonalTemplates / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const personalTemplates = allPersonalTemplates.slice(startIndex, endIndex);
+
+  // Helper for page navigation
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const handleDelete = (id: string) => {
     const template = templates.find(t => t.id === id);
@@ -440,12 +472,12 @@ export default function TemplatesPage() {
   };
 
   const handleSelectAll = () => {
-    if (selectedTemplateIds.size === personalTemplates.length && personalTemplates.length > 0) {
+    if (selectedTemplateIds.size === allPersonalTemplates.length && allPersonalTemplates.length > 0) {
       // Deselect all
       setSelectedTemplateIds(new Set());
     } else {
-      // Select all personal templates
-      setSelectedTemplateIds(new Set(personalTemplates.map(t => t.id)));
+      // Select all personal templates (across all pages)
+      setSelectedTemplateIds(new Set(allPersonalTemplates.map(t => t.id)));
     }
   };
 
@@ -600,11 +632,11 @@ export default function TemplatesPage() {
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {personalTemplates.length > 0 && (
+            {allPersonalTemplates.length > 0 && (
               <label className="flex items-center gap-2 cursor-pointer" data-testid="select-all-checkbox">
                 <input
                   type="checkbox"
-                  checked={selectedTemplateIds.size === personalTemplates.length && personalTemplates.length > 0}
+                  checked={selectedTemplateIds.size === allPersonalTemplates.length && allPersonalTemplates.length > 0}
                   onChange={handleSelectAll}
                   className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
                 />
@@ -612,7 +644,7 @@ export default function TemplatesPage() {
               </label>
             )}
             <h2 className="text-lg font-semibold text-text-primary">
-              Personal Templates ({personalTemplates.length})
+              Personal Templates ({totalPersonalTemplates})
             </h2>
           </div>
           {selectedTemplateIds.size > 0 && (
@@ -696,6 +728,47 @@ export default function TemplatesPage() {
                 </CardFooter>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-2" data-testid="pagination-controls">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              data-testid="pagination-prev"
+            >
+              Previous
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => goToPage(page)}
+                  data-testid={`pagination-page-${page}`}
+                  className="min-w-[36px]"
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              data-testid="pagination-next"
+            >
+              Next
+            </Button>
+            <span className="ml-2 text-sm text-text-secondary" data-testid="pagination-info">
+              Showing {startIndex + 1}-{Math.min(endIndex, totalPersonalTemplates)} of {totalPersonalTemplates}
+            </span>
           </div>
         )}
       </div>
