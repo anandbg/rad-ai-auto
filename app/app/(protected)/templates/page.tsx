@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -98,6 +98,8 @@ function saveTemplates(templates: Template[], userId: string | undefined) {
 export default function TemplatesPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -109,6 +111,7 @@ export default function TemplatesPage() {
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [templateToClone, setTemplateToClone] = useState<Template | null>(null);
   const [cloneName, setCloneName] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Read URL query params on mount
   useEffect(() => {
@@ -125,7 +128,29 @@ export default function TemplatesPage() {
     if (sortParam && ['name-asc', 'name-desc', 'date-asc', 'date-desc'].includes(sortParam)) {
       setSortBy(sortParam as 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc');
     }
+    setIsInitialized(true);
   }, [searchParams]);
+
+  // Sync URL when filters change (after initial load)
+  const updateUrlParams = useCallback((search: string, modality: string, sort: string) => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (modality && modality !== 'all') params.set('modality', modality);
+    if (sort && sort !== 'name-asc') params.set('sort', sort);
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [pathname, router]);
+
+  // Debounced URL update when search/filter changes
+  useEffect(() => {
+    if (!isInitialized) return;
+    const timeoutId = setTimeout(() => {
+      updateUrlParams(searchQuery, selectedModality, sortBy);
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, selectedModality, sortBy, isInitialized, updateUrlParams]);
 
   // Load templates on mount and when user changes
   useEffect(() => {
