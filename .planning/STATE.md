@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 ## Current Position
 
 Phase: 3 of 10 (Template System)
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: In progress
-Last activity: 2026-01-16 - Completed 03-01-PLAN.md (Template CRUD API)
+Last activity: 2026-01-16 - Completed 03-02-PLAN.md (Template UI API Integration)
 
-Progress: [███░░░░░░░] 30%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 6 min
-- Total execution time: 0.3 hours
+- Total execution time: 0.4 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [███░░░░░░░] 30%
 |-------|-------|-------|----------|
 | 01-database-foundation | 1 | 12 min | 12 min |
 | 02-authentication | 1 | 3 min | 3 min |
-| 03-template-system | 1 | 3 min | 3 min |
+| 03-template-system | 2 | 8 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (12 min), 02-01 (3 min), 03-01 (3 min)
-- Trend: Consistent fast execution on API and verification plans
+- Last 5 plans: 01-01 (12 min), 02-01 (3 min), 03-01 (3 min), 03-02 (5 min)
+- Trend: Consistent fast execution on API and UI integration plans
 
 ## Accumulated Context
 
@@ -54,6 +54,9 @@ Recent decisions affecting current work:
 | Content stored as JSONB {sections, rawContent} | Flexible template content structure | 03-01 |
 | origin_global_id for cloned templates | Track provenance of cloned templates | 03-01 |
 | DELETE returns 204 No Content | REST convention for successful delete | 03-01 |
+| Keep browser Supabase client for reads | RLS handles security, simpler than list API endpoint | 03-02 |
+| Global templates read-only for all | Admin editing is Phase 10, all users can only clone | 03-02 |
+| Preserve draft storage in localStorage | Useful UX for form recovery | 03-02 |
 
 ### Pending Todos
 
@@ -70,7 +73,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 03-01-PLAN.md
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
 
 ## Completed Plans
@@ -80,3 +83,4 @@ Resume file: None
 | 01-01 | Database Schema and RLS | 12 min | 381015b, 6ad60ae |
 | 02-01 | Supabase Auth Verification | 3 min | a00506a, a2bb68c, a2f4263 |
 | 03-01 | Template CRUD API | 3 min | d6f520b, dc2962c, 1deff1d |
+| 03-02 | Template UI API Integration | 5 min | 1d88bc3, a0e7051, a13d023 |
