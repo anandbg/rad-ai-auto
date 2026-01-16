@@ -15,6 +15,9 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { PageWrapper } from '@/components/motion/page-wrapper';
+import { FadeIn } from '@/components/motion/fade-in';
+import { StaggerContainer } from '@/components/motion/stagger-container';
 
 // Category interface
 interface MacroCategory {
@@ -548,633 +551,655 @@ export default function MacrosPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-5xl p-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-text-primary">Macros</h1>
-          <p className="mt-1 text-text-secondary">Loading...</p>
+      <PageWrapper className="p-6">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Macros</h1>
+            <p className="mt-2 text-text-secondary">Loading...</p>
+          </div>
+          <div className="flex items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
+          </div>
         </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
-        </div>
-      </div>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Macros</h1>
-          <p className="mt-1 text-text-secondary">
-            Create shortcuts for commonly used terms and phrases
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="file"
-            id="import-macros-input"
-            accept=".json"
-            onChange={handleImportMacros}
-            className="hidden"
-            data-testid="import-macros-input"
-          />
-          <Button
-            variant="outline"
-            onClick={() => document.getElementById('import-macros-input')?.click()}
-            data-testid="import-macros-button"
-          >
-            Import
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExportMacros}
-            data-testid="export-macros-button"
-          >
-            Export
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsCategoryDialogOpen(true)}
-            data-testid="create-category-button"
-          >
-            + Create Category
-          </Button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="create-macro-button">
-                + Create Macro
+    <PageWrapper className="p-6">
+      <div className="mx-auto max-w-5xl">
+        <FadeIn>
+          <div className="mb-8 flex items-center justify-between">
+            <header>
+              <h1 className="text-3xl font-bold tracking-tight">Macros</h1>
+              <p className="mt-2 text-text-secondary">
+                Create shortcuts for commonly used terms and phrases
+              </p>
+            </header>
+            <div className="flex gap-2">
+              <input
+                type="file"
+                id="import-macros-input"
+                accept=".json"
+                onChange={handleImportMacros}
+                className="hidden"
+                data-testid="import-macros-input"
+              />
+              <Button
+                variant="outline"
+                onClick={() => document.getElementById('import-macros-input')?.click()}
+                data-testid="import-macros-button"
+              >
+                Import
               </Button>
-            </DialogTrigger>
-          <DialogContent data-testid="create-macro-dialog">
+              <Button
+                variant="outline"
+                onClick={handleExportMacros}
+                data-testid="export-macros-button"
+              >
+                Export
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsCategoryDialogOpen(true)}
+                data-testid="create-category-button"
+              >
+                + Create Category
+              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button data-testid="create-macro-button">
+                    + Create Macro
+                  </Button>
+                </DialogTrigger>
+              <DialogContent data-testid="create-macro-dialog">
+                <DialogHeader>
+                  <DialogTitle>Create New Macro</DialogTitle>
+                  <DialogDescription>
+                    Define a shortcut that expands to longer text during transcription
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 px-6 py-4 max-h-[60vh] overflow-y-auto">
+                  <div>
+                    <label htmlFor="macro-name" className="mb-2 block text-sm font-medium text-text-primary">
+                      Shortcut
+                    </label>
+                    <Input
+                      id="macro-name"
+                      placeholder="e.g., nml"
+                      value={newMacroName}
+                      onChange={(e) => setNewMacroName(e.target.value)}
+                      data-testid="macro-name-input"
+                    />
+                    <p className="mt-1 text-xs text-text-secondary">
+                      The abbreviation you&apos;ll type during transcription
+                    </p>
+                  </div>
+                  <div>
+                    <label htmlFor="macro-text" className="mb-2 block text-sm font-medium text-text-primary">
+                      {isSmartMacro ? 'Default Expansion Text' : 'Expansion Text'}
+                    </label>
+                    <Textarea
+                      id="macro-text"
+                      placeholder="e.g., within normal limits"
+                      value={newMacroText}
+                      onChange={(e) => setNewMacroText(e.target.value)}
+                      data-testid="macro-text-input"
+                    />
+                    <p className="mt-1 text-xs text-text-secondary">
+                      {isSmartMacro ? 'Used when no specific body part context matches' : 'The full text that replaces the shortcut'}
+                    </p>
+                  </div>
+                  {/* Smart Macro Toggle */}
+                  <div className="flex items-center gap-3 rounded-lg border border-border p-3 bg-surface-muted">
+                    <input
+                      type="checkbox"
+                      id="smart-macro"
+                      checked={isSmartMacro}
+                      onChange={(e) => setIsSmartMacro(e.target.checked)}
+                      className="h-4 w-4 rounded border-border"
+                      data-testid="smart-macro-checkbox"
+                    />
+                    <div>
+                      <label htmlFor="smart-macro" className="text-sm font-medium text-text-primary cursor-pointer">
+                        Smart Macro (Context-Aware)
+                      </label>
+                      <p className="text-xs text-text-secondary">
+                        Expands differently based on the body part being examined
+                      </p>
+                    </div>
+                  </div>
+                  {/* Context Expansions for Smart Macros */}
+                  {isSmartMacro && (
+                    <div className="space-y-3 rounded-lg border border-brand/30 p-4 bg-brand/5">
+                      <h4 className="text-sm font-medium text-text-primary">Context-Specific Expansions</h4>
+                      <p className="text-xs text-text-secondary">
+                        Add different expansions for specific body parts (e.g., Chest, Abdomen, Head)
+                      </p>
+                      {/* Existing context expansions */}
+                      {contextExpansions.map((ctx, index) => (
+                        <div key={index} className="flex items-start gap-2 rounded bg-surface p-2">
+                          <div className="flex-1">
+                            <span className="text-xs font-semibold text-brand">{ctx.bodyPart}</span>
+                            <p className="text-sm text-text-secondary">{ctx.text}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeContextExpansion(index)}
+                            className="text-danger"
+                          >
+                            X
+                          </Button>
+                        </div>
+                      ))}
+                      {/* Add new context expansion */}
+                      <div className="space-y-2">
+                        <select
+                          value={newContextBodyPart}
+                          onChange={(e) => setNewContextBodyPart(e.target.value)}
+                          className="w-full h-9 rounded-xl border border-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand"
+                          data-testid="context-bodypart-select"
+                        >
+                          <option value="">Select body part...</option>
+                          <option value="Head">Head</option>
+                          <option value="Neck">Neck</option>
+                          <option value="Chest">Chest</option>
+                          <option value="Abdomen">Abdomen</option>
+                          <option value="Pelvis">Pelvis</option>
+                          <option value="Spine">Spine</option>
+                          <option value="Upper Extremity">Upper Extremity</option>
+                          <option value="Lower Extremity">Lower Extremity</option>
+                        </select>
+                        <Input
+                          placeholder="Context-specific expansion text"
+                          value={newContextText}
+                          onChange={(e) => setNewContextText(e.target.value)}
+                          data-testid="context-text-input"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addContextExpansion}
+                          disabled={!newContextBodyPart || !newContextText.trim()}
+                          data-testid="add-context-btn"
+                        >
+                          + Add Context Expansion
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateMacro}
+                    disabled={!newMacroName.trim() || !newMacroText.trim()}
+                    data-testid="save-macro-button"
+                  >
+                    Create Macro
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* Categories Section */}
+        {categories.length > 0 && (
+          <FadeIn delay={0.1}>
+            <div className="mb-6">
+              <h2 className="mb-3 text-sm font-medium text-text-secondary uppercase tracking-wide">
+                Categories
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => {
+                  const macroCount = macros.filter(m => m.categoryId === cat.id).length;
+                  return (
+                    <span
+                      key={cat.id}
+                      className="group inline-flex items-center gap-1 rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand"
+                      data-testid={`category-badge-${cat.id}`}
+                    >
+                      {cat.name}
+                      {macroCount > 0 && (
+                        <span className="text-xs opacity-70">({macroCount})</span>
+                      )}
+                      <button
+                        onClick={() => openDeleteCategoryDialog(cat)}
+                        className="ml-1 rounded-full p-0.5 hover:bg-danger/20 hover:text-danger transition-colors"
+                        title={`Delete category "${cat.name}"`}
+                        data-testid={`delete-category-${cat.id}`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </FadeIn>
+        )}
+
+        {/* Categorized Macros */}
+        {categorizedMacros.map(({ category, macros: categoryMacros }, index) => (
+          <FadeIn key={category.id} delay={0.15 + index * 0.05}>
+            <div className="mb-8">
+              <h2 className="mb-4 text-lg font-semibold text-text-primary flex items-center gap-2">
+                <span className="text-brand">[Folder]</span>
+                {category.name} ({categoryMacros.length})
+              </h2>
+              <StaggerContainer className="grid gap-4 md:grid-cols-2">
+                {categoryMacros.map((macro) => (
+                  <FadeIn key={macro.id}>
+                    <Card data-testid={`macro-card-${macro.id}`}>
+                      <CardContent className="py-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <code className="rounded bg-surface-muted px-2 py-1 text-sm font-semibold text-brand">
+                                {macro.name}
+                              </code>
+                              {macro.isGlobal && (
+                                <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info">
+                                  Global
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-2 text-sm text-text-secondary">
+                              {macro.replacementText}
+                            </p>
+                          </div>
+                          {!macro.isGlobal && (
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openMoveDialog(macro)}
+                                title="Move to category"
+                                data-testid={`move-macro-${macro.id}`}
+                              >
+                                Move
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditDialog(macro)}
+                                title="Edit macro"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleMacro(macro.id)}
+                                title="Disable macro"
+                              >
+                                Disable
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openDeleteDialog(macro)}
+                                className="text-danger hover:text-danger"
+                                title="Delete macro"
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </FadeIn>
+                ))}
+              </StaggerContainer>
+            </div>
+          </FadeIn>
+        ))}
+
+        {/* Uncategorized / Active Macros */}
+        <FadeIn delay={0.2}>
+          <div className="mb-8">
+            <h2 className="mb-4 text-lg font-semibold text-text-primary">
+              {categories.length > 0 ? 'Uncategorized Macros' : 'Active Macros'} ({uncategorizedMacros.length})
+            </h2>
+            {uncategorizedMacros.length > 0 ? (
+              <StaggerContainer className="grid gap-4 md:grid-cols-2">
+                {uncategorizedMacros.map((macro) => (
+                  <FadeIn key={macro.id}>
+                    <Card data-testid={`macro-card-${macro.id}`}>
+                      <CardContent className="py-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <code className="rounded bg-surface-muted px-2 py-1 text-sm font-semibold text-brand">
+                                {macro.name}
+                              </code>
+                              {macro.isGlobal && (
+                                <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info">
+                                  Global
+                                </span>
+                              )}
+                              {macro.isSmartMacro && (
+                                <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning" data-testid={`smart-badge-${macro.id}`}>
+                                  Smart
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-2 text-sm text-text-secondary">
+                              {macro.replacementText}
+                            </p>
+                            {macro.isSmartMacro && macro.contextExpansions && macro.contextExpansions.length > 0 && (
+                              <div className="mt-2 text-xs text-text-muted">
+                                Context expansions: {macro.contextExpansions.map(c => c.bodyPart).join(', ')}
+                              </div>
+                            )}
+                          </div>
+                          {!macro.isGlobal && (
+                            <div className="flex gap-1">
+                              {categories.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openMoveDialog(macro)}
+                                  title="Move to category"
+                                  data-testid={`move-macro-${macro.id}`}
+                                >
+                                  Move
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditDialog(macro)}
+                                title="Edit macro"
+                                data-testid={`edit-macro-${macro.id}`}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleMacro(macro.id)}
+                                title="Disable macro"
+                              >
+                                Disable
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openDeleteDialog(macro)}
+                                className="text-danger hover:text-danger"
+                                title="Delete macro"
+                                data-testid={`delete-macro-${macro.id}`}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </FadeIn>
+                ))}
+              </StaggerContainer>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border p-8 text-center">
+                <p className="text-sm text-text-secondary">No {categories.length > 0 ? 'uncategorized' : 'active'} macros</p>
+              </div>
+            )}
+          </div>
+        </FadeIn>
+
+        {/* Inactive Macros */}
+        {inactiveMacros.length > 0 && (
+          <FadeIn delay={0.3}>
+            <div>
+              <h2 className="mb-4 text-lg font-semibold text-text-secondary">
+                Inactive Macros ({inactiveMacros.length})
+              </h2>
+              <StaggerContainer className="grid gap-4 md:grid-cols-2 opacity-60">
+                {inactiveMacros.map((macro) => (
+                  <FadeIn key={macro.id}>
+                    <Card data-testid={`macro-card-${macro.id}`}>
+                      <CardContent className="py-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <code className="rounded bg-surface-muted px-2 py-1 text-sm font-semibold text-text-secondary">
+                                {macro.name}
+                              </code>
+                            </div>
+                            <p className="mt-2 text-sm text-text-secondary">
+                              {macro.replacementText}
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleMacro(macro.id)}
+                              title="Enable macro"
+                            >
+                              Enable
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openDeleteDialog(macro)}
+                              className="text-danger hover:text-danger"
+                              title="Delete macro"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </FadeIn>
+                ))}
+              </StaggerContainer>
+            </div>
+          </FadeIn>
+        )}
+
+        {macros.length === 0 && (
+          <FadeIn delay={0.1}>
+            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center">
+              <div className="mb-4 text-5xl">[Lightning]</div>
+              <h3 className="mb-2 text-lg font-semibold text-text-primary">No macros yet</h3>
+              <p className="mb-4 text-sm text-text-secondary">
+                Create your first macro to speed up transcription
+              </p>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                Create Macro
+              </Button>
+            </div>
+          </FadeIn>
+        )}
+
+        {/* Edit Macro Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent data-testid="edit-macro-dialog">
             <DialogHeader>
-              <DialogTitle>Create New Macro</DialogTitle>
+              <DialogTitle>Edit Macro</DialogTitle>
               <DialogDescription>
-                Define a shortcut that expands to longer text during transcription
+                Modify the expansion text for &quot;{editingMacro?.name}&quot;
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 px-6 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-4 px-6 py-4">
               <div>
-                <label htmlFor="macro-name" className="mb-2 block text-sm font-medium text-text-primary">
-                  Shortcut
-                </label>
-                <Input
-                  id="macro-name"
-                  placeholder="e.g., nml"
-                  value={newMacroName}
-                  onChange={(e) => setNewMacroName(e.target.value)}
-                  data-testid="macro-name-input"
-                />
-                <p className="mt-1 text-xs text-text-secondary">
-                  The abbreviation you&apos;ll type during transcription
-                </p>
-              </div>
-              <div>
-                <label htmlFor="macro-text" className="mb-2 block text-sm font-medium text-text-primary">
-                  {isSmartMacro ? 'Default Expansion Text' : 'Expansion Text'}
+                <label htmlFor="edit-macro-text" className="mb-2 block text-sm font-medium text-text-primary">
+                  Expansion Text
                 </label>
                 <Textarea
-                  id="macro-text"
-                  placeholder="e.g., within normal limits"
-                  value={newMacroText}
-                  onChange={(e) => setNewMacroText(e.target.value)}
-                  data-testid="macro-text-input"
+                  id="edit-macro-text"
+                  placeholder="Enter expansion text"
+                  value={editMacroText}
+                  onChange={(e) => setEditMacroText(e.target.value)}
+                  data-testid="edit-macro-text-input"
                 />
-                <p className="mt-1 text-xs text-text-secondary">
-                  {isSmartMacro ? 'Used when no specific body part context matches' : 'The full text that replaces the shortcut'}
-                </p>
               </div>
-              {/* Smart Macro Toggle */}
-              <div className="flex items-center gap-3 rounded-lg border border-border p-3 bg-surface-muted">
-                <input
-                  type="checkbox"
-                  id="smart-macro"
-                  checked={isSmartMacro}
-                  onChange={(e) => setIsSmartMacro(e.target.checked)}
-                  className="h-4 w-4 rounded border-border"
-                  data-testid="smart-macro-checkbox"
-                />
-                <div>
-                  <label htmlFor="smart-macro" className="text-sm font-medium text-text-primary cursor-pointer">
-                    Smart Macro (Context-Aware)
-                  </label>
-                  <p className="text-xs text-text-secondary">
-                    Expands differently based on the body part being examined
-                  </p>
-                </div>
-              </div>
-              {/* Context Expansions for Smart Macros */}
-              {isSmartMacro && (
-                <div className="space-y-3 rounded-lg border border-brand/30 p-4 bg-brand/5">
-                  <h4 className="text-sm font-medium text-text-primary">Context-Specific Expansions</h4>
-                  <p className="text-xs text-text-secondary">
-                    Add different expansions for specific body parts (e.g., Chest, Abdomen, Head)
-                  </p>
-                  {/* Existing context expansions */}
-                  {contextExpansions.map((ctx, index) => (
-                    <div key={index} className="flex items-start gap-2 rounded bg-surface p-2">
-                      <div className="flex-1">
-                        <span className="text-xs font-semibold text-brand">{ctx.bodyPart}</span>
-                        <p className="text-sm text-text-secondary">{ctx.text}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeContextExpansion(index)}
-                        className="text-danger"
-                      >
-                        X
-                      </Button>
-                    </div>
-                  ))}
-                  {/* Add new context expansion */}
-                  <div className="space-y-2">
-                    <select
-                      value={newContextBodyPart}
-                      onChange={(e) => setNewContextBodyPart(e.target.value)}
-                      className="w-full h-9 rounded-xl border border-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand"
-                      data-testid="context-bodypart-select"
-                    >
-                      <option value="">Select body part...</option>
-                      <option value="Head">Head</option>
-                      <option value="Neck">Neck</option>
-                      <option value="Chest">Chest</option>
-                      <option value="Abdomen">Abdomen</option>
-                      <option value="Pelvis">Pelvis</option>
-                      <option value="Spine">Spine</option>
-                      <option value="Upper Extremity">Upper Extremity</option>
-                      <option value="Lower Extremity">Lower Extremity</option>
-                    </select>
-                    <Input
-                      placeholder="Context-specific expansion text"
-                      value={newContextText}
-                      onChange={(e) => setNewContextText(e.target.value)}
-                      data-testid="context-text-input"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={addContextExpansion}
-                      disabled={!newContextBodyPart || !newContextText.trim()}
-                      data-testid="add-context-btn"
-                    >
-                      + Add Context Expansion
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Cancel
               </Button>
               <Button
-                onClick={handleCreateMacro}
-                disabled={!newMacroName.trim() || !newMacroText.trim()}
-                data-testid="save-macro-button"
+                onClick={handleEditMacro}
+                disabled={!editMacroText.trim()}
+                data-testid="save-edit-macro-button"
               >
-                Create Macro
+                Save Changes
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        </div>
-      </div>
 
-      {/* Categories Section */}
-      {categories.length > 0 && (
-        <div className="mb-6">
-          <h2 className="mb-3 text-sm font-medium text-text-secondary uppercase tracking-wide">
-            Categories
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => {
-              const macroCount = macros.filter(m => m.categoryId === cat.id).length;
-              return (
-                <span
-                  key={cat.id}
-                  className="group inline-flex items-center gap-1 rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand"
-                  data-testid={`category-badge-${cat.id}`}
-                >
-                  {cat.name}
-                  {macroCount > 0 && (
-                    <span className="text-xs opacity-70">({macroCount})</span>
-                  )}
-                  <button
-                    onClick={() => openDeleteCategoryDialog(cat)}
-                    className="ml-1 rounded-full p-0.5 hover:bg-danger/20 hover:text-danger transition-colors"
-                    title={`Delete category "${cat.name}"`}
-                    data-testid={`delete-category-${cat.id}`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Categorized Macros */}
-      {categorizedMacros.map(({ category, macros: categoryMacros }) => (
-        <div key={category.id} className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-text-primary flex items-center gap-2">
-            <span className="text-brand">[Folder]</span>
-            {category.name} ({categoryMacros.length})
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {categoryMacros.map((macro) => (
-              <Card key={macro.id} data-testid={`macro-card-${macro.id}`}>
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <code className="rounded bg-surface-muted px-2 py-1 text-sm font-semibold text-brand">
-                          {macro.name}
-                        </code>
-                        {macro.isGlobal && (
-                          <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info">
-                            Global
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-2 text-sm text-text-secondary">
-                        {macro.replacementText}
-                      </p>
-                    </div>
-                    {!macro.isGlobal && (
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openMoveDialog(macro)}
-                          title="Move to category"
-                          data-testid={`move-macro-${macro.id}`}
-                        >
-                          Move
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(macro)}
-                          title="Edit macro"
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleMacro(macro.id)}
-                          title="Disable macro"
-                        >
-                          Disable
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openDeleteDialog(macro)}
-                          className="text-danger hover:text-danger"
-                          title="Delete macro"
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {/* Uncategorized / Active Macros */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">
-          {categories.length > 0 ? 'Uncategorized Macros' : 'Active Macros'} ({uncategorizedMacros.length})
-        </h2>
-        {uncategorizedMacros.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {uncategorizedMacros.map((macro) => (
-              <Card key={macro.id} data-testid={`macro-card-${macro.id}`}>
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <code className="rounded bg-surface-muted px-2 py-1 text-sm font-semibold text-brand">
-                          {macro.name}
-                        </code>
-                        {macro.isGlobal && (
-                          <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info">
-                            Global
-                          </span>
-                        )}
-                        {macro.isSmartMacro && (
-                          <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning" data-testid={`smart-badge-${macro.id}`}>
-                            Smart
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-2 text-sm text-text-secondary">
-                        {macro.replacementText}
-                      </p>
-                      {macro.isSmartMacro && macro.contextExpansions && macro.contextExpansions.length > 0 && (
-                        <div className="mt-2 text-xs text-text-muted">
-                          Context expansions: {macro.contextExpansions.map(c => c.bodyPart).join(', ')}
-                        </div>
-                      )}
-                    </div>
-                    {!macro.isGlobal && (
-                      <div className="flex gap-1">
-                        {categories.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openMoveDialog(macro)}
-                            title="Move to category"
-                            data-testid={`move-macro-${macro.id}`}
-                          >
-                            Move
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(macro)}
-                          title="Edit macro"
-                          data-testid={`edit-macro-${macro.id}`}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleMacro(macro.id)}
-                          title="Disable macro"
-                        >
-                          Disable
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openDeleteDialog(macro)}
-                          className="text-danger hover:text-danger"
-                          title="Delete macro"
-                          data-testid={`delete-macro-${macro.id}`}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-text-secondary">No {categories.length > 0 ? 'uncategorized' : 'active'} macros</p>
-          </div>
-        )}
-      </div>
-
-      {/* Inactive Macros */}
-      {inactiveMacros.length > 0 && (
-        <div>
-          <h2 className="mb-4 text-lg font-semibold text-text-secondary">
-            Inactive Macros ({inactiveMacros.length})
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2 opacity-60">
-            {inactiveMacros.map((macro) => (
-              <Card key={macro.id} data-testid={`macro-card-${macro.id}`}>
-                <CardContent className="py-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <code className="rounded bg-surface-muted px-2 py-1 text-sm font-semibold text-text-secondary">
-                          {macro.name}
-                        </code>
-                      </div>
-                      <p className="mt-2 text-sm text-text-secondary">
-                        {macro.replacementText}
-                      </p>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleMacro(macro.id)}
-                        title="Enable macro"
-                      >
-                        Enable
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openDeleteDialog(macro)}
-                        className="text-danger hover:text-danger"
-                        title="Delete macro"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {macros.length === 0 && (
-        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center">
-          <div className="mb-4 text-5xl">[Lightning]</div>
-          <h3 className="mb-2 text-lg font-semibold text-text-primary">No macros yet</h3>
-          <p className="mb-4 text-sm text-text-secondary">
-            Create your first macro to speed up transcription
-          </p>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            Create Macro
-          </Button>
-        </div>
-      )}
-
-      {/* Edit Macro Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent data-testid="edit-macro-dialog">
-          <DialogHeader>
-            <DialogTitle>Edit Macro</DialogTitle>
-            <DialogDescription>
-              Modify the expansion text for &quot;{editingMacro?.name}&quot;
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 px-6 py-4">
-            <div>
-              <label htmlFor="edit-macro-text" className="mb-2 block text-sm font-medium text-text-primary">
-                Expansion Text
-              </label>
-              <Textarea
-                id="edit-macro-text"
-                placeholder="Enter expansion text"
-                value={editMacroText}
-                onChange={(e) => setEditMacroText(e.target.value)}
-                data-testid="edit-macro-text-input"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleEditMacro}
-              disabled={!editMacroText.trim()}
-              data-testid="save-edit-macro-button"
-            >
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Macro Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent data-testid="delete-macro-dialog">
-          <DialogHeader>
-            <DialogTitle>Delete Macro</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete the macro &quot;{macroToDelete?.name}&quot;? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} data-testid="cancel-delete-macro-button">
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={confirmDeleteMacro}
-              data-testid="confirm-delete-macro-button"
-            >
-              Delete Macro
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Create Category Dialog */}
-      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-        <DialogContent data-testid="create-category-dialog">
-          <DialogHeader>
-            <DialogTitle>Create Category</DialogTitle>
-            <DialogDescription>
-              Create a new category to organize your macros
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 px-6 py-4">
-            <div>
-              <label htmlFor="category-name" className="mb-2 block text-sm font-medium text-text-primary">
-                Category Name
-              </label>
-              <Input
-                id="category-name"
-                placeholder="e.g., Anatomy, Findings, Impressions"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                data-testid="category-name-input"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateCategory}
-              disabled={!newCategoryName.trim()}
-              data-testid="save-category-button"
-            >
-              Create Category
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Move Macro to Category Dialog */}
-      <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
-        <DialogContent data-testid="move-macro-dialog">
-          <DialogHeader>
-            <DialogTitle>Move Macro</DialogTitle>
-            <DialogDescription>
-              Move &quot;{macroToMove?.name}&quot; to a category
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 px-6 py-4">
-            <div>
-              <label htmlFor="select-category" className="mb-2 block text-sm font-medium text-text-primary">
-                Select Category
-              </label>
-              <select
-                id="select-category"
-                value={selectedCategoryId}
-                onChange={(e) => setSelectedCategoryId(e.target.value)}
-                className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand"
-                data-testid="select-category-dropdown"
+        {/* Delete Macro Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent data-testid="delete-macro-dialog">
+            <DialogHeader>
+              <DialogTitle>Delete Macro</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete the macro &quot;{macroToDelete?.name}&quot;? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} data-testid="cancel-delete-macro-button">
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={confirmDeleteMacro}
+                data-testid="confirm-delete-macro-button"
               >
-                <option value="">Uncategorized</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsMoveDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleMoveMacro}
-              data-testid="confirm-move-macro-button"
-            >
-              Move Macro
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                Delete Macro
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Delete Category Confirmation Dialog */}
-      <Dialog open={isDeleteCategoryDialogOpen} onOpenChange={setIsDeleteCategoryDialogOpen}>
-        <DialogContent data-testid="delete-category-dialog">
-          <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
-            <DialogDescription>
-              {(() => {
-                const macroCount = categoryToDelete
-                  ? macros.filter(m => m.categoryId === categoryToDelete.id).length
-                  : 0;
-                if (macroCount > 0) {
-                  return `Are you sure you want to delete the category "${categoryToDelete?.name}"? The ${macroCount} macro${macroCount !== 1 ? 's' : ''} in this category will be moved to Uncategorized.`;
-                }
-                return `Are you sure you want to delete the category "${categoryToDelete?.name}"?`;
-              })()}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteCategoryDialogOpen(false)} data-testid="cancel-delete-category-button">
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleDeleteCategory}
-              data-testid="confirm-delete-category-button"
-            >
-              Delete Category
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        {/* Create Category Dialog */}
+        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+          <DialogContent data-testid="create-category-dialog">
+            <DialogHeader>
+              <DialogTitle>Create Category</DialogTitle>
+              <DialogDescription>
+                Create a new category to organize your macros
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 px-6 py-4">
+              <div>
+                <label htmlFor="category-name" className="mb-2 block text-sm font-medium text-text-primary">
+                  Category Name
+                </label>
+                <Input
+                  id="category-name"
+                  placeholder="e.g., Anatomy, Findings, Impressions"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  data-testid="category-name-input"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateCategory}
+                disabled={!newCategoryName.trim()}
+                data-testid="save-category-button"
+              >
+                Create Category
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Move Macro to Category Dialog */}
+        <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
+          <DialogContent data-testid="move-macro-dialog">
+            <DialogHeader>
+              <DialogTitle>Move Macro</DialogTitle>
+              <DialogDescription>
+                Move &quot;{macroToMove?.name}&quot; to a category
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 px-6 py-4">
+              <div>
+                <label htmlFor="select-category" className="mb-2 block text-sm font-medium text-text-primary">
+                  Select Category
+                </label>
+                <select
+                  id="select-category"
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  className="w-full h-10 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand"
+                  data-testid="select-category-dropdown"
+                >
+                  <option value="">Uncategorized</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsMoveDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleMoveMacro}
+                data-testid="confirm-move-macro-button"
+              >
+                Move Macro
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Category Confirmation Dialog */}
+        <Dialog open={isDeleteCategoryDialogOpen} onOpenChange={setIsDeleteCategoryDialogOpen}>
+          <DialogContent data-testid="delete-category-dialog">
+            <DialogHeader>
+              <DialogTitle>Delete Category</DialogTitle>
+              <DialogDescription>
+                {(() => {
+                  const macroCount = categoryToDelete
+                    ? macros.filter(m => m.categoryId === categoryToDelete.id).length
+                    : 0;
+                  if (macroCount > 0) {
+                    return `Are you sure you want to delete the category "${categoryToDelete?.name}"? The ${macroCount} macro${macroCount !== 1 ? 's' : ''} in this category will be moved to Uncategorized.`;
+                  }
+                  return `Are you sure you want to delete the category "${categoryToDelete?.name}"?`;
+                })()}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteCategoryDialogOpen(false)} data-testid="cancel-delete-category-button">
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDeleteCategory}
+                data-testid="confirm-delete-category-button"
+              >
+                Delete Category
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageWrapper>
   );
 }

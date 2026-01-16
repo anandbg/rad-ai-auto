@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth/auth-context';
+import { PageWrapper } from '@/components/motion/page-wrapper';
+import { FadeIn } from '@/components/motion/fade-in';
+import { StaggerContainer } from '@/components/motion/stagger-container';
 
 // Types for productivity data
 interface DailyReport {
@@ -287,188 +290,214 @@ export default function ProductivityPage() {
   });
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-text-primary">Productivity Insights</h1>
-        <p className="mt-1 text-text-secondary">
-          Track your report generation performance and efficiency
-        </p>
-      </div>
+    <PageWrapper className="p-6">
+      <div className="mx-auto max-w-6xl">
+        {/* Header */}
+        <FadeIn>
+          <header className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Productivity Insights</h1>
+            <p className="mt-2 text-text-secondary">
+              Track your report generation performance and efficiency
+            </p>
+          </header>
+        </FadeIn>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary" data-testid="total-reports">
-                {data.totalReports}
-              </div>
-              <div className="text-sm text-text-secondary mt-1">Total Reports</div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Summary Cards */}
+        <FadeIn delay={0.1}>
+          <StaggerContainer className="grid gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+            <FadeIn>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary" data-testid="total-reports">
+                      {data.totalReports}
+                    </div>
+                    <div className="text-sm text-text-secondary mt-1">Total Reports</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </FadeIn>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary" data-testid="avg-report-time">
-                {data.averageReportTime}s
-              </div>
-              <div className="text-sm text-text-secondary mt-1">Avg. Report Time</div>
-            </div>
-          </CardContent>
-        </Card>
+            <FadeIn>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary" data-testid="avg-report-time">
+                      {data.averageReportTime}s
+                    </div>
+                    <div className="text-sm text-text-secondary mt-1">Avg. Report Time</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </FadeIn>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary" data-testid="productivity-score">
-                {data.productivityScore}
-              </div>
-              <div className="text-sm text-text-secondary mt-1">Productivity Score</div>
-            </div>
-          </CardContent>
-        </Card>
+            <FadeIn>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary" data-testid="productivity-score">
+                      {data.productivityScore}
+                    </div>
+                    <div className="text-sm text-text-secondary mt-1">Productivity Score</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </FadeIn>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-success" data-testid="time-saved">
-                {data.timeSavedMinutes}m
-              </div>
-              <div className="text-sm text-text-secondary mt-1">Time Saved</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <FadeIn>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-success" data-testid="time-saved">
+                      {data.timeSavedMinutes}m
+                    </div>
+                    <div className="text-sm text-text-secondary mt-1">Time Saved</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </FadeIn>
+          </StaggerContainer>
+        </FadeIn>
 
-      {/* Charts Row */}
-      <div className="grid gap-6 mb-8 lg:grid-cols-2">
-        {/* Reports Per Day */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Reports Per Day</CardTitle>
-            <CardDescription>Last 7 days of report generation</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div data-testid="reports-per-day-chart">
-              <BarChart
-                data={data.reportsPerDay.map((d, i) => ({
-                  label: dayLabels[i] ?? '',
-                  value: d.count,
-                }))}
-                label="Day"
-                valueLabel=""
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Reports Per Week */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Reports Per Week</CardTitle>
-            <CardDescription>Last 4 weeks of report generation</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div data-testid="reports-per-week-chart">
-              <BarChart
-                data={data.reportsPerWeek.map(d => ({
-                  label: d.week,
-                  value: d.count,
-                }))}
-                label="Week"
-                valueLabel=""
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Second Row */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Most Used Templates */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Most Used Templates</CardTitle>
-            <CardDescription>Your frequently used report templates</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div data-testid="most-used-templates">
-              {data.mostUsedTemplates.length > 0 ? (
-                <BarChart
-                  data={data.mostUsedTemplates.map(t => ({
-                    label: t.name,
-                    value: t.count,
-                  }))}
-                  label="Template"
-                  valueLabel=""
-                />
-              ) : (
-                <div className="text-center py-8 text-text-secondary">
-                  No template usage data yet
+        {/* Charts Row */}
+        <FadeIn delay={0.2}>
+          <div className="grid gap-6 mb-8 lg:grid-cols-2">
+            {/* Reports Per Day */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Reports Per Day</CardTitle>
+                <CardDescription>Last 7 days of report generation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div data-testid="reports-per-day-chart">
+                  <BarChart
+                    data={data.reportsPerDay.map((d, i) => ({
+                      label: dayLabels[i] ?? '',
+                      value: d.count,
+                    }))}
+                    label="Day"
+                    valueLabel=""
+                  />
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Transcription Usage */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Transcription Usage</CardTitle>
-            <CardDescription>Transcription minutes over the last 7 days</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div data-testid="transcription-usage-chart">
-              <BarChart
-                data={data.transcriptionMinutesPerDay.map((d, i) => ({
-                  label: dayLabels[i] ?? '',
-                  value: d.count,
-                }))}
-                label="Day"
-                valueLabel="min"
-              />
-            </div>
-            <div className="mt-4 text-center">
-              <span className="text-2xl font-bold text-primary">
-                {data.totalTranscriptionMinutes.toFixed(1)}
-              </span>
-              <span className="text-text-secondary ml-2">total minutes</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Productivity Tips */}
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Productivity Tips</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="p-4 rounded-lg bg-surface-secondary">
-              <div className="text-lg mb-1">Use YOLO Mode</div>
-              <p className="text-sm text-text-secondary">
-                Enable YOLO mode to auto-detect modality and generate reports with minimal clicks.
-              </p>
-            </div>
-            <div className="p-4 rounded-lg bg-surface-secondary">
-              <div className="text-lg mb-1">Create Macros</div>
-              <p className="text-sm text-text-secondary">
-                Set up macros for frequently used phrases to speed up transcription.
-              </p>
-            </div>
-            <div className="p-4 rounded-lg bg-surface-secondary">
-              <div className="text-lg mb-1">Set Default Template</div>
-              <p className="text-sm text-text-secondary">
-                Configure a default template in settings to skip the selection step.
-              </p>
-            </div>
+            {/* Reports Per Week */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Reports Per Week</CardTitle>
+                <CardDescription>Last 4 weeks of report generation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div data-testid="reports-per-week-chart">
+                  <BarChart
+                    data={data.reportsPerWeek.map(d => ({
+                      label: d.week,
+                      value: d.count,
+                    }))}
+                    label="Week"
+                    valueLabel=""
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </FadeIn>
+
+        {/* Second Row */}
+        <FadeIn delay={0.3}>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Most Used Templates */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Most Used Templates</CardTitle>
+                <CardDescription>Your frequently used report templates</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div data-testid="most-used-templates">
+                  {data.mostUsedTemplates.length > 0 ? (
+                    <BarChart
+                      data={data.mostUsedTemplates.map(t => ({
+                        label: t.name,
+                        value: t.count,
+                      }))}
+                      label="Template"
+                      valueLabel=""
+                    />
+                  ) : (
+                    <div className="text-center py-8 text-text-secondary">
+                      No template usage data yet
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Transcription Usage */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Transcription Usage</CardTitle>
+                <CardDescription>Transcription minutes over the last 7 days</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div data-testid="transcription-usage-chart">
+                  <BarChart
+                    data={data.transcriptionMinutesPerDay.map((d, i) => ({
+                      label: dayLabels[i] ?? '',
+                      value: d.count,
+                    }))}
+                    label="Day"
+                    valueLabel="min"
+                  />
+                </div>
+                <div className="mt-4 text-center">
+                  <span className="text-2xl font-bold text-primary">
+                    {data.totalTranscriptionMinutes.toFixed(1)}
+                  </span>
+                  <span className="text-text-secondary ml-2">total minutes</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </FadeIn>
+
+        {/* Productivity Tips */}
+        <FadeIn delay={0.4}>
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Productivity Tips</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <FadeIn>
+                  <div className="p-4 rounded-lg bg-surface-secondary">
+                    <div className="text-lg mb-1">Use YOLO Mode</div>
+                    <p className="text-sm text-text-secondary">
+                      Enable YOLO mode to auto-detect modality and generate reports with minimal clicks.
+                    </p>
+                  </div>
+                </FadeIn>
+                <FadeIn>
+                  <div className="p-4 rounded-lg bg-surface-secondary">
+                    <div className="text-lg mb-1">Create Macros</div>
+                    <p className="text-sm text-text-secondary">
+                      Set up macros for frequently used phrases to speed up transcription.
+                    </p>
+                  </div>
+                </FadeIn>
+                <FadeIn>
+                  <div className="p-4 rounded-lg bg-surface-secondary">
+                    <div className="text-lg mb-1">Set Default Template</div>
+                    <p className="text-sm text-text-secondary">
+                      Configure a default template in settings to skip the selection step.
+                    </p>
+                  </div>
+                </FadeIn>
+              </StaggerContainer>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      </div>
+    </PageWrapper>
   );
 }

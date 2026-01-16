@@ -11,6 +11,9 @@ import { useToast } from '@/components/ui/toast';
 import { usePreferences } from '@/lib/preferences/preferences-context';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { PageWrapper } from '@/components/motion/page-wrapper';
+import { FadeIn } from '@/components/motion/fade-in';
+import { StaggerContainer } from '@/components/motion/stagger-container';
 
 // Template interface
 interface Template {
@@ -451,381 +454,396 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Report Templates</h1>
-          <p className="mt-1 text-text-secondary">
-            Manage your radiology report templates
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExportAll}
-            data-testid="export-templates-button"
-          >
-            Export All
-          </Button>
-          <Button asChild data-testid="create-template-button">
-            <Link href="/templates/new">
-              + Create Template
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row">
-        <div className="flex-1">
-          <Input
-            type="search"
-            placeholder="Search templates..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            data-testid="template-search"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="h-9 rounded-xl border border-border bg-surface px-3 py-1 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand"
-            data-testid="template-sort"
-          >
-            <option value="name-asc">Name (A-Z)</option>
-            <option value="name-desc">Name (Z-A)</option>
-            <option value="date-asc">Date (Oldest)</option>
-            <option value="date-desc">Date (Newest)</option>
-          </select>
-        </div>
-        <div className="flex gap-2">
-          {modalities.map((modality) => (
-            <Button
-              key={modality}
-              variant={selectedModality === modality ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedModality(modality)}
-            >
-              {modality === 'all' ? 'All' : modality}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Personal Templates */}
-      <div className="mb-8">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {allPersonalTemplates.length > 0 && (
-              <label className="flex items-center gap-2 cursor-pointer" data-testid="select-all-checkbox">
-                <input
-                  type="checkbox"
-                  checked={selectedTemplateIds.size === allPersonalTemplates.length && allPersonalTemplates.length > 0}
-                  onChange={handleSelectAll}
-                  className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
-                />
-                <span className="text-sm text-text-secondary">Select All</span>
-              </label>
-            )}
-            <h2 className="text-lg font-semibold text-text-primary">
-              Personal Templates ({totalPersonalTemplates})
-            </h2>
-          </div>
-          {selectedTemplateIds.size > 0 && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={handleBulkDelete}
-              data-testid="bulk-delete-button"
-            >
-              Delete Selected ({selectedTemplateIds.size})
-            </Button>
-          )}
-        </div>
-        {personalTemplates.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="mb-4 text-5xl">📝</div>
-              <h3 className="mb-2 text-lg font-semibold text-text-primary">No personal templates</h3>
-              <p className="mb-4 text-center text-sm text-text-secondary">
-                Create your own templates or clone from global templates
+    <PageWrapper className="p-6">
+      <div className="mx-auto max-w-6xl">
+        {/* Header */}
+        <FadeIn>
+          <div className="mb-8 flex items-center justify-between">
+            <header>
+              <h1 className="text-3xl font-bold tracking-tight">Report Templates</h1>
+              <p className="mt-2 text-text-secondary">
+                Manage your radiology report templates
               </p>
-              <Button asChild>
-                <Link href="/templates/new">Create Template</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {personalTemplates.map((template) => (
-              <Card
-                key={template.id}
-                data-testid={`template-card-${template.id}`}
-                className={selectedTemplateIds.has(template.id) ? 'ring-2 ring-brand' : ''}
+            </header>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleExportAll}
+                data-testid="export-templates-button"
               >
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedTemplateIds.has(template.id)}
-                        onChange={() => handleToggleSelect(template.id)}
-                        className="mt-1 h-4 w-4 rounded border-border text-brand focus:ring-brand cursor-pointer"
-                        data-testid={`checkbox-${template.id}`}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
-                        <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-text-secondary line-clamp-2">
-                    {template.description}
-                  </p>
-                </CardContent>
-                <CardFooter className="flex-wrap gap-2 justify-between">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/templates/${template.id}`}>Edit</Link>
-                  </Button>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(template.id)}
-                      className="text-error hover:text-error"
-                      disabled={actionLoading === template.id}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
+                Export All
+              </Button>
+              <Button asChild data-testid="create-template-button">
+                <Link href="/templates/new">
+                  + Create Template
+                </Link>
+              </Button>
+            </div>
           </div>
-        )}
+        </FadeIn>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2" data-testid="pagination-controls">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              data-testid="pagination-prev"
-            >
-              Previous
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        {/* Search and Filters */}
+        <FadeIn delay={0.1}>
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+            <div className="flex-1">
+              <Input
+                type="search"
+                placeholder="Search templates..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                data-testid="template-search"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="h-9 rounded-xl border border-border bg-surface px-3 py-1 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-brand"
+                data-testid="template-sort"
+              >
+                <option value="name-asc">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="date-asc">Date (Oldest)</option>
+                <option value="date-desc">Date (Newest)</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              {modalities.map((modality) => (
                 <Button
-                  key={page}
-                  variant={page === currentPage ? 'primary' : 'outline'}
+                  key={modality}
+                  variant={selectedModality === modality ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => goToPage(page)}
-                  data-testid={`pagination-page-${page}`}
-                  className="min-w-[36px]"
+                  onClick={() => setSelectedModality(modality)}
                 >
-                  {page}
+                  {modality === 'all' ? 'All' : modality}
                 </Button>
               ))}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              data-testid="pagination-next"
-            >
-              Next
-            </Button>
-            <span className="ml-2 text-sm text-text-secondary" data-testid="pagination-info">
-              Showing {startIndex + 1}-{Math.min(endIndex, totalPersonalTemplates)} of {totalPersonalTemplates}
-            </span>
           </div>
-        )}
-      </div>
+        </FadeIn>
 
-      {/* Global Templates */}
-      <div>
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">
-          Global Templates ({globalTemplatesList.length})
-        </h2>
-        {globalTemplatesList.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="mb-4 text-5xl">🌍</div>
-              <h3 className="mb-2 text-lg font-semibold text-text-primary">No global templates</h3>
-              <p className="text-center text-sm text-text-secondary">
-                Global templates are managed by administrators
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {globalTemplatesList.map((template) => (
-              <Card key={template.id} data-testid={`template-card-${template.id}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
-                      <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
-                      Global
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-text-secondary line-clamp-2">
-                    {template.description}
+        {/* Personal Templates */}
+        <FadeIn delay={0.2}>
+          <div className="mb-8">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {allPersonalTemplates.length > 0 && (
+                  <label className="flex items-center gap-2 cursor-pointer" data-testid="select-all-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedTemplateIds.size === allPersonalTemplates.length && allPersonalTemplates.length > 0}
+                      onChange={handleSelectAll}
+                      className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                    />
+                    <span className="text-sm text-text-secondary">Select All</span>
+                  </label>
+                )}
+                <h2 className="text-lg font-semibold text-text-primary">
+                  Personal Templates ({totalPersonalTemplates})
+                </h2>
+              </div>
+              {selectedTemplateIds.size > 0 && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  data-testid="bulk-delete-button"
+                >
+                  Delete Selected ({selectedTemplateIds.size})
+                </Button>
+              )}
+            </div>
+            {personalTemplates.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <div className="mb-4 text-5xl">*</div>
+                  <h3 className="mb-2 text-lg font-semibold text-text-primary">No personal templates</h3>
+                  <p className="mb-4 text-center text-sm text-text-secondary">
+                    Create your own templates or clone from global templates
+                  </p>
+                  <Button asChild>
+                    <Link href="/templates/new">Create Template</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <StaggerContainer className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {personalTemplates.map((template) => (
+                  <FadeIn key={template.id}>
+                    <Card
+                      data-testid={`template-card-${template.id}`}
+                      className={selectedTemplateIds.has(template.id) ? 'ring-2 ring-brand' : ''}
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedTemplateIds.has(template.id)}
+                              onChange={() => handleToggleSelect(template.id)}
+                              className="mt-1 h-4 w-4 rounded border-border text-brand focus:ring-brand cursor-pointer"
+                              data-testid={`checkbox-${template.id}`}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
+                              <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
+                            </div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-text-secondary line-clamp-2">
+                          {template.description}
+                        </p>
+                      </CardContent>
+                      <CardFooter className="flex-wrap gap-2 justify-between">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/templates/${template.id}`}>Edit</Link>
+                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(template.id)}
+                            className="text-error hover:text-error"
+                            disabled={actionLoading === template.id}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </FadeIn>
+                ))}
+              </StaggerContainer>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-center gap-2" data-testid="pagination-controls">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  data-testid="pagination-prev"
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={page === currentPage ? 'primary' : 'outline'}
+                      size="sm"
+                      onClick={() => goToPage(page)}
+                      data-testid={`pagination-page-${page}`}
+                      className="min-w-[36px]"
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  data-testid="pagination-next"
+                >
+                  Next
+                </Button>
+                <span className="ml-2 text-sm text-text-secondary" data-testid="pagination-info">
+                  Showing {startIndex + 1}-{Math.min(endIndex, totalPersonalTemplates)} of {totalPersonalTemplates}
+                </span>
+              </div>
+            )}
+          </div>
+        </FadeIn>
+
+        {/* Global Templates */}
+        <FadeIn delay={0.3}>
+          <div>
+            <h2 className="mb-4 text-lg font-semibold text-text-primary">
+              Global Templates ({globalTemplatesList.length})
+            </h2>
+            {globalTemplatesList.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <div className="mb-4 text-5xl">*</div>
+                  <h3 className="mb-2 text-lg font-semibold text-text-primary">No global templates</h3>
+                  <p className="text-center text-sm text-text-secondary">
+                    Global templates are managed by administrators
                   </p>
                 </CardContent>
-                <CardFooter className="justify-between">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/templates/${template.id}`}>View</Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleClone(template.id)}
-                    data-testid={`clone-template-${template.id}`}
-                    disabled={actionLoading === 'clone'}
-                  >
-                    Clone
-                  </Button>
-                </CardFooter>
               </Card>
-            ))}
+            ) : (
+              <StaggerContainer className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {globalTemplatesList.map((template) => (
+                  <FadeIn key={template.id}>
+                    <Card data-testid={`template-card-${template.id}`}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
+                            <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
+                            Global
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-text-secondary line-clamp-2">
+                          {template.description}
+                        </p>
+                      </CardContent>
+                      <CardFooter className="justify-between">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/templates/${template.id}`}>View</Link>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleClone(template.id)}
+                          data-testid={`clone-template-${template.id}`}
+                          disabled={actionLoading === 'clone'}
+                        >
+                          Clone
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </FadeIn>
+                ))}
+              </StaggerContainer>
+            )}
           </div>
+        </FadeIn>
+
+        {/* Empty state if no templates match filter */}
+        {filteredTemplates.length === 0 && templates.length > 0 && (
+          <FadeIn delay={0.2}>
+            <div className="mt-8 text-center">
+              <p className="text-text-secondary">No templates match your search criteria</p>
+              <Button variant="ghost" onClick={() => { setSearchQuery(''); setSelectedModality('all'); }}>
+                Clear filters
+              </Button>
+            </div>
+          </FadeIn>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent data-testid="delete-confirmation-dialog">
+            <DialogHeader>
+              <DialogTitle>Delete Template</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete &quot;{templateToDelete?.name}&quot;? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                onClick={() => setDeleteDialogOpen(false)}
+                data-testid="cancel-delete-button"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={confirmDelete}
+                data-testid="confirm-delete-button"
+                disabled={actionLoading !== null}
+              >
+                {actionLoading ? 'Deleting...' : 'Delete Template'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Clone Template Dialog */}
+        <Dialog open={cloneDialogOpen} onOpenChange={setCloneDialogOpen}>
+          <DialogContent data-testid="clone-template-dialog">
+            <DialogHeader>
+              <DialogTitle>Clone Template</DialogTitle>
+              <DialogDescription>
+                Create a personal copy of &quot;{templateToClone?.name}&quot;. You can customize the name below.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <label htmlFor="clone-name" className="mb-2 block text-sm font-medium text-text-primary">
+                Template Name
+              </label>
+              <Input
+                id="clone-name"
+                value={cloneName}
+                onChange={(e) => setCloneName(e.target.value)}
+                placeholder="Enter template name"
+                data-testid="clone-name-input"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                onClick={() => setCloneDialogOpen(false)}
+                data-testid="cancel-clone-button"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmClone}
+                data-testid="confirm-clone-button"
+                disabled={actionLoading === 'clone'}
+              >
+                {actionLoading === 'clone' ? 'Cloning...' : 'Clone Template'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Delete Confirmation Dialog */}
+        <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+          <DialogContent data-testid="bulk-delete-dialog">
+            <DialogHeader>
+              <DialogTitle>Delete Multiple Templates</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete {selectedTemplateIds.size} template{selectedTemplateIds.size > 1 ? 's' : ''}? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 max-h-40 overflow-y-auto">
+              <p className="text-sm font-medium text-text-primary mb-2">Templates to delete:</p>
+              <ul className="text-sm text-text-secondary space-y-1">
+                {Array.from(selectedTemplateIds).map(id => {
+                  const template = templates.find(t => t.id === id);
+                  return template ? (
+                    <li key={id} className="flex items-center gap-2">
+                      <span className="text-danger">*</span>
+                      {template.name}
+                    </li>
+                  ) : null;
+                })}
+              </ul>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                onClick={() => setBulkDeleteDialogOpen(false)}
+                data-testid="cancel-bulk-delete-button"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={confirmBulkDelete}
+                data-testid="confirm-bulk-delete-button"
+                disabled={actionLoading === 'bulk-delete'}
+              >
+                {actionLoading === 'bulk-delete' ? 'Deleting...' : `Delete ${selectedTemplateIds.size} Template${selectedTemplateIds.size > 1 ? 's' : ''}`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Empty state if no templates match filter */}
-      {filteredTemplates.length === 0 && templates.length > 0 && (
-        <div className="mt-8 text-center">
-          <p className="text-text-secondary">No templates match your search criteria</p>
-          <Button variant="ghost" onClick={() => { setSearchQuery(''); setSelectedModality('all'); }}>
-            Clear filters
-          </Button>
-        </div>
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent data-testid="delete-confirmation-dialog">
-          <DialogHeader>
-            <DialogTitle>Delete Template</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{templateToDelete?.name}&quot;? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setDeleteDialogOpen(false)}
-              data-testid="cancel-delete-button"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={confirmDelete}
-              data-testid="confirm-delete-button"
-              disabled={actionLoading !== null}
-            >
-              {actionLoading ? 'Deleting...' : 'Delete Template'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Clone Template Dialog */}
-      <Dialog open={cloneDialogOpen} onOpenChange={setCloneDialogOpen}>
-        <DialogContent data-testid="clone-template-dialog">
-          <DialogHeader>
-            <DialogTitle>Clone Template</DialogTitle>
-            <DialogDescription>
-              Create a personal copy of &quot;{templateToClone?.name}&quot;. You can customize the name below.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <label htmlFor="clone-name" className="mb-2 block text-sm font-medium text-text-primary">
-              Template Name
-            </label>
-            <Input
-              id="clone-name"
-              value={cloneName}
-              onChange={(e) => setCloneName(e.target.value)}
-              placeholder="Enter template name"
-              data-testid="clone-name-input"
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setCloneDialogOpen(false)}
-              data-testid="cancel-clone-button"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={confirmClone}
-              data-testid="confirm-clone-button"
-              disabled={actionLoading === 'clone'}
-            >
-              {actionLoading === 'clone' ? 'Cloning...' : 'Clone Template'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Bulk Delete Confirmation Dialog */}
-      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
-        <DialogContent data-testid="bulk-delete-dialog">
-          <DialogHeader>
-            <DialogTitle>Delete Multiple Templates</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete {selectedTemplateIds.size} template{selectedTemplateIds.size > 1 ? 's' : ''}? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 max-h-40 overflow-y-auto">
-            <p className="text-sm font-medium text-text-primary mb-2">Templates to delete:</p>
-            <ul className="text-sm text-text-secondary space-y-1">
-              {Array.from(selectedTemplateIds).map(id => {
-                const template = templates.find(t => t.id === id);
-                return template ? (
-                  <li key={id} className="flex items-center gap-2">
-                    <span className="text-danger">•</span>
-                    {template.name}
-                  </li>
-                ) : null;
-              })}
-            </ul>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setBulkDeleteDialogOpen(false)}
-              data-testid="cancel-bulk-delete-button"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={confirmBulkDelete}
-              data-testid="confirm-bulk-delete-button"
-              disabled={actionLoading === 'bulk-delete'}
-            >
-              {actionLoading === 'bulk-delete' ? 'Deleting...' : `Delete ${selectedTemplateIds.size} Template${selectedTemplateIds.size > 1 ? 's' : ''}`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </PageWrapper>
   );
 }

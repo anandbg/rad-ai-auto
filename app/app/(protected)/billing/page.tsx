@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/auth-context';
+import { PageWrapper } from '@/components/motion/page-wrapper';
+import { FadeIn } from '@/components/motion/fade-in';
+import { StaggerContainer } from '@/components/motion/stagger-container';
 
 // Plan configuration
 const plans = [
@@ -242,228 +245,239 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-text-primary">Billing & Subscription</h1>
-        <p className="mt-1 text-text-secondary">
-          Manage your subscription plan and view billing history
-        </p>
-      </div>
+    <PageWrapper className="p-6">
+      <div className="mx-auto max-w-5xl">
+        <FadeIn>
+          <header className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Billing & Subscription</h1>
+            <p className="mt-2 text-text-secondary">
+              Manage your subscription plan and view billing history
+            </p>
+          </header>
+        </FadeIn>
 
-      {/* Current Plan & Usage */}
-      <div className="mb-8 grid gap-6 lg:grid-cols-2">
-        {/* Current Plan */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Plan</CardTitle>
-            <CardDescription>Your active subscription</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-text-primary">{currentPlan.price}</span>
-                <span className="text-text-secondary">/{currentPlan.period}</span>
-              </div>
-              <div className="mt-1 text-lg font-semibold text-brand">{currentPlan.name} Plan</div>
-              {subscription?.status && subscription.status !== 'active' && (
-                <div className="mt-2 text-sm text-warning">
-                  Status: {subscription.status}
-                </div>
-              )}
-            </div>
-            <ul className="space-y-2">
-              {currentPlan.features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-2 text-sm text-text-secondary">
-                  <span className="text-success">✓</span>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" onClick={handleManageSubscription}>
-              Manage Subscription
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {/* Usage Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Usage This Month</CardTitle>
-            <CardDescription>Your current billing period usage</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Reports */}
-            <div>
-              <div className="mb-1 flex justify-between text-sm">
-                <span className="text-text-secondary">Reports Generated</span>
-                <span className="font-medium text-text-primary" data-testid="billing-reports-count">
-                  {usageStats.reportsGenerated} / {limits.reports === Infinity ? 'Unlimited' : limits.reports}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
-                <div
-                  className="h-full bg-brand transition-all"
-                  style={{ width: `${usagePercentage(usageStats.reportsGenerated, limits.reports)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Transcription */}
-            <div>
-              <div className="mb-1 flex justify-between text-sm">
-                <span className="text-text-secondary">Transcription Minutes</span>
-                <span className="font-medium text-text-primary" data-testid="billing-transcription-minutes">
-                  {usageStats.transcriptionMinutes} / {limits.transcription === Infinity ? 'Unlimited' : limits.transcription + ' min'}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
-                <div
-                  className="h-full bg-info transition-all"
-                  style={{ width: `${usagePercentage(usageStats.transcriptionMinutes, limits.transcription)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Templates */}
-            <div>
-              <div className="mb-1 flex justify-between text-sm">
-                <span className="text-text-secondary">Personal Templates</span>
-                <span className="font-medium text-text-primary" data-testid="billing-templates-count">
-                  {usageStats.templateCount} / {limits.templates === Infinity ? 'Unlimited' : limits.templates}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
-                <div
-                  className="h-full bg-success transition-all"
-                  style={{ width: `${usagePercentage(usageStats.templateCount, limits.templates)}%` }}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Available Plans */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">Available Plans</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          {plans.map((plan) => {
-            const isCurrent = plan.id === currentPlanId;
-            return (
-              <Card
-                key={plan.id}
-                className={plan.recommended ? 'border-brand ring-2 ring-brand/20' : ''}
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>{plan.name}</CardTitle>
-                    {plan.recommended && (
-                      <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
-                        Recommended
-                      </span>
-                    )}
-                  </div>
+        {/* Current Plan & Usage */}
+        <FadeIn delay={0.1}>
+          <div className="mb-8 grid gap-6 lg:grid-cols-2">
+            {/* Current Plan */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Plan</CardTitle>
+                <CardDescription>Your active subscription</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-text-primary">{plan.price}</span>
-                    <span className="text-sm text-text-secondary">/{plan.period}</span>
+                    <span className="text-3xl font-bold text-text-primary">{currentPlan.price}</span>
+                    <span className="text-text-secondary">/{currentPlan.period}</span>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-2 text-sm text-text-secondary">
-                        <span className="text-success">✓</span>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    variant={isCurrent ? 'outline' : plan.recommended ? 'primary' : 'secondary'}
-                    className="w-full"
-                    disabled={isCurrent}
-                    onClick={() => !isCurrent && handleUpgrade(plan.stripePriceId)}
-                  >
-                    {isCurrent ? 'Current Plan' : 'Upgrade'}
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Invoice History */}
-      <div>
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">Invoice History</h2>
-        <Card>
-          <div className="overflow-x-auto">
-            {invoicesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-              </div>
-            ) : invoices.length === 0 ? (
-              <div className="py-8 text-center text-text-secondary">
-                No invoices yet
-              </div>
-            ) : (
-              <table className="w-full min-w-[600px]">
-                <thead className="bg-surface-muted">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Description</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Amount</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Invoice</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {invoices.map((invoice) => (
-                    <tr key={invoice.id} className="hover:bg-surface-muted/50">
-                      <td className="px-4 py-3 text-sm text-text-primary">
-                        {formatDate(invoice.date)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-text-secondary">
-                        {invoice.description}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-text-primary">
-                        {invoice.amount}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          invoice.status === 'paid'
-                            ? 'bg-success/10 text-success'
-                            : 'bg-warning/10 text-warning'
-                        }`}>
-                          {invoice.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {invoice.invoiceUrl ? (
-                          <a
-                            href={invoice.invoiceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-brand hover:text-brand/80 hover:underline"
-                            data-testid={`invoice-link-${invoice.id}`}
-                          >
-                            View Invoice
-                          </a>
-                        ) : (
-                          <span className="text-sm text-text-muted">-</span>
-                        )}
-                      </td>
-                    </tr>
+                  <div className="mt-1 text-lg font-semibold text-brand">{currentPlan.name} Plan</div>
+                  {subscription?.status && subscription.status !== 'active' && (
+                    <div className="mt-2 text-sm text-warning">
+                      Status: {subscription.status}
+                    </div>
+                  )}
+                </div>
+                <ul className="space-y-2">
+                  {currentPlan.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm text-text-secondary">
+                      <span className="text-success">+</span>
+                      {feature}
+                    </li>
                   ))}
-                </tbody>
-              </table>
-            )}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button variant="outline" className="w-full" onClick={handleManageSubscription}>
+                  Manage Subscription
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Usage Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Usage This Month</CardTitle>
+                <CardDescription>Your current billing period usage</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Reports */}
+                <div>
+                  <div className="mb-1 flex justify-between text-sm">
+                    <span className="text-text-secondary">Reports Generated</span>
+                    <span className="font-medium text-text-primary" data-testid="billing-reports-count">
+                      {usageStats.reportsGenerated} / {limits.reports === Infinity ? 'Unlimited' : limits.reports}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className="h-full bg-brand transition-all"
+                      style={{ width: `${usagePercentage(usageStats.reportsGenerated, limits.reports)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Transcription */}
+                <div>
+                  <div className="mb-1 flex justify-between text-sm">
+                    <span className="text-text-secondary">Transcription Minutes</span>
+                    <span className="font-medium text-text-primary" data-testid="billing-transcription-minutes">
+                      {usageStats.transcriptionMinutes} / {limits.transcription === Infinity ? 'Unlimited' : limits.transcription + ' min'}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className="h-full bg-info transition-all"
+                      style={{ width: `${usagePercentage(usageStats.transcriptionMinutes, limits.transcription)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Templates */}
+                <div>
+                  <div className="mb-1 flex justify-between text-sm">
+                    <span className="text-text-secondary">Personal Templates</span>
+                    <span className="font-medium text-text-primary" data-testid="billing-templates-count">
+                      {usageStats.templateCount} / {limits.templates === Infinity ? 'Unlimited' : limits.templates}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className="h-full bg-success transition-all"
+                      style={{ width: `${usagePercentage(usageStats.templateCount, limits.templates)}%` }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </Card>
+        </FadeIn>
+
+        {/* Available Plans */}
+        <FadeIn delay={0.2}>
+          <div className="mb-8">
+            <h2 className="mb-4 text-lg font-semibold text-text-primary">Available Plans</h2>
+            <StaggerContainer className="grid gap-4 md:grid-cols-3">
+              {plans.map((plan) => {
+                const isCurrent = plan.id === currentPlanId;
+                return (
+                  <FadeIn key={plan.id}>
+                    <Card
+                      className={plan.recommended ? 'border-brand ring-2 ring-brand/20' : ''}
+                    >
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle>{plan.name}</CardTitle>
+                          {plan.recommended && (
+                            <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
+                              Recommended
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-bold text-text-primary">{plan.price}</span>
+                          <span className="text-sm text-text-secondary">/{plan.period}</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-2">
+                          {plan.features.map((feature, index) => (
+                            <li key={index} className="flex items-center gap-2 text-sm text-text-secondary">
+                              <span className="text-success">+</span>
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                      <CardFooter>
+                        <Button
+                          variant={isCurrent ? 'outline' : plan.recommended ? 'primary' : 'secondary'}
+                          className="w-full"
+                          disabled={isCurrent}
+                          onClick={() => !isCurrent && handleUpgrade(plan.stripePriceId)}
+                        >
+                          {isCurrent ? 'Current Plan' : 'Upgrade'}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </FadeIn>
+                );
+              })}
+            </StaggerContainer>
+          </div>
+        </FadeIn>
+
+        {/* Invoice History */}
+        <FadeIn delay={0.3}>
+          <div>
+            <h2 className="mb-4 text-lg font-semibold text-text-primary">Invoice History</h2>
+            <Card>
+              <div className="overflow-x-auto">
+                {invoicesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+                  </div>
+                ) : invoices.length === 0 ? (
+                  <div className="py-8 text-center text-text-secondary">
+                    No invoices yet
+                  </div>
+                ) : (
+                  <table className="w-full min-w-[600px]">
+                    <thead className="bg-surface-muted">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Date</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Description</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Amount</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Status</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Invoice</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {invoices.map((invoice) => (
+                        <tr key={invoice.id} className="hover:bg-surface-muted/50">
+                          <td className="px-4 py-3 text-sm text-text-primary">
+                            {formatDate(invoice.date)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-text-secondary">
+                            {invoice.description}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium text-text-primary">
+                            {invoice.amount}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              invoice.status === 'paid'
+                                ? 'bg-success/10 text-success'
+                                : 'bg-warning/10 text-warning'
+                            }`}>
+                              {invoice.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {invoice.invoiceUrl ? (
+                              <a
+                                href={invoice.invoiceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-brand hover:text-brand/80 hover:underline"
+                                data-testid={`invoice-link-${invoice.id}`}
+                              >
+                                View Invoice
+                              </a>
+                            ) : (
+                              <span className="text-sm text-text-muted">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </Card>
+          </div>
+        </FadeIn>
       </div>
-    </div>
+    </PageWrapper>
   );
 }
