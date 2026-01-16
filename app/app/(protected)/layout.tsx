@@ -1,6 +1,6 @@
 'use client';
 
-import { Sidebar } from '@/components/layout/sidebar';
+import { AppShell } from '@/components/layout/app-shell';
 import { CommandPalette, useKeyboardShortcuts } from '@/components/ui/command-palette';
 import { useSessionTimeout } from '@/lib/hooks/use-session-timeout';
 
@@ -15,12 +15,11 @@ export default function ProtectedLayout({
   useSessionTimeout();
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main id="main-content" className="flex-1 overflow-auto pt-16 md:pt-0">
+    <>
+      <AppShell>
         {children}
-      </main>
+      </AppShell>
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={closeCommandPalette} />
-    </div>
+    </>
   );
 }

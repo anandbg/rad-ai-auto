@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PanelLeftClose, PanelLeft, LayoutList } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -26,7 +27,19 @@ const navItems: NavItem[] = [
   { href: '/admin', label: 'Admin', icon: '>', adminOnly: true },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+  onToggleReportsPanel?: () => void;
+  reportsPanelVisible?: boolean;
+}
+
+export function Sidebar({
+  collapsed = false,
+  onToggleCollapse,
+  onToggleReportsPanel,
+  reportsPanelVisible = true,
+}: SidebarProps = {}) {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -99,12 +112,42 @@ export function Sidebar() {
         `}
       >
       {/* Logo - 44px minimum touch target */}
-      <div className="flex h-16 items-center border-b px-4">
+      <div className="flex h-16 items-center border-b px-4 justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 min-h-[44px] px-2 rounded-lg hover:bg-surface-muted transition-colors">
           <span className="text-xl">+</span>
           <span className="font-semibold">AI Radiologist</span>
         </Link>
       </div>
+
+      {/* Panel Controls - only show on desktop when props are provided */}
+      {(onToggleCollapse || onToggleReportsPanel) && (
+        <div className="hidden md:flex items-center gap-1 px-4 py-2 border-b border-border">
+          {onToggleReportsPanel && (
+            <button
+              onClick={onToggleReportsPanel}
+              className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-surface-muted transition-colors"
+              aria-label={reportsPanelVisible ? 'Hide reports panel' : 'Show reports panel'}
+              title={reportsPanelVisible ? 'Hide reports panel' : 'Show reports panel'}
+            >
+              <LayoutList className={`h-4 w-4 ${reportsPanelVisible ? 'text-brand' : 'text-text-secondary'}`} />
+            </button>
+          )}
+          {onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-surface-muted transition-colors"
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? (
+                <PanelLeft className="h-4 w-4 text-text-secondary" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4 text-text-secondary" />
+              )}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-4">
