@@ -50,19 +50,6 @@ interface TemplateSection {
   content: string;
 }
 
-// Template interface - must match the one in the list page
-interface Template {
-  id: string;
-  name: string;
-  modality: string;
-  bodyPart: string;
-  description: string;
-  isGlobal: boolean;
-  createdAt: string;
-  updatedAt: string;
-  sections?: TemplateSection[];
-}
-
 // Modality options
 const modalityOptions = [
   'X-Ray',
@@ -90,55 +77,6 @@ const bodyPartOptions = [
   'Other',
 ];
 
-// Helper to get user-specific storage key
-function getStorageKey(userId: string | undefined): string {
-  return userId ? `ai-rad-templates-${userId}` : 'ai-rad-templates';
-}
-
-// Helper to get templates from localStorage (user-specific)
-function getStoredTemplates(userId: string | undefined): Template[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(getStorageKey(userId));
-  if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to save templates to localStorage (user-specific)
-function saveTemplates(templates: Template[], userId: string | undefined) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(getStorageKey(userId), JSON.stringify(templates));
-}
-
-// Global templates storage key (shared across all users)
-const GLOBAL_TEMPLATES_KEY = 'ai-rad-global-templates';
-
-// Helper to get global templates from localStorage
-function getGlobalTemplates(): Template[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(GLOBAL_TEMPLATES_KEY);
-  if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to save global templates to localStorage
-function saveGlobalTemplates(templates: Template[]) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(templates));
-}
-
-// Generate unique ID
-function generateId(): string {
-  return 'tpl-' + Math.random().toString(36).substring(2, 9);
-}
-
 // Draft data interface
 interface FormDraft {
   formData: {
@@ -149,7 +87,6 @@ interface FormDraft {
     content: string;
   };
   sections: TemplateSection[];
-  isGlobal: boolean;
   savedAt: string;
 }
 
@@ -202,14 +139,10 @@ export default function NewTemplatePage() {
     description: '',
     content: '',
   });
-  const [isGlobal, setIsGlobal] = useState(false);
 
   // Sections state
   const [sections, setSections] = useState<TemplateSection[]>([]);
   const [newSectionName, setNewSectionName] = useState('');
-
-  // Check if user is admin
-  const isAdmin = user?.role === 'admin';
 
   // Load draft on mount
   useEffect(() => {
@@ -223,7 +156,6 @@ export default function NewTemplatePage() {
       if (hasData) {
         setFormData(draft.formData);
         setSections(draft.sections);
-        setIsGlobal(draft.isGlobal);
         setDraftRestored(true);
         setDraftSavedAt(draft.savedAt);
         console.log('[Form Draft] Restored draft from', draft.savedAt);
@@ -236,11 +168,10 @@ export default function NewTemplatePage() {
     const draft: FormDraft = {
       formData,
       sections,
-      isGlobal,
       savedAt: new Date().toISOString(),
     };
     saveDraft(draft, user?.id);
-  }, [formData, sections, isGlobal, user?.id]);
+  }, [formData, sections, user?.id]);
 
   // Auto-save draft on form changes
   useEffect(() => {
@@ -253,7 +184,7 @@ export default function NewTemplatePage() {
       const timeoutId = setTimeout(saveCurrentDraft, 500); // Debounce 500ms
       return () => clearTimeout(timeoutId);
     }
-  }, [formData, sections, isGlobal, saveCurrentDraft]);
+  }, [formData, sections, saveCurrentDraft]);
 
   // Clear draft handler
   const handleClearDraft = () => {
@@ -266,7 +197,6 @@ export default function NewTemplatePage() {
       content: '',
     });
     setSections([]);
-    setIsGlobal(false);
     setDraftRestored(false);
     setDraftSavedAt(null);
     showToast('Draft cleared', 'info');
@@ -322,20 +252,7 @@ export default function NewTemplatePage() {
       });
     }
 
-    // Check for duplicate template name
-    if (formData.name.trim()) {
-      const existingTemplates = getStoredTemplates(user?.id);
-      const globalTemplates = getGlobalTemplates();
-      const allTemplates = [...existingTemplates, ...globalTemplates];
-
-      const duplicateName = allTemplates.find(
-        t => t.name.toLowerCase() === formData.name.trim().toLowerCase()
-      );
-
-      if (duplicateName) {
-        newErrors.name = `A template named "${duplicateName.name}" already exists. Please use a different name.`;
-      }
-    }
+    // Note: Duplicate name check is handled server-side
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -360,38 +277,45 @@ export default function NewTemplatePage() {
 
     setIsSubmitting(true);
 
-    // Create new template with sections
-    const newTemplate: Template = {
-      id: generateId(),
-      name: formData.name.trim(),
-      modality: formData.modality,
-      bodyPart: formData.bodyPart,
-      description: formData.description.trim(),
-      isGlobal: isAdmin && isGlobal, // Only admins can create global templates
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      sections: sections.length > 0 ? sections : undefined,
-    };
+    try {
+      const response = await fetch('/api/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          modality: formData.modality,
+          bodyPart: formData.bodyPart,
+          description: formData.description.trim(),
+          content: formData.content,
+          sections: sections.length > 0 ? sections : undefined,
+        }),
+      });
 
-    // Save to appropriate storage
-    if (newTemplate.isGlobal) {
-      // Save to global templates storage
-      const existingGlobalTemplates = getGlobalTemplates();
-      saveGlobalTemplates([newTemplate, ...existingGlobalTemplates]);
-    } else {
-      // Save to user-specific storage
-      const existingTemplates = getStoredTemplates(user?.id);
-      saveTemplates([newTemplate, ...existingTemplates], user?.id);
+      if (!response.ok) {
+        const data = await response.json();
+        if (data.validationErrors) {
+          setErrors(data.validationErrors);
+          return;
+        }
+        throw new Error(data.message || 'Failed to create template');
+      }
+
+      const { data: newTemplate } = await response.json();
+
+      // Clear draft on successful submission
+      clearDraft(user?.id);
+
+      // Show success toast
+      showToast(`Template "${newTemplate.name}" created successfully!`, 'success');
+
+      // Redirect to templates list
+      router.push('/templates');
+    } catch (error) {
+      console.error('Error creating template:', error);
+      showToast(error instanceof Error ? error.message : 'Failed to create template', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Clear draft on successful submission
-    clearDraft(user?.id);
-
-    // Show success toast
-    showToast(`Template "${newTemplate.name}" created successfully!`, 'success');
-
-    // Redirect to templates list
-    router.push('/templates');
   };
 
   const handleChange = (field: string, value: string) => {
@@ -640,27 +564,7 @@ export default function NewTemplatePage() {
               </p>
             </div>
 
-            {/* Global Template Option (Admin only) */}
-            {isAdmin && (
-              <div className="flex items-center gap-3 rounded-lg border border-brand/20 bg-brand/5 p-4">
-                <input
-                  type="checkbox"
-                  id="isGlobal"
-                  checked={isGlobal}
-                  onChange={(e) => setIsGlobal(e.target.checked)}
-                  data-testid="template-global-checkbox"
-                  className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
-                />
-                <div>
-                  <label htmlFor="isGlobal" className="text-sm font-medium text-text-primary cursor-pointer">
-                    Publish as Global Template
-                  </label>
-                  <p className="text-xs text-text-secondary">
-                    Global templates are visible to all users in the system
-                  </p>
-                </div>
-              </div>
-            )}
+            {/* Note: Global template creation is an admin feature handled in Phase 10 */}
           </CardContent>
           <CardFooter className="flex-col-reverse gap-3 sm:flex-row sm:justify-between">
             <Button variant="ghost" asChild className="w-full sm:w-auto">
