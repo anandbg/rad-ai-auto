@@ -1,5 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+// Helper function to determine plan from price ID
+function getPlanFromPriceId(priceId: string | undefined): 'free' | 'plus' | 'pro' {
+  if (priceId === process.env.STRIPE_PRICE_ID_PLUS) return 'plus';
+  if (priceId === process.env.STRIPE_PRICE_ID_PRO) return 'pro';
+  return 'free';
+}
+
+// Helper function to map Stripe subscription status to our status enum
+function mapStripeStatus(stripeStatus: Stripe.Subscription.Status): 'active' | 'past_due' | 'canceled' | 'trialing' | 'incomplete' {
+  switch (stripeStatus) {
+    case 'active': return 'active';
+    case 'past_due': return 'past_due';
+    case 'canceled':
+    case 'unpaid':
+    case 'incomplete_expired': return 'canceled';
+    case 'trialing': return 'trialing';
+    case 'incomplete': return 'incomplete';
+    default: return 'active';
+  }
+}
 
 // Initialize Stripe client
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -72,10 +94,48 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log(`[Stripe Webhook] Checkout completed: ${session.id}`);
-        // TODO: Activate subscription for the user
-        // - Get customer email from session
-        // - Update user subscription status in database
-        // - Allocate credits based on plan
+
+        const customerId = session.customer as string;
+        const userId = session.metadata?.user_id;
+
+        if (!userId) {
+          console.error('[Stripe Webhook] No user_id in checkout metadata');
+          break;
+        }
+
+        try {
+          // Get subscription details from Stripe
+          const subscriptionId = session.subscription as string;
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+          // Determine plan from price ID - period dates are on the subscription item
+          const subscriptionItem = subscription.items.data[0];
+          const priceId = subscriptionItem?.price.id;
+          const plan = getPlanFromPriceId(priceId);
+
+          // Period dates are on the subscription item in newer Stripe API versions
+          const periodStart = subscriptionItem?.current_period_start ?? Math.floor(Date.now() / 1000);
+          const periodEnd = subscriptionItem?.current_period_end ?? Math.floor(Date.now() / 1000);
+
+          // Update subscriptions table
+          const supabase = await createSupabaseServerClient();
+          const { error } = await supabase.from('subscriptions').upsert({
+            user_id: userId,
+            stripe_customer_id: customerId,
+            plan: plan,
+            status: 'active',
+            period_start: new Date(periodStart * 1000).toISOString(),
+            period_end: new Date(periodEnd * 1000).toISOString(),
+          });
+
+          if (error) {
+            console.error('[Stripe Webhook] Error upserting subscription:', error);
+          } else {
+            console.log(`[Stripe Webhook] Activated ${plan} subscription for user ${userId}`);
+          }
+        } catch (err) {
+          console.error('[Stripe Webhook] Error processing checkout.session.completed:', err);
+        }
         break;
       }
 
@@ -83,19 +143,62 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         console.log(`[Stripe Webhook] Subscription ${event.type}: ${subscription.id}`);
-        // TODO: Update subscription status
-        // - Find user by Stripe customer ID
-        // - Update plan, status, period_start, period_end
+
+        try {
+          const customerId = subscription.customer as string;
+          const subscriptionItem = subscription.items.data[0];
+          const priceId = subscriptionItem?.price.id;
+          const plan = getPlanFromPriceId(priceId);
+          const status = mapStripeStatus(subscription.status);
+
+          // Period dates are on the subscription item in newer Stripe API versions
+          const periodStart = subscriptionItem?.current_period_start ?? Math.floor(Date.now() / 1000);
+          const periodEnd = subscriptionItem?.current_period_end ?? Math.floor(Date.now() / 1000);
+
+          const supabase = await createSupabaseServerClient();
+          const { error } = await supabase.from('subscriptions')
+            .update({
+              plan: plan,
+              status: status,
+              period_start: new Date(periodStart * 1000).toISOString(),
+              period_end: new Date(periodEnd * 1000).toISOString(),
+            })
+            .eq('stripe_customer_id', customerId);
+
+          if (error) {
+            console.error('[Stripe Webhook] Error updating subscription:', error);
+          } else {
+            console.log(`[Stripe Webhook] Updated subscription to ${plan}/${status} for customer ${customerId}`);
+          }
+        } catch (err) {
+          console.error('[Stripe Webhook] Error processing subscription event:', err);
+        }
         break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         console.log(`[Stripe Webhook] Subscription canceled: ${subscription.id}`);
-        // TODO: Downgrade to free plan
-        // - Find user by Stripe customer ID
-        // - Set plan to 'free'
-        // - Clear Stripe subscription data
+
+        try {
+          const customerId = subscription.customer as string;
+
+          const supabase = await createSupabaseServerClient();
+          const { error } = await supabase.from('subscriptions')
+            .update({
+              plan: 'free',
+              status: 'canceled',
+            })
+            .eq('stripe_customer_id', customerId);
+
+          if (error) {
+            console.error('[Stripe Webhook] Error downgrading subscription:', error);
+          } else {
+            console.log(`[Stripe Webhook] Downgraded to free plan for customer ${customerId}`);
+          }
+        } catch (err) {
+          console.error('[Stripe Webhook] Error processing subscription deletion:', err);
+        }
         break;
       }
 
@@ -109,7 +212,23 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         console.log(`[Stripe Webhook] Payment failed: ${invoice.id}`);
-        // TODO: Send notification to user, update subscription status to 'past_due'
+
+        try {
+          const customerId = invoice.customer as string;
+
+          const supabase = await createSupabaseServerClient();
+          const { error } = await supabase.from('subscriptions')
+            .update({ status: 'past_due' })
+            .eq('stripe_customer_id', customerId);
+
+          if (error) {
+            console.error('[Stripe Webhook] Error marking subscription as past_due:', error);
+          } else {
+            console.log(`[Stripe Webhook] Marked subscription as past_due for customer ${customerId}`);
+          }
+        } catch (err) {
+          console.error('[Stripe Webhook] Error processing payment failure:', err);
+        }
         break;
       }
 
