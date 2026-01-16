@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 9 — Stripe Billing (next)
+**Current focus:** Phase 9 — Stripe Billing (in progress)
 
 ## Current Position
 
-Phase: 8 of 10 (User Settings & Macros) — COMPLETE
-Plan: 08-02 complete (phase complete)
-Status: Phase verified and complete
-Last activity: 2026-01-16 - Completed phase 08 (User Settings & Macros)
+Phase: 9 of 10 (Stripe Billing)
+Plan: 09-01 complete (1 of 2 in phase)
+Status: In progress
+Last activity: 2026-01-16 - Completed 09-01-PLAN.md (Stripe API Endpoints)
 
-Progress: [████████░░] 80%
+Progress: [████████░░] 85%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 9.2 min
-- Total execution time: 1.5 hours
+- Total plans completed: 11
+- Average duration: 8.6 min
+- Total execution time: 1.6 hours
 
 **By Phase:**
 
@@ -35,10 +35,11 @@ Progress: [████████░░] 80%
 | 06-ai-template-suggestions | 1 | 6 min | 6 min |
 | 07-pdf-export | 1 | 5 min | 5 min |
 | 08-user-settings-macros | 2 | 50 min | 25 min |
+| 09-stripe-billing | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-01 (6 min), 07-01 (5 min), 08-02 (5 min), 08-01 (45 min)
-- Trend: 08-01 took longer due to fixing 20+ pre-existing TypeScript errors
+- Last 5 plans: 07-01 (5 min), 08-02 (5 min), 08-01 (45 min), 09-01 (2 min)
+- Trend: 09-01 fast execution, straightforward API endpoints
 
 ## Accumulated Context
 
@@ -80,23 +81,28 @@ Recent decisions affecting current work:
 | Keep compactMode as local-only preference | Not stored in database, only localStorage | 08-01 |
 | Use UPSERT for preference updates | Auto-creates row if not exists | 08-01 |
 | localStorage fallback for offline support | Ensures app works when offline or API fails | 08-01 |
+| Validate priceId against environment config | Security: prevents arbitrary price IDs from being used | 09-01 |
+| Create Stripe customer during checkout | Deferred creation: only creates customer when user actually upgrades | 09-01 |
+| Upsert subscription record before checkout | Ensures stripe_customer_id is stored for future portal access | 09-01 |
 
 ### Pending Todos
 
 1. Apply database migrations to Supabase (requires Docker or remote project)
 2. Generate Supabase TypeScript types after migration
 3. Configure OPENAI_API_KEY for production
+4. Configure Stripe environment variables (STRIPE_SECRET_KEY, price IDs)
 
 ### Blockers/Concerns
 
 1. **Docker not running** - Cannot apply migrations locally or generate Supabase types
 2. **Static page generation fails** - Protected pages using auth context fail prerendering (expected for authenticated routes)
 3. **OPENAI_API_KEY required** - Generate, transcribe, and suggest endpoints return 500 if not configured
+4. **STRIPE_SECRET_KEY required** - Billing endpoints return 500 if not configured
 
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 08-01-PLAN.md (Phase 08 complete)
+Stopped at: Completed 09-01-PLAN.md (Stripe API Endpoints)
 Resume file: None
 
 ## Completed Plans
@@ -113,3 +119,4 @@ Resume file: None
 | 07-01 | PDF Export Enhancement | 5 min | 52dd397 |
 | 08-02 | Macros API Integration | 5 min | aa558c6, e00452d, 8d63773 |
 | 08-01 | Preferences API Integration | 45 min | c463c54, 21c43d3, 50bc944 |
+| 09-01 | Stripe API Endpoints | 2 min | be73281, d077dda |
