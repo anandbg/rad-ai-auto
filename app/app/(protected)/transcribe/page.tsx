@@ -67,6 +67,8 @@ function detectModality(text: string): ModalityDetection | null {
   results.sort((a, b) => b.score - a.score);
 
   const bestMatch = results[0];
+  if (!bestMatch) return null;
+
   const totalScore = results.reduce((sum, r) => sum + r.score, 0);
 
   // Calculate confidence as percentage of total score
@@ -114,7 +116,7 @@ function detectBodyPart(text: string): string | null {
 
   if (results.length === 0) return null;
   results.sort((a, b) => b.score - a.score);
-  return results[0].bodyPart;
+  return results[0]?.bodyPart ?? null;
 }
 
 // Context expansion interface
@@ -279,6 +281,7 @@ export default function TranscribePage() {
         audio.removeEventListener('ended', handleEnded);
       };
     }
+    return undefined;
   }, [audioUrl]);
 
   // Apply macro expansion to text with context awareness
@@ -420,6 +423,7 @@ export default function TranscribePage() {
       }, 300);
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only on mount
 

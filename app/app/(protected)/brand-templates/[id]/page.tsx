@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -178,7 +178,7 @@ export default function BrandTemplateEditPage() {
           <div className="mb-4 text-5xl">404</div>
           <h3 className="mb-2 text-lg font-semibold text-text-primary">Brand Template Not Found</h3>
           <p className="mb-4 text-sm text-text-secondary">
-            The brand template you're looking for doesn't exist.
+            The brand template you&apos;re looking for doesn&apos;t exist.
           </p>
           <Button asChild>
             <Link href="/brand-templates">

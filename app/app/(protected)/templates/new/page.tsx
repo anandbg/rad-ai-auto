@@ -190,6 +190,7 @@ export default function NewTemplatePage() {
       const timeoutId = setTimeout(saveCurrentDraft, 500); // Debounce 500ms
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [formData, sections, saveCurrentDraft]);
 
   // Clear draft handler

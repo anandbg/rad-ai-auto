@@ -174,7 +174,7 @@ export async function PUT(
  * Deletes a macro owned by the authenticated user.
  */
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

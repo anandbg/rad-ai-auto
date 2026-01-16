@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Button } from '@/components/ui/button';
@@ -94,7 +94,6 @@ function getMembers(institutionId: string): InstitutionMember[] {
 
 export default function InstitutionDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { user, isLoading } = useAuth();
   const { showToast } = useToast();
   const id = params.id as string;
@@ -219,7 +218,7 @@ export default function InstitutionDetailPage() {
           <div className="mb-4 text-5xl">403</div>
           <h3 className="mb-2 text-lg font-semibold text-text-primary">Access Denied</h3>
           <p className="mb-4 text-sm text-text-secondary">
-            You don't have permission to access this page.
+            You don&apos;t have permission to access this page.
           </p>
           <Button asChild>
             <Link href="/dashboard">Back to Dashboard</Link>
@@ -236,7 +235,7 @@ export default function InstitutionDetailPage() {
           <div className="mb-4 text-5xl">404</div>
           <h3 className="mb-2 text-lg font-semibold text-text-primary">Institution Not Found</h3>
           <p className="mb-4 text-sm text-text-secondary">
-            The institution you're looking for doesn't exist.
+            The institution you&apos;re looking for doesn&apos;t exist.
           </p>
           <Button asChild>
             <Link href="/admin/institutions">Back to Institutions</Link>

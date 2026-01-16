@@ -367,7 +367,8 @@ export default function TemplateDetailPage() {
         return [...prev, versionId];
       }
       // Replace the oldest selection
-      return [prev[1], versionId];
+      const second = prev[1] ?? '';
+      return [second, versionId];
     });
   };
 
@@ -395,9 +396,13 @@ export default function TemplateDetailPage() {
   };
 
   // Get selected versions for comparison (sorted by version number)
-  const getSelectedVersionsForComparison = () => {
+  const getSelectedVersionsForComparison = (): [TemplateVersion, TemplateVersion] | [undefined, undefined] => {
     const selected = versions.filter(v => selectedVersions.includes(v.id));
-    return selected.sort((a, b) => a.version - b.version);
+    const sorted = selected.sort((a, b) => a.version - b.version);
+    if (sorted.length >= 2 && sorted[0] && sorted[1]) {
+      return [sorted[0], sorted[1]];
+    }
+    return [undefined, undefined];
   };
 
   // Handle rollback to a previous version
@@ -595,7 +600,7 @@ export default function TemplateDetailPage() {
             {error || 'Template Not Found'}
           </h3>
           <p className="mb-4 text-sm text-text-secondary">
-            The template you're looking for doesn't exist or you don't have access.
+            The template you&apos;re looking for doesn&apos;t exist or you don&apos;t have access.
           </p>
           <Button asChild>
             <Link href="/templates">Back to Templates</Link>
@@ -771,7 +776,7 @@ export default function TemplateDetailPage() {
 
                 {editSections.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border p-8 text-center">
-                    <p className="text-text-muted">No sections defined. Click "Add Section" to create one.</p>
+                    <p className="text-text-muted">No sections defined. Click &quot;Add Section&quot; to create one.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1196,6 +1201,7 @@ The lungs are clear. No focal consolidation, pleural effusion, or pneumothorax. 
               <CardContent className="border-b border-border pb-4">
                 {(() => {
                   const [v1, v2] = getSelectedVersionsForComparison();
+                  if (!v1 || !v2) return null;
                   const diffs = getVersionDiff(v1, v2);
                   return (
                     <div data-testid="version-diff-view">

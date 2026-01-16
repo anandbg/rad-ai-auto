@@ -122,6 +122,11 @@ export default function WelcomePage() {
   const isLastStep = currentStep === tutorialSteps.length - 1;
   const progress = ((currentStep + 1) / tutorialSteps.length) * 100;
 
+  // Guard against undefined step (shouldn't happen but TypeScript requires it)
+  if (!step) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-surface via-surface to-surface-secondary flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
@@ -177,7 +177,7 @@ export default function InstitutionsPage() {
           <div className="mb-4 text-5xl">403</div>
           <h3 className="mb-2 text-lg font-semibold text-text-primary">Access Denied</h3>
           <p className="mb-4 text-sm text-text-secondary">
-            You don't have permission to access this page.
+            You don&apos;t have permission to access this page.
           </p>
           <Button asChild>
             <Link href="/dashboard">Back to Dashboard</Link>
@@ -273,7 +273,7 @@ export default function InstitutionsPage() {
           <DialogHeader>
             <DialogTitle>Delete Institution</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deleteTarget?.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

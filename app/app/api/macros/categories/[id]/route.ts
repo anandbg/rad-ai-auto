@@ -9,7 +9,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
  * so macros in this category will have their category_id set to null.
  */
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

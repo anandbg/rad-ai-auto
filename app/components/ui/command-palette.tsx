@@ -55,7 +55,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     if (!acc[cmd.category]) {
       acc[cmd.category] = [];
     }
-    acc[cmd.category].push(cmd);
+    acc[cmd.category]!.push(cmd);
     return acc;
   }, {} as Record<string, Command[]>);
 
@@ -166,7 +166,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
           {flatFilteredCommands.length === 0 && (
             <div className="p-8 text-center text-text-muted">
-              No commands found for "{search}"
+              No commands found for &quot;{search}&quot;
             </div>
           )}
         </div>
@@ -239,9 +239,10 @@ export function useKeyboardShortcuts() {
             'p': '/productivity',
           };
 
-          if (routes[nextE.key]) {
+          const route = routes[nextE.key];
+          if (route) {
             nextE.preventDefault();
-            router.push(routes[nextE.key]);
+            router.push(route);
           }
         };
 

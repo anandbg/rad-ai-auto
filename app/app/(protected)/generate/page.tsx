@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle } from 'docx';
+import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from 'docx';
 import { saveAs } from 'file-saver';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useAuth } from '@/lib/auth/auth-context';
 import { usePreferences } from '@/lib/preferences/preferences-context';
-import { saveDraft as saveToIndexedDB, getDraft as getFromIndexedDB, deleteDraft as deleteFromIndexedDB, isOnline, onOnlineStatusChange, type Draft } from '@/lib/storage/indexeddb';
+import { saveDraft as saveToIndexedDB, getDraft as getFromIndexedDB, isOnline, onOnlineStatusChange, type Draft } from '@/lib/storage/indexeddb';
 
 // Draft storage key
 const GENERATE_DRAFT_KEY = 'ai-rad-generate-draft';
@@ -211,6 +211,7 @@ export default function GeneratePage() {
       const timeoutId = setTimeout(saveToIndexedDBDraft, 1000);
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [findings, selectedTemplateId, saveToIndexedDBDraft]);
 
   // Load templates from Supabase on mount and when user changes
@@ -327,16 +328,18 @@ export default function GeneratePage() {
       if (matchingTemplates.length > 0) {
         // Prefer personal templates over global ones
         const personalMatch = matchingTemplates.find(t => !t.isGlobal);
-        const bestMatch = personalMatch || matchingTemplates[0];
+        const bestMatch = personalMatch ?? matchingTemplates[0];
 
-        setSelectedTemplateId(bestMatch.id);
-        setYoloAutoSelected(true);
-        setDefaultApplied(true); // Prevent default template from overriding
+        if (bestMatch) {
+          setSelectedTemplateId(bestMatch.id);
+          setYoloAutoSelected(true);
+          setDefaultApplied(true); // Prevent default template from overriding
 
-        showToast(
-          `YOLO: Auto-selected "${bestMatch.name}" for ${yoloModality}`,
-          'success'
-        );
+          showToast(
+            `YOLO: Auto-selected "${bestMatch.name}" for ${yoloModality}`,
+            'success'
+          );
+        }
       } else {
         showToast(
           `No template found for ${yoloModality}. Please select manually.`,
@@ -378,6 +381,7 @@ export default function GeneratePage() {
       const timeoutId = setTimeout(saveCurrentDraft, 500); // Debounce 500ms
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [findings, selectedTemplateId, saveCurrentDraft]);
 
   // Clear draft handler
@@ -524,7 +528,7 @@ export default function GeneratePage() {
     const lines = report.split('\n');
     let currentSection = '';
     let currentContent: string[] = [];
-    let headerSection: string[] = [];
+    const headerSection: string[] = [];
     let inHeader = true;
 
     for (const line of lines) {
@@ -543,7 +547,7 @@ export default function GeneratePage() {
           inHeader = false;
         }
 
-        currentSection = sectionMatch[1];
+        currentSection = sectionMatch[1] ?? '';
         currentContent = [];
       } else if (line.startsWith('---')) {
         // Footer separator
@@ -581,7 +585,8 @@ export default function GeneratePage() {
     const sections = parseReportSections(generatedReport);
     const sectionIndex = sections.findIndex(s => s.name === sectionName);
 
-    if (sectionIndex !== -1) {
+    const section = sections[sectionIndex];
+    if (sectionIndex !== -1 && section) {
       // Generate new content for the section
       let newContent = '';
 
@@ -595,10 +600,10 @@ export default function GeneratePage() {
         newContent = 'Standard radiographic technique was employed using appropriate exposure parameters.';
       } else {
         // Default regeneration
-        newContent = sections[sectionIndex].content + ' [Regenerated]';
+        newContent = section.content + ' [Regenerated]';
       }
 
-      sections[sectionIndex].content = newContent;
+      section.content = newContent;
 
       // Rebuild the report
       let newReport = '';

@@ -230,7 +230,7 @@ export default function NewBrandTemplatePage() {
                   data-testid="brand-template-logo-input"
                 />
                 <p className="mt-1 text-xs text-text-secondary">
-                  Enter a URL to your institution's logo image
+                  Enter a URL to your institution&apos;s logo image
                 </p>
               </div>
             </div>

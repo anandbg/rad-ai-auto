@@ -35,12 +35,13 @@ export function useUnsavedChanges({
 
   // Handle browser beforeunload event (refresh, close tab)
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent): string | undefined => {
       if (internalIsDirty) {
         e.preventDefault();
         e.returnValue = message;
         return message;
       }
+      return undefined;
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);

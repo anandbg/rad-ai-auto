@@ -117,7 +117,7 @@ function generateReportsPerDay(
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.toISOString().split('T')[0] ?? '';
 
     // Count reports from history for this date
     const count = history.filter(r => r.date.startsWith(dateStr)).length;
@@ -126,13 +126,18 @@ function generateReportsPerDay(
   }
 
   // If no history, distribute total reports across recent days
-  if (history.length === 0 && totalReports > 0) {
+  if (history.length === 0 && totalReports > 0 && days.length >= 7) {
     // Put most reports on today
-    days[6].count = Math.min(totalReports, Math.ceil(totalReports * 0.4));
-    const remaining = totalReports - days[6].count;
-    if (remaining > 0) {
-      days[5].count = Math.min(remaining, Math.ceil(remaining * 0.5));
-      days[4].count = remaining - days[5].count;
+    const day6 = days[6];
+    const day5 = days[5];
+    const day4 = days[4];
+    if (day6 && day5 && day4) {
+      day6.count = Math.min(totalReports, Math.ceil(totalReports * 0.4));
+      const remaining = totalReports - day6.count;
+      if (remaining > 0) {
+        day5.count = Math.min(remaining, Math.ceil(remaining * 0.5));
+        day4.count = remaining - day5.count;
+      }
     }
   }
 
@@ -173,17 +178,22 @@ function generateTranscriptionPerDay(totalMinutes: number): DailyReport[] {
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.toISOString().split('T')[0] ?? '';
     days.push({ date: dateStr, count: 0 });
   }
 
   // Distribute minutes across recent days
-  if (totalMinutes > 0) {
-    days[6].count = Math.round(totalMinutes * 0.3 * 10) / 10;
-    days[5].count = Math.round(totalMinutes * 0.25 * 10) / 10;
-    days[4].count = Math.round(totalMinutes * 0.2 * 10) / 10;
-    days[3].count = Math.round(totalMinutes * 0.15 * 10) / 10;
-    days[2].count = Math.round(totalMinutes * 0.1 * 10) / 10;
+  if (totalMinutes > 0 && days.length >= 7) {
+    const d6 = days[6];
+    const d5 = days[5];
+    const d4 = days[4];
+    const d3 = days[3];
+    const d2 = days[2];
+    if (d6) d6.count = Math.round(totalMinutes * 0.3 * 10) / 10;
+    if (d5) d5.count = Math.round(totalMinutes * 0.25 * 10) / 10;
+    if (d4) d4.count = Math.round(totalMinutes * 0.2 * 10) / 10;
+    if (d3) d3.count = Math.round(totalMinutes * 0.15 * 10) / 10;
+    if (d2) d2.count = Math.round(totalMinutes * 0.1 * 10) / 10;
   }
 
   return days;
@@ -223,7 +233,7 @@ function calculateProductivityScore(reports: number, minutes: number): number {
 }
 
 // Simple bar chart component
-function BarChart({ data, label, valueLabel }: { data: { label: string; value: number }[]; label: string; valueLabel: string }) {
+function BarChart({ data, valueLabel }: { data: { label: string; value: number }[]; label?: string; valueLabel: string }) {
   const maxValue = Math.max(...data.map(d => d.value), 1);
 
   return (
@@ -345,7 +355,7 @@ export default function ProductivityPage() {
             <div data-testid="reports-per-day-chart">
               <BarChart
                 data={data.reportsPerDay.map((d, i) => ({
-                  label: dayLabels[i],
+                  label: dayLabels[i] ?? '',
                   value: d.count,
                 }))}
                 label="Day"
@@ -414,7 +424,7 @@ export default function ProductivityPage() {
             <div data-testid="transcription-usage-chart">
               <BarChart
                 data={data.transcriptionMinutesPerDay.map((d, i) => ({
-                  label: dayLabels[i],
+                  label: dayLabels[i] ?? '',
                   value: d.count,
                 }))}
                 label="Day"
