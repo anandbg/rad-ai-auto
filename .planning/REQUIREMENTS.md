@@ -52,8 +52,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Database
 
-- [ ] **DB-01**: Supabase schema verified and aligned with codebase expectations
-- [ ] **DB-02**: Row-Level Security policies enforce data isolation per user
+- [x] **DB-01**: Supabase schema verified and aligned with codebase expectations
+- [x] **DB-02**: Row-Level Security policies enforce data isolation per user
 
 ## v2 Requirements
 
@@ -101,8 +101,8 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DB-01 | Phase 1 | Pending |
-| DB-02 | Phase 1 | Pending |
+| DB-01 | Phase 1 | Complete |
+| DB-02 | Phase 1 | Complete |
 | AUTH-01 | Phase 2 | Pending |
 | AUTH-02 | Phase 2 | Pending |
 | AUTH-03 | Phase 2 | Pending |
@@ -136,4 +136,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after initial definition*
+*Last updated: 2026-01-16 after Phase 1 completion*

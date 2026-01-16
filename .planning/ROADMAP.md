@@ -10,7 +10,7 @@ Transform a functional UI prototype into a production-ready AI radiology applica
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Database Foundation** - Verify and align Supabase schema with RLS
+- [x] **Phase 1: Database Foundation** - Verify and align Supabase schema with RLS
 - [ ] **Phase 2: Authentication** - Real Supabase Auth with email/password
 - [ ] **Phase 3: Template System** - CRUD operations connected to real database
 - [ ] **Phase 4: AI Report Generation** - GPT-4o streaming report generation
@@ -35,7 +35,7 @@ Transform a functional UI prototype into a production-ready AI radiology applica
 **Plans**: TBD
 
 Plans:
-- [ ] 01-01: Schema verification and alignment
+- [x] 01-01: Schema verification and alignment
 
 ### Phase 2: Authentication
 **Goal**: Users can sign up, verify email, log in, and reset password
@@ -178,7 +178,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Database Foundation | 0/1 | Not started | - |
+| 1. Database Foundation | 1/1 | Complete | 2026-01-16 |
 | 2. Authentication | 0/1 | Not started | - |
 | 3. Template System | 0/2 | Not started | - |
 | 4. AI Report Generation | 0/1 | Not started | - |
