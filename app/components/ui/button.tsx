@@ -1,6 +1,7 @@
 'use client';
 
 import { Slot } from "@radix-ui/react-slot";
+import { motion, useReducedMotion } from "framer-motion";
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/shared/cn";
 import { Spinner } from "./spinner";
@@ -32,10 +33,19 @@ const sizeStyles: Record<ButtonSize, string> = {
   lg: "px-6 py-3 text-base rounded-xl min-h-[44px] min-w-[44px]"
 };
 
+// Motion variants for scale animation
+const motionVariants = {
+  rest: { scale: 1 },
+  hover: { scale: 1.02 },
+  tap: { scale: 0.98 }
+};
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", isLoading = false, children, disabled, asChild = false, ...props }, ref) => {
+    const shouldReduceMotion = useReducedMotion();
     const combinedClassName = cn(baseStyles, variantStyles[variant], sizeStyles[size], className);
 
+    // When asChild is true, use Slot without motion
     if (asChild) {
       return (
         <Slot className={combinedClassName} {...props}>
@@ -44,16 +54,41 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       );
     }
 
+    // When reduced motion is preferred, use static button with CSS fallback
+    if (shouldReduceMotion) {
+      return (
+        <button
+          ref={ref}
+          className={combinedClassName}
+          disabled={disabled || isLoading}
+          {...props}
+        >
+          {isLoading && <Spinner size="sm" aria-hidden="true" />}
+          <span className="inline-flex items-center gap-1">{children}</span>
+        </button>
+      );
+    }
+
+    // Extract only the props that are safe for motion.button
+    // Exclude drag-related handlers that conflict with Framer Motion
+    const { onDrag, onDragStart, onDragEnd, onDragOver, onDragEnter, onDragLeave, onDrop, onAnimationStart, onAnimationEnd, ...safeProps } = props;
+
+    // Use motion.button with scale animation
     return (
-      <button
+      <motion.button
         ref={ref}
         className={combinedClassName}
         disabled={disabled || isLoading}
-        {...props}
+        variants={motionVariants}
+        initial="rest"
+        whileHover="hover"
+        whileTap="tap"
+        transition={{ duration: 0.15 }}
+        {...safeProps}
       >
         {isLoading && <Spinner size="sm" aria-hidden="true" />}
         <span className="inline-flex items-center gap-1">{children}</span>
-      </button>
+      </motion.button>
     );
   }
 );
