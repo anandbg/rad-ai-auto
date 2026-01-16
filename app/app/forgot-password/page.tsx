@@ -4,6 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { z } from 'zod';
 import { useCsrf } from '@/lib/hooks/use-csrf';
+import { PageWrapper } from '@/components/motion/page-wrapper';
+import { FadeIn } from '@/components/motion/fade-in';
+import { StaggerContainer } from '@/components/motion/stagger-container';
+import { Card } from '@/components/ui/card';
+import { AnimatePresence, motion } from 'framer-motion';
 
 // Email validation schema
 const emailSchema = z.object({
@@ -66,109 +71,134 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <main
-        id="main-content"
-        className="flex min-h-screen flex-col items-center justify-center p-8"
-      >
-        <div className="w-full max-w-md text-center">
-          <div className="mb-4 text-6xl">📧</div>
-          <h1 className="mb-2 text-2xl font-bold">Check your email</h1>
-          <p className="mb-6 text-text-secondary">
-            If an account exists for <strong>{email}</strong>, we&apos;ve sent a password reset link.
-          </p>
+      <PageWrapper className="min-h-screen flex items-center justify-center bg-background p-4">
+        <main id="main-content" className="w-full max-w-md">
+          <Card className="p-8">
+            <FadeIn>
+              <div className="text-center">
+                <span className="text-6xl mb-4 block" role="img" aria-label="Email">
+                  {String.fromCodePoint(0x1F4E7)}
+                </span>
+                <h1 className="text-2xl font-bold mb-2">Check your email</h1>
+                <p className="text-text-secondary mb-6">
+                  If an account exists for <strong>{email}</strong>, we&apos;ve sent a password reset link.
+                </p>
 
-          <div className="space-y-3">
-            <Link href="/login" className="btn-primary inline-block">
-              Back to Login
-            </Link>
-            <p className="text-sm text-text-muted">
-              Didn&apos;t receive the email?{' '}
-              <button
-                onClick={() => {
-                  setSuccess(false);
-                }}
-                className="text-brand hover:underline"
-              >
-                Try again
-              </button>
-            </p>
-          </div>
-        </div>
-      </main>
+                <div className="space-y-3">
+                  <Link href="/login" className="btn-primary inline-block">
+                    Back to Login
+                  </Link>
+                  <p className="text-sm text-text-muted">
+                    Didn&apos;t receive the email?{' '}
+                    <button
+                      onClick={() => {
+                        setSuccess(false);
+                      }}
+                      className="text-brand hover:underline"
+                    >
+                      Try again
+                    </button>
+                  </p>
+                </div>
+              </div>
+            </FadeIn>
+          </Card>
+        </main>
+      </PageWrapper>
     );
   }
 
   return (
-    <main
-      id="main-content"
-      className="flex min-h-screen flex-col items-center justify-center p-8"
-    >
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-3xl font-bold tracking-tight">Forgot password?</h1>
-          <p className="text-text-secondary">
-            Enter your email and we&apos;ll send you a reset link
-          </p>
-        </div>
+    <PageWrapper className="min-h-screen flex items-center justify-center bg-background p-4">
+      <main id="main-content" className="w-full max-w-md">
+        <Card className="p-8">
+          <FadeIn>
+            <div className="text-center mb-8">
+              <span className="text-4xl mb-4 block" role="img" aria-label="Key">
+                {String.fromCodePoint(0x1F511)}
+              </span>
+              <h1 className="text-2xl font-bold">Forgot password?</h1>
+              <p className="text-text-secondary mt-1">Enter your email and we&apos;ll send you a reset link</p>
+            </div>
+          </FadeIn>
 
-        <div className="card p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit}>
             {/* CSRF Token */}
             <CsrfInput />
 
-            {error && (
-              <div
-                className="rounded-lg border border-danger/50 bg-danger/10 p-3 text-sm text-danger"
-                role="alert"
-              >
-                {error}
-              </div>
-            )}
+            <StaggerContainer className="space-y-4">
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div
+                      className="rounded-lg border border-danger/50 bg-danger/10 p-3 text-sm text-danger"
+                      role="alert"
+                    >
+                      {error}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            <div className="space-y-2">
-              <label htmlFor="email" className="label">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input"
-                placeholder="you@example.com"
-                required
-                autoComplete="email"
-                disabled={loading}
-                data-testid="forgot-password-email"
-              />
-            </div>
+              <FadeIn>
+                <div className="space-y-2">
+                  <label htmlFor="email" className="label">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input"
+                    placeholder="you@example.com"
+                    required
+                    autoComplete="email"
+                    disabled={loading}
+                    data-testid="forgot-password-email"
+                  />
+                </div>
+              </FadeIn>
 
-            <button
-              type="submit"
-              className="btn-primary w-full"
-              disabled={loading}
-              data-testid="forgot-password-submit"
-            >
-              {loading ? 'Sending...' : 'Send reset link'}
-            </button>
+              <FadeIn>
+                <button
+                  type="submit"
+                  className="btn-primary w-full"
+                  disabled={loading}
+                  data-testid="forgot-password-submit"
+                >
+                  {loading ? 'Sending...' : 'Send reset link'}
+                </button>
+              </FadeIn>
+
+              <FadeIn>
+                <div className="text-center text-sm pt-2">
+                  <p className="text-text-secondary">
+                    Remember your password?{' '}
+                    <Link href="/login" className="text-brand hover:underline">
+                      Sign in
+                    </Link>
+                  </p>
+                </div>
+              </FadeIn>
+            </StaggerContainer>
           </form>
+        </Card>
 
-          <div className="mt-6 text-center text-sm">
-            <p className="text-text-secondary">
-              Remember your password?{' '}
-              <Link href="/login" className="text-brand hover:underline">
-                Sign in
-              </Link>
-            </p>
+        <FadeIn>
+          <div className="mt-4 text-center">
+            <Link href="/" className="text-sm text-text-muted hover:text-text-secondary">
+              &larr; Back to home
+            </Link>
           </div>
-        </div>
-
-        <div className="mt-4 text-center">
-          <Link href="/" className="text-sm text-text-muted hover:text-text-secondary">
-            &larr; Back to home
-          </Link>
-        </div>
-      </div>
-    </main>
+        </FadeIn>
+      </main>
+    </PageWrapper>
   );
 }
