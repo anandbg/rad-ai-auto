@@ -1,13 +1,11 @@
 'use client';
 
-import { useAuth } from '@/lib/auth/auth-context';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PageWrapper } from '@/components/motion/page-wrapper';
 import { ReportWorkspace } from '@/components/workspace/report-workspace';
 
 export default function DashboardPage() {
-  const { isLoading } = useAuth();
   const searchParams = useSearchParams();
   const [showUnauthorizedError, setShowUnauthorizedError] = useState(false);
 
@@ -18,17 +16,6 @@ export default function DashboardPage() {
       setTimeout(() => setShowUnauthorizedError(false), 5000);
     }
   }, [searchParams]);
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 text-4xl">...</div>
-          <p className="text-text-secondary">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <PageWrapper className="h-full">
