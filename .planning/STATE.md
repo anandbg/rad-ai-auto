@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 9 — Stripe Billing (in progress)
+**Current focus:** Phase 9 — Stripe Billing (complete)
 
 ## Current Position
 
 Phase: 9 of 10 (Stripe Billing)
-Plan: 09-01 complete (1 of 2 in phase)
-Status: In progress
-Last activity: 2026-01-16 - Completed 09-01-PLAN.md (Stripe API Endpoints)
+Plan: 09-02 complete (2 of 2 in phase)
+Status: Phase complete
+Last activity: 2026-01-16 - Completed 09-02-PLAN.md (Webhook Handlers)
 
-Progress: [████████░░] 85%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 8.6 min
-- Total execution time: 1.6 hours
+- Total plans completed: 12
+- Average duration: 8.3 min
+- Total execution time: 1.7 hours
 
 **By Phase:**
 
@@ -35,11 +35,11 @@ Progress: [████████░░] 85%
 | 06-ai-template-suggestions | 1 | 6 min | 6 min |
 | 07-pdf-export | 1 | 5 min | 5 min |
 | 08-user-settings-macros | 2 | 50 min | 25 min |
-| 09-stripe-billing | 1 | 2 min | 2 min |
+| 09-stripe-billing | 2 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 07-01 (5 min), 08-02 (5 min), 08-01 (45 min), 09-01 (2 min)
-- Trend: 09-01 fast execution, straightforward API endpoints
+- Last 5 plans: 08-02 (5 min), 08-01 (45 min), 09-01 (2 min), 09-02 (4 min)
+- Trend: Stripe billing phase fast execution
 
 ## Accumulated Context
 
@@ -84,13 +84,16 @@ Recent decisions affecting current work:
 | Validate priceId against environment config | Security: prevents arbitrary price IDs from being used | 09-01 |
 | Create Stripe customer during checkout | Deferred creation: only creates customer when user actually upgrades | 09-01 |
 | Upsert subscription record before checkout | Ensures stripe_customer_id is stored for future portal access | 09-01 |
+| Access period dates from subscription item | Stripe API 2025-04-30.basil moved current_period_start/end to SubscriptionItem | 09-02 |
+| Use meta.type for usage classification | credits_ledger.reason enum is generic (debit); meta.type specifies report vs transcription | 09-02 |
+| Try/catch per webhook case | Prevents one failing case from blocking other event processing | 09-02 |
 
 ### Pending Todos
 
 1. Apply database migrations to Supabase (requires Docker or remote project)
 2. Generate Supabase TypeScript types after migration
 3. Configure OPENAI_API_KEY for production
-4. Configure Stripe environment variables (STRIPE_SECRET_KEY, price IDs)
+4. Configure Stripe environment variables (STRIPE_SECRET_KEY, price IDs, STRIPE_WEBHOOK_SECRET)
 
 ### Blockers/Concerns
 
@@ -98,11 +101,12 @@ Recent decisions affecting current work:
 2. **Static page generation fails** - Protected pages using auth context fail prerendering (expected for authenticated routes)
 3. **OPENAI_API_KEY required** - Generate, transcribe, and suggest endpoints return 500 if not configured
 4. **STRIPE_SECRET_KEY required** - Billing endpoints return 500 if not configured
+5. **STRIPE_WEBHOOK_SECRET required** - Webhook signature verification requires secret from Stripe CLI or dashboard
 
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 09-01-PLAN.md (Stripe API Endpoints)
+Stopped at: Completed 09-02-PLAN.md (Webhook Handlers)
 Resume file: None
 
 ## Completed Plans
@@ -120,3 +124,4 @@ Resume file: None
 | 08-02 | Macros API Integration | 5 min | aa558c6, e00452d, 8d63773 |
 | 08-01 | Preferences API Integration | 45 min | c463c54, 21c43d3, 50bc944 |
 | 09-01 | Stripe API Endpoints | 2 min | be73281, d077dda |
+| 09-02 | Webhook Handlers | 4 min | a919ec1, fced612 |
