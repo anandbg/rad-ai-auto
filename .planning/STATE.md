@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 11 — UI/UX Overhaul (protected pages polished)
+**Current focus:** Phase 11 — UI/UX Overhaul (3-panel layout complete)
 
 ## Current Position
 
 Phase: 11 of 11 (UI/UX Overhaul)
-Plan: 5 of 5 complete
+Plan: 6 of 6 complete
 Status: PHASE COMPLETE - ALL MVP PHASES DONE
-Last activity: 2026-01-16 - Completed 11-05-PLAN.md (Accessibility Compliance)
+Last activity: 2026-01-16 - Completed 11-06-PLAN.md (3-Panel Application Shell)
 
 Progress: [██████████] 100% (11/11 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
-- Average duration: 6.8 min
-- Total execution time: 1.9 hours
+- Total plans completed: 18
+- Average duration: 6.6 min
+- Total execution time: 2.0 hours
 
 **By Phase:**
 
@@ -37,10 +37,10 @@ Progress: [██████████] 100% (11/11 phases complete)
 | 08-user-settings-macros | 2 | 50 min | 25 min |
 | 09-stripe-billing | 2 | 6 min | 3 min |
 | 10-admin-dashboard | 1 | 3 min | 3 min |
-| 11-ui-ux-overhaul | 5 | 18 min | 3.6 min |
+| 11-ui-ux-overhaul | 6 | 22 min | 3.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 11-02 (3 min), 11-03 (4 min), 11-04 (5 min), 11-05 (4 min)
+- Last 5 plans: 11-03 (4 min), 11-04 (5 min), 11-05 (4 min), 11-06 (4 min)
 - Trend: Fast execution continues for UI/UX overhaul - ALL PHASES COMPLETE
 
 ## Accumulated Context
@@ -110,6 +110,10 @@ Recent decisions affecting current work:
 | Focus ring utility class | Consistent focus appearance across browsers using Tailwind ring | 11-05 |
 | Darker focus color for dark mode | #60a5fa maintains 6.59:1 contrast vs #3b82f6 | 11-05 |
 | Reduced motion CSS fallback | Defense in depth alongside useReducedMotion hook | 11-05 |
+| AppShell wraps protected layout | 3-panel structure with sidebar, reports panel, main workspace | 11-06 |
+| Reports panel 280px fixed width | Toggleable visibility for workspace flexibility | 11-06 |
+| Sidebar collapsed state via props | Supports icon-only mode when collapsed | 11-06 |
+| Mock reports grouped by date | Today/Yesterday/Date format for temporal organization | 11-06 |
 
 ### Pending Todos
 
@@ -129,7 +133,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 11-05-PLAN.md (Accessibility Compliance) - ALL MVP PHASES COMPLETE
+Stopped at: Completed 11-06-PLAN.md (3-Panel Application Shell) - ALL MVP PHASES COMPLETE
 Resume file: None
 
 ## Completed Plans
@@ -154,3 +158,4 @@ Resume file: None
 | 11-03 | Auth Pages Polish | 4 min | dd2cec4, 01d05da |
 | 11-04 | Protected Pages Polish | 5 min | cd33b2c, 49fccec, 922582d |
 | 11-05 | Accessibility Compliance | 4 min | 4d7a0cb, 96284bb, 32ed8e4 |
+| 11-06 | 3-Panel Application Shell | 4 min | 460b3b7, 5f73423, 6399621 |
