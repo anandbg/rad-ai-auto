@@ -20,6 +20,7 @@ Transform a functional UI prototype into a production-ready AI radiology applica
 - [x] **Phase 8: User Settings & Macros** - Preferences and macros in database
 - [x] **Phase 9: Stripe Billing** - Subscriptions and usage tracking
 - [x] **Phase 10: Admin Dashboard** - User and template management
+- [x] **Phase 11: UI/UX Overhaul** - Research-driven cutting-edge design refresh
 
 ## Phase Details
 
@@ -172,10 +173,33 @@ Plans:
 Plans:
 - [x] 10-01: Connect admin features to database
 
+### Phase 11: UI/UX Overhaul
+**Goal**: Transform the application with a cutting-edge, research-driven visual design
+**Depends on**: Phase 10 (all functionality complete)
+**Requirements**: UX-01, UX-02, UX-03
+**Success Criteria** (what must be TRUE):
+  1. Modern, distinctive visual design that stands out from generic medical apps
+  2. Consistent design language across all pages (auth, dashboard, templates, settings, admin)
+  3. Smooth micro-interactions and transitions using Framer Motion
+  4. Responsive design that works beautifully on desktop and tablet
+  5. No functional changes - all existing features work exactly as before
+**Research**: Required (2026 design trends, medical SaaS best practices, accessibility standards)
+**Research topics**: 2026 UI trends, medical/healthcare app design patterns, glassmorphism vs neubrutalism vs minimalism, motion design best practices, dark mode implementation
+**Plans**: TBD
+
+Plans:
+- [x] 11-01: Motion System Foundation
+- [x] 11-02: Core UI Micro-interactions
+- [x] 11-03: Auth Pages Polish
+- [x] 11-04: Protected Pages Polish
+- [x] 11-05: Accessibility Compliance
+- [x] 11-06: 3-Panel Application Shell
+- [x] 11-07: ReportWorkspace Overhaul (redesigned with user feedback)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -189,6 +213,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. User Settings & Macros | 2/2 | Complete | 2026-01-16 |
 | 9. Stripe Billing | 2/2 | Complete | 2026-01-16 |
 | 10. Admin Dashboard | 1/1 | Complete | 2026-01-16 |
+| 11. UI/UX Overhaul | 7/7 | Complete | 2026-01-16 |
 
 ---
 *Roadmap created: 2026-01-16*
