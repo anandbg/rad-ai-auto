@@ -52,10 +52,7 @@ interface TemplateVersion {
   createdBy?: string;
 }
 
-// Global templates storage key (shared across all users)
-const GLOBAL_TEMPLATES_KEY = 'ai-rad-global-templates';
-
-// Template versions storage key
+// Template versions storage key (local-only version history)
 const TEMPLATE_VERSIONS_KEY = 'ai-rad-template-versions';
 
 // Helper to get template versions from localStorage
@@ -108,54 +105,6 @@ function saveTemplateVersion(template: Template, userId?: string): TemplateVersi
   return newVersion;
 }
 
-// Seed global templates (only used if no global templates exist in storage)
-const seedGlobalTemplates: Template[] = [
-  {
-    id: 'tpl-001',
-    name: 'Chest X-Ray Standard',
-    modality: 'X-Ray',
-    bodyPart: 'Chest',
-    description: 'Standard chest X-ray report template with PA and lateral views',
-    isGlobal: true,
-    createdAt: '2024-01-10T10:00:00Z',
-    updatedAt: '2024-01-10T10:00:00Z',
-    content: 'CHEST X-RAY PA AND LATERAL\n\nCLINICAL INDICATION:\n{{INDICATION}}\n\nFINDINGS:\n{{FINDINGS}}\n\nIMPRESSION:\n{{IMPRESSION}}',
-  },
-  {
-    id: 'tpl-002',
-    name: 'CT Abdomen',
-    modality: 'CT',
-    bodyPart: 'Abdomen',
-    description: 'CT scan of abdomen and pelvis with and without contrast',
-    isGlobal: true,
-    createdAt: '2024-01-12T14:30:00Z',
-    updatedAt: '2024-01-12T14:30:00Z',
-    content: 'CT ABDOMEN AND PELVIS WITH CONTRAST\n\nCLINICAL INDICATION:\n{{INDICATION}}\n\nTECHNIQUE:\n{{TECHNIQUE}}\n\nFINDINGS:\n{{FINDINGS}}\n\nIMPRESSION:\n{{IMPRESSION}}',
-  },
-];
-
-// Helper to get global templates from localStorage
-function getGlobalTemplates(): Template[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(GLOBAL_TEMPLATES_KEY);
-  if (!stored) {
-    // Initialize with seed templates if nothing exists
-    localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(seedGlobalTemplates));
-    return seedGlobalTemplates;
-  }
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to save global templates to localStorage
-function saveGlobalTemplates(templates: Template[]) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(templates));
-}
-
 // Modality options
 const modalityOptions = [
   'X-Ray',
@@ -183,28 +132,6 @@ const bodyPartOptions = [
   'Other',
 ];
 
-// Helper to get user-specific storage key
-function getStorageKey(userId: string | undefined): string {
-  return userId ? `ai-rad-templates-${userId}` : 'ai-rad-templates';
-}
-
-// Helper to get templates from localStorage (user-specific)
-function getStoredTemplates(userId: string | undefined): Template[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(getStorageKey(userId));
-  if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to save templates to localStorage (user-specific)
-function saveTemplates(templates: Template[], userId: string | undefined) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(getStorageKey(userId), JSON.stringify(templates));
-}
 
 export default function TemplateDetailPage() {
   const params = useParams();
@@ -241,6 +168,7 @@ export default function TemplateDetailPage() {
   });
   const [editorTab, setEditorTab] = useState<EditorTab>('sections');
   const [editSections, setEditSections] = useState<TemplateSection[]>([]);
+  const [isCloning, setIsCloning] = useState(false);
 
   // Check if form has unsaved changes
   const hasUnsavedChanges = useMemo(() => {
@@ -266,73 +194,100 @@ export default function TemplateDetailPage() {
     message: 'You have unsaved changes. Are you sure you want to leave?',
   });
 
-  // Load template on mount and when user changes
+  // Track if template is loading
+  const [error, setError] = useState<string | null>(null);
+
+  // Load template on mount via API
   useEffect(() => {
-    // Only attempt to load if user context is ready (not in initial loading state)
-    if (user === null && typeof window !== 'undefined') {
-      // User is loading, wait for auth context to settle
-      return;
-    }
+    const loadTemplate = async () => {
+      if (!id) {
+        setError('Template ID not found');
+        setIsLoading(false);
+        return;
+      }
 
-    const storedTemplates = getStoredTemplates(user?.id);
-    const globalTemplates = getGlobalTemplates();
+      try {
+        const response = await fetch(`/api/templates/${id}`);
 
-    // First check if it's the user's own personal template
-    const personalTemplate = storedTemplates.find(t => t.id === id);
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError('Template not found');
+          } else if (response.status === 401) {
+            setError('Please sign in to view this template');
+          } else {
+            setError('Failed to load template');
+          }
+          setIsLoading(false);
+          return;
+        }
 
-    // Then check if it's a global template (accessible to all)
-    const globalTemplate = globalTemplates.find(t => t.id === id);
+        const { data: templateData } = await response.json();
 
-    // Only allow access to:
-    // 1. User's own personal templates
-    // 2. Global templates (shared with everyone)
-    // Personal templates of OTHER users should NOT be accessible
-    const foundTemplate = personalTemplate || globalTemplate;
+        // Map API response to Template interface
+        const foundTemplate: Template = {
+          id: templateData.id,
+          name: templateData.name,
+          modality: templateData.modality,
+          bodyPart: templateData.bodyPart,
+          description: templateData.description || '',
+          isGlobal: templateData.isGlobal,
+          createdAt: templateData.createdAt,
+          updatedAt: templateData.updatedAt,
+          content: templateData.content?.rawContent || '',
+          sections: templateData.content?.sections || [],
+        };
 
-    if (foundTemplate) {
-      setTemplate(foundTemplate);
-      const initialData = {
-        name: foundTemplate.name,
-        modality: foundTemplate.modality,
-        bodyPart: foundTemplate.bodyPart,
-        description: foundTemplate.description,
-        content: foundTemplate.content || '',
-        normalFindings: (foundTemplate as any).normalFindings || '',
-      };
-      setFormData(initialData);
-      setOriginalFormData(initialData);
-      setEditSections(foundTemplate.sections || []);
-      // Load version history for this template
-      const templateVersions = getTemplateVersions(id);
-      setVersions(templateVersions);
-    }
-    setIsLoading(false);
-  }, [id, user?.id]);
+        setTemplate(foundTemplate);
+        const initialData = {
+          name: foundTemplate.name,
+          modality: foundTemplate.modality,
+          bodyPart: foundTemplate.bodyPart,
+          description: foundTemplate.description,
+          content: foundTemplate.content || '',
+          normalFindings: '',
+        };
+        setFormData(initialData);
+        setOriginalFormData(initialData);
+        setEditSections(foundTemplate.sections || []);
+
+        // Load version history for this template (local-only for now)
+        const templateVersions = getTemplateVersions(id);
+        setVersions(templateVersions);
+      } catch (err) {
+        console.error('Error loading template:', err);
+        setError('Failed to load template');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTemplate();
+  }, [id]);
 
   const handleSave = async () => {
     if (!template) return;
 
-    setIsSaving(true);
+    // Global templates cannot be edited - must clone first
+    if (template.isGlobal) {
+      showToast('Global templates are read-only. Clone to your personal templates to edit.', 'error');
+      return;
+    }
 
-    // Check for simulated API failure (for testing optimistic updates rollback)
-    const urlParams = new URLSearchParams(window.location.search);
-    const simulateError = urlParams.get('simulate_save_error') === 'true';
+    setIsSaving(true);
 
     // Optimistic update: immediately update the UI
     const previousTemplate = { ...template };
-    const previousFormData = { ...formData };
 
     // Get current version number for the template
     const currentVersion = (template.version || 0) + 1;
 
-    const updatedTemplate: Template & { normalFindings?: string } = {
+    const updatedTemplate: Template = {
       ...template,
       name: formData.name,
       modality: formData.modality,
       bodyPart: formData.bodyPart,
       description: formData.description,
       content: formData.content,
-      normalFindings: formData.normalFindings,
       sections: editSections,
       updatedAt: new Date().toISOString(),
       version: currentVersion,
@@ -341,54 +296,55 @@ export default function TemplateDetailPage() {
     // Optimistically update UI immediately
     setTemplate(updatedTemplate);
 
-    // Simulate async save operation
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch(`/api/templates/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          modality: formData.modality,
+          bodyPart: formData.bodyPart,
+          description: formData.description.trim(),
+          content: formData.content,
+          sections: editSections.length > 0 ? editSections : undefined,
+        }),
+      });
 
-    // Simulate error if flag is set
-    if (simulateError) {
+      if (!response.ok) {
+        // ROLLBACK: Revert to original state
+        setTemplate(previousTemplate);
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to update template');
+      }
+
+      const { data: savedTemplate } = await response.json();
+
+      // Save the current state as a version (local version history)
+      const newVersion = saveTemplateVersion(previousTemplate, user?.id);
+
+      // Update versions list with the new version
+      setVersions(prev => [newVersion, ...prev]);
+
+      // Update template with response data
+      setTemplate({
+        ...updatedTemplate,
+        updatedAt: savedTemplate.updatedAt,
+      });
+
+      // Reset original form data to match saved state (clears dirty flag)
+      setOriginalFormData({ ...formData });
+      setIsEditing(false);
+
+      // Show success toast
+      showToast(`Template "${savedTemplate.name}" updated successfully!`, 'success');
+    } catch (error) {
       // ROLLBACK: Revert to original state
       setTemplate(previousTemplate);
-      setFormData(originalFormData);
+      console.error('Error saving template:', error);
+      showToast(error instanceof Error ? error.message : 'Failed to save template', 'error');
+    } finally {
       setIsSaving(false);
-      showToast('Failed to save template. Changes have been reverted.', 'error');
-      return;
     }
-
-    // Save the current state as a version BEFORE updating
-    const newVersion = saveTemplateVersion(previousTemplate, user?.id);
-
-    // Update in appropriate localStorage storage
-    if (updatedTemplate.isGlobal) {
-      // Admin editing a global template
-      const globalTemplates = getGlobalTemplates();
-      const existingIndex = globalTemplates.findIndex(t => t.id === id);
-      if (existingIndex >= 0) {
-        globalTemplates[existingIndex] = updatedTemplate;
-      } else {
-        globalTemplates.push(updatedTemplate);
-      }
-      saveGlobalTemplates(globalTemplates);
-    } else {
-      // User editing personal template
-      const storedTemplates = getStoredTemplates(user?.id);
-      const existingIndex = storedTemplates.findIndex(t => t.id === id);
-      if (existingIndex >= 0) {
-        storedTemplates[existingIndex] = updatedTemplate;
-      } else {
-        storedTemplates.push(updatedTemplate);
-      }
-      saveTemplates(storedTemplates, user?.id);
-    }
-
-    // Update versions list with the new version
-    setVersions(prev => [newVersion, ...prev]);
-    // Reset original form data to match saved state (clears dirty flag)
-    setOriginalFormData({ ...formData });
-    setIsEditing(false);
-    setIsSaving(false);
-
-    // Show success toast
-    showToast(`Template "${updatedTemplate.name}" updated successfully! (Version ${newVersion.version} saved)`, 'success');
   };
 
   const handleChange = (field: string, value: string) => {
@@ -445,65 +401,120 @@ export default function TemplateDetailPage() {
   };
 
   // Confirm and execute rollback
-  const confirmRollback = () => {
+  const confirmRollback = async () => {
     if (!rollbackVersion || !template) return;
 
-    // Save current state as a new version before rollback
-    const newVersion = saveTemplateVersion(template, user?.id);
-
-    // Update template with the rollback version's content
-    const rolledBackTemplate: Template = {
-      ...template,
-      name: rollbackVersion.name,
-      modality: rollbackVersion.modality,
-      bodyPart: rollbackVersion.bodyPart,
-      description: rollbackVersion.description,
-      content: rollbackVersion.content,
-      sections: rollbackVersion.sections,
-      updatedAt: new Date().toISOString(),
-      version: (template.version || 0) + 1,
-    };
-
-    // Save the rolled-back template
-    if (rolledBackTemplate.isGlobal) {
-      const globalTemplates = getGlobalTemplates();
-      const existingIndex = globalTemplates.findIndex(t => t.id === id);
-      if (existingIndex >= 0) {
-        globalTemplates[existingIndex] = rolledBackTemplate;
-      }
-      saveGlobalTemplates(globalTemplates);
-    } else {
-      const storedTemplates = getStoredTemplates(user?.id);
-      const existingIndex = storedTemplates.findIndex(t => t.id === id);
-      if (existingIndex >= 0) {
-        storedTemplates[existingIndex] = rolledBackTemplate;
-      }
-      saveTemplates(storedTemplates, user?.id);
+    // Global templates cannot be rolled back
+    if (template.isGlobal) {
+      showToast('Global templates are read-only and cannot be rolled back.', 'error');
+      setShowRollbackConfirm(false);
+      setRollbackVersion(null);
+      return;
     }
 
-    // Update local state
-    setTemplate(rolledBackTemplate);
-    setVersions(prev => [newVersion, ...prev]);
-    setFormData({
-      name: rolledBackTemplate.name,
-      modality: rolledBackTemplate.modality,
-      bodyPart: rolledBackTemplate.bodyPart,
-      description: rolledBackTemplate.description,
-      content: rolledBackTemplate.content || '',
-    });
-    setOriginalFormData({
-      name: rolledBackTemplate.name,
-      modality: rolledBackTemplate.modality,
-      bodyPart: rolledBackTemplate.bodyPart,
-      description: rolledBackTemplate.description,
-      content: rolledBackTemplate.content || '',
-    });
+    try {
+      // Save current state as a new version before rollback (local)
+      const newVersion = saveTemplateVersion(template, user?.id);
 
-    // Clean up
-    setShowRollbackConfirm(false);
-    setRollbackVersion(null);
+      // Update template with the rollback version's content via API
+      const response = await fetch(`/api/templates/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: rollbackVersion.name,
+          modality: rollbackVersion.modality,
+          bodyPart: rollbackVersion.bodyPart,
+          description: rollbackVersion.description,
+          content: rollbackVersion.content || '',
+          sections: rollbackVersion.sections || [],
+        }),
+      });
 
-    showToast(`Template rolled back to Version ${rollbackVersion.version} successfully!`, 'success');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to rollback template');
+      }
+
+      const { data: savedTemplate } = await response.json();
+
+      // Update template with the rollback version's content
+      const rolledBackTemplate: Template = {
+        ...template,
+        name: savedTemplate.name,
+        modality: savedTemplate.modality,
+        bodyPart: savedTemplate.bodyPart,
+        description: savedTemplate.description,
+        content: savedTemplate.content?.rawContent || '',
+        sections: savedTemplate.content?.sections || [],
+        updatedAt: savedTemplate.updatedAt,
+        version: (template.version || 0) + 1,
+      };
+
+      // Update local state
+      setTemplate(rolledBackTemplate);
+      setVersions(prev => [newVersion, ...prev]);
+      setFormData({
+        name: rolledBackTemplate.name,
+        modality: rolledBackTemplate.modality,
+        bodyPart: rolledBackTemplate.bodyPart,
+        description: rolledBackTemplate.description,
+        content: rolledBackTemplate.content || '',
+        normalFindings: '',
+      });
+      setOriginalFormData({
+        name: rolledBackTemplate.name,
+        modality: rolledBackTemplate.modality,
+        bodyPart: rolledBackTemplate.bodyPart,
+        description: rolledBackTemplate.description,
+        content: rolledBackTemplate.content || '',
+        normalFindings: '',
+      });
+
+      // Clean up
+      setShowRollbackConfirm(false);
+      setRollbackVersion(null);
+
+      showToast(`Template rolled back to Version ${rollbackVersion.version} successfully!`, 'success');
+    } catch (error) {
+      console.error('Error rolling back template:', error);
+      showToast(error instanceof Error ? error.message : 'Failed to rollback template', 'error');
+      setShowRollbackConfirm(false);
+      setRollbackVersion(null);
+    }
+  };
+
+  // Clone global template to personal collection
+  const handleCloneToPersonal = async () => {
+    if (!template || !template.isGlobal) return;
+
+    setIsCloning(true);
+
+    try {
+      const response = await fetch('/api/templates/clone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          globalTemplateId: template.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to clone template');
+      }
+
+      const { data: clonedTemplate } = await response.json();
+
+      showToast(`Template cloned as "${clonedTemplate.name}"!`, 'success');
+
+      // Redirect to the cloned template
+      router.push(`/templates/${clonedTemplate.id}`);
+    } catch (error) {
+      console.error('Error cloning template:', error);
+      showToast(error instanceof Error ? error.message : 'Failed to clone template', 'error');
+    } finally {
+      setIsCloning(false);
+    }
   };
 
   if (isLoading) {
@@ -517,14 +528,16 @@ export default function TemplateDetailPage() {
     );
   }
 
-  if (!template) {
+  if (error || !template) {
     return (
       <div className="mx-auto max-w-3xl p-6">
         <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center">
           <div className="mb-4 text-5xl">404</div>
-          <h3 className="mb-2 text-lg font-semibold text-text-primary">Template Not Found</h3>
+          <h3 className="mb-2 text-lg font-semibold text-text-primary">
+            {error || 'Template Not Found'}
+          </h3>
           <p className="mb-4 text-sm text-text-secondary">
-            The template you're looking for doesn't exist.
+            The template you're looking for doesn't exist or you don't have access.
           </p>
           <Button asChild>
             <Link href="/templates">Back to Templates</Link>
@@ -535,8 +548,8 @@ export default function TemplateDetailPage() {
   }
 
   const isGlobal = template.isGlobal;
-  const isAdmin = user?.role === 'admin';
-  const canEdit = !isGlobal || isAdmin; // Admins can edit global templates
+  // Global templates are read-only for everyone (admin editing of globals is Phase 10)
+  const canEdit = !isGlobal;
 
   return (
     <div className="mx-auto max-w-4xl p-6">
@@ -601,12 +614,22 @@ export default function TemplateDetailPage() {
         <div className="flex items-center gap-3">
           {isGlobal && (
             <span className="rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand">
-              Global Template
+              Global Template (Read-only)
             </span>
           )}
           {canEdit && !isEditing && (
-            <Button onClick={() => setIsEditing(true)}>
+            <Button onClick={() => setIsEditing(true)} data-testid="edit-template-btn">
               Edit Template
+            </Button>
+          )}
+          {isGlobal && !isEditing && (
+            <Button
+              variant="outline"
+              onClick={handleCloneToPersonal}
+              disabled={isCloning}
+              data-testid="clone-to-edit-btn"
+            >
+              {isCloning ? 'Cloning...' : 'Clone to Edit'}
             </Button>
           )}
         </div>
@@ -1115,7 +1138,14 @@ The lungs are clear. No focal consolidation, pleural effusion, or pneumothorax. 
               <Link href="/templates">Back to Templates</Link>
             </Button>
             {isGlobal && (
-              <Button variant="outline">Clone to Personal</Button>
+              <Button
+                variant="outline"
+                onClick={handleCloneToPersonal}
+                disabled={isCloning}
+                data-testid="clone-to-personal-btn"
+              >
+                {isCloning ? 'Cloning...' : 'Clone to Personal'}
+              </Button>
             )}
           </div>
         </div>
