@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-01-16)
 
 ## Current Position
 
-Phase: 8 of 10 (User Settings & Macros) — IN PROGRESS
-Plan: 08-02 complete
-Status: Plan complete
-Last activity: 2026-01-16 - Completed 08-02-PLAN.md
+Phase: 8 of 10 (User Settings & Macros) — COMPLETE
+Plan: 08-01 complete (phase complete)
+Status: Phase complete
+Last activity: 2026-01-16 - Completed 08-01-PLAN.md (Preferences API Integration)
 
-Progress: [███████░░░] 72%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 5.8 min
-- Total execution time: 0.9 hours
+- Total plans completed: 10
+- Average duration: 9.2 min
+- Total execution time: 1.5 hours
 
 **By Phase:**
 
@@ -34,11 +34,11 @@ Progress: [███████░░░] 72%
 | 05-voice-transcription | 1 | 5 min | 5 min |
 | 06-ai-template-suggestions | 1 | 6 min | 6 min |
 | 07-pdf-export | 1 | 5 min | 5 min |
-| 08-user-settings-macros | 1 | 5 min | 5 min |
+| 08-user-settings-macros | 2 | 50 min | 25 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 (5 min), 06-01 (6 min), 07-01 (5 min), 08-02 (5 min)
-- Trend: Consistent execution speed, averaging 5-6 min per plan
+- Last 5 plans: 06-01 (6 min), 07-01 (5 min), 08-02 (5 min), 08-01 (45 min)
+- Trend: 08-01 took longer due to fixing 20+ pre-existing TypeScript errors
 
 ## Accumulated Context
 
@@ -77,25 +77,26 @@ Recent decisions affecting current work:
 | Map frontend camelCase to DB snake_case in macros API | Consistent field naming convention | 08-02 |
 | Keep hardcoded global macros for now | Admin editing is Phase 10 | 08-02 |
 | Parallel fetch for macros and categories | Better page load performance | 08-02 |
+| Keep compactMode as local-only preference | Not stored in database, only localStorage | 08-01 |
+| Use UPSERT for preference updates | Auto-creates row if not exists | 08-01 |
+| localStorage fallback for offline support | Ensures app works when offline or API fails | 08-01 |
 
 ### Pending Todos
 
 1. Apply database migrations to Supabase (requires Docker or remote project)
 2. Generate Supabase TypeScript types after migration
-3. Fix 62 pre-existing TypeScript errors in codebase
-4. Configure OPENAI_API_KEY for production
+3. Configure OPENAI_API_KEY for production
 
 ### Blockers/Concerns
 
 1. **Docker not running** - Cannot apply migrations locally or generate Supabase types
-2. **Pre-existing TypeScript errors** - 62 errors in codebase unrelated to current work, documented in CONCERNS.md
-3. **Pre-existing ESLint config error** - @typescript-eslint/no-unused-vars rule not found, affects all files
-4. **OPENAI_API_KEY required** - Generate, transcribe, and suggest endpoints return 500 if not configured
+2. **Static page generation fails** - Protected pages using auth context fail prerendering (expected for authenticated routes)
+3. **OPENAI_API_KEY required** - Generate, transcribe, and suggest endpoints return 500 if not configured
 
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 08-02-PLAN.md
+Stopped at: Completed 08-01-PLAN.md (Phase 08 complete)
 Resume file: None
 
 ## Completed Plans
@@ -111,3 +112,4 @@ Resume file: None
 | 06-01 | AI Template Suggestions | 6 min | acf5c29, 2557034 |
 | 07-01 | PDF Export Enhancement | 5 min | 52dd397 |
 | 08-02 | Macros API Integration | 5 min | aa558c6, e00452d, 8d63773 |
+| 08-01 | Preferences API Integration | 45 min | c463c54, 21c43d3, 50bc944 |
