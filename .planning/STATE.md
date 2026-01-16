@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 4 — AI Report Generation (next)
+**Current focus:** Phase 4 — AI Report Generation (in progress)
 
 ## Current Position
 
-Phase: 3 of 10 (Template System) — COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 3 complete, ready for Phase 4
-Last activity: 2026-01-16 - Phase 3 verified complete
+Phase: 4 of 10 (AI Report Generation)
+Plan: 1 of 2 complete
+Status: GPT-4o streaming generation implemented, voice transcription next
+Last activity: 2026-01-16 - Completed 04-01-PLAN.md
 
-Progress: [███░░░░░░░] 30%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 6 min
-- Total execution time: 0.4 hours
+- Total plans completed: 5
+- Average duration: 6.6 min
+- Total execution time: 0.5 hours
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [███░░░░░░░] 30%
 | 01-database-foundation | 1 | 12 min | 12 min |
 | 02-authentication | 1 | 3 min | 3 min |
 | 03-template-system | 2 | 8 min | 4 min |
+| 04-ai-report-generation | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (12 min), 02-01 (3 min), 03-01 (3 min), 03-02 (5 min)
-- Trend: Consistent fast execution on API and UI integration plans
+- Last 5 plans: 02-01 (3 min), 03-01 (3 min), 03-02 (5 min), 04-01 (8 min)
+- Trend: AI integration plans slightly longer due to SDK API exploration
 
 ## Accumulated Context
 
@@ -57,23 +58,29 @@ Recent decisions affecting current work:
 | Keep browser Supabase client for reads | RLS handles security, simpler than list API endpoint | 03-02 |
 | Global templates read-only for all | Admin editing is Phase 10, all users can only clone | 03-02 |
 | Preserve draft storage in localStorage | Useful UX for form recovery | 03-02 |
+| Vercel AI SDK over raw OpenAI | Better streaming abstractions, simpler response handling | 04-01 |
+| Edge runtime for /api/generate | Lower latency for AI streaming | 04-01 |
+| Temperature 0.2 for GPT-4o | Deterministic, consistent medical reports | 04-01 |
+| toTextStreamResponse() for SSE | Plain text streaming simpler than data stream format | 04-01 |
 
 ### Pending Todos
 
 1. Apply database migrations to Supabase (requires Docker or remote project)
 2. Generate Supabase TypeScript types after migration
 3. Fix 62 pre-existing TypeScript errors in codebase
+4. Configure OPENAI_API_KEY for production
 
 ### Blockers/Concerns
 
 1. **Docker not running** - Cannot apply migrations locally or generate Supabase types
 2. **Pre-existing TypeScript errors** - 62 errors in codebase unrelated to current work, documented in CONCERNS.md
 3. **Pre-existing ESLint config error** - @typescript-eslint/no-unused-vars rule not found, affects all files
+4. **OPENAI_API_KEY required** - Generate endpoint returns 500 if not configured
 
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 03-02-PLAN.md
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
 
 ## Completed Plans
@@ -84,3 +91,4 @@ Resume file: None
 | 02-01 | Supabase Auth Verification | 3 min | a00506a, a2bb68c, a2f4263 |
 | 03-01 | Template CRUD API | 3 min | d6f520b, dc2962c, 1deff1d |
 | 03-02 | Template UI API Integration | 5 min | 1d88bc3, a0e7051, a13d023 |
+| 04-01 | GPT-4o Streaming Generation | 8 min | fb15e6d, e6b66be, 759860a |
