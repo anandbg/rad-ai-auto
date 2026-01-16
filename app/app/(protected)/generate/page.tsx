@@ -31,92 +31,8 @@ interface Template {
   updatedAt: string;
 }
 
-// Mock templates for development (same as templates page)
-const mockTemplates: Template[] = [
-  {
-    id: 'tpl-001',
-    name: 'Chest X-Ray Standard',
-    modality: 'X-Ray',
-    bodyPart: 'Chest',
-    description: 'Standard chest X-ray report template with PA and lateral views',
-    isGlobal: true,
-    content: 'FINDINGS:\n\nThe heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.\n\nIMPRESSION:\n\nNo acute cardiopulmonary findings.',
-    createdAt: '2024-01-10T10:00:00Z',
-    updatedAt: '2024-01-10T10:00:00Z',
-  },
-  {
-    id: 'tpl-002',
-    name: 'CT Abdomen',
-    modality: 'CT',
-    bodyPart: 'Abdomen',
-    description: 'CT scan of abdomen and pelvis with and without contrast',
-    isGlobal: true,
-    content: 'TECHNIQUE:\n\nCT of the abdomen and pelvis was performed with oral and IV contrast.\n\nFINDINGS:\n\nLiver, spleen, pancreas, and adrenal glands are unremarkable.\n\nIMPRESSION:\n\nNo acute findings.',
-    createdAt: '2024-01-12T14:30:00Z',
-    updatedAt: '2024-01-12T14:30:00Z',
-  },
-  {
-    id: 'tpl-003',
-    name: 'MRI Brain',
-    modality: 'MRI',
-    bodyPart: 'Head',
-    description: 'Standard brain MRI with diffusion-weighted imaging',
-    isGlobal: false,
-    content: 'TECHNIQUE:\n\nMRI of the brain was performed without contrast.\n\nFINDINGS:\n\nNo acute intracranial abnormality.\n\nIMPRESSION:\n\nUnremarkable MRI of the brain.',
-    createdAt: '2024-01-14T09:15:00Z',
-    updatedAt: '2024-01-14T09:15:00Z',
-  },
-];
-
-// Helper to get user-specific storage key
-function getStorageKey(userId: string | undefined): string {
-  return userId ? `ai-rad-templates-${userId}` : 'ai-rad-templates';
-}
-
-// Helper to get templates from localStorage
-function getStoredTemplates(userId: string | undefined): Template[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(getStorageKey(userId));
-  if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to get and update usage stats
-function getUsageStats(): { reportsGenerated: number; transcriptionMinutes: number } {
-  if (typeof window === 'undefined') return { reportsGenerated: 0, transcriptionMinutes: 0 };
-  const stored = localStorage.getItem('ai-rad-usage');
-  if (!stored) return { reportsGenerated: 0, transcriptionMinutes: 0 };
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return { reportsGenerated: 0, transcriptionMinutes: 0 };
-  }
-}
-
-function incrementReportCount() {
-  const stats = getUsageStats();
-  stats.reportsGenerated += 1;
-  localStorage.setItem('ai-rad-usage', JSON.stringify(stats));
-}
-
 // Plan limits (Free plan)
 const REPORT_LIMIT = 10;
-
-// Check if user has credits remaining
-function hasCreditsRemaining(): boolean {
-  const stats = getUsageStats();
-  return stats.reportsGenerated < REPORT_LIMIT;
-}
-
-// Get credits remaining
-function getCreditsRemaining(): number {
-  const stats = getUsageStats();
-  return Math.max(0, REPORT_LIMIT - stats.reportsGenerated);
-}
 
 // Draft interface for generate page
 interface GenerateDraft {
@@ -181,8 +97,9 @@ export default function GeneratePage() {
   // Section regeneration state
   const [regeneratingSection, setRegeneratingSection] = useState<string | null>(null);
 
-  // Generation cancellation ref
+  // Generation cancellation refs
   const generationCancelledRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Credits state
   const [creditsRemaining, setCreditsRemaining] = useState<number>(REPORT_LIMIT);
@@ -203,21 +120,36 @@ export default function GeneratePage() {
     return unsubscribe;
   }, [showToast]);
 
-  // Load and track credits
+  // Load credits from Supabase
   useEffect(() => {
-    const updateCredits = () => {
-      setCreditsRemaining(getCreditsRemaining());
-    };
-    updateCredits();
+    async function loadCredits() {
+      if (!user?.id) return;
 
-    // Update on focus and storage changes
-    window.addEventListener('focus', updateCredits);
-    window.addEventListener('storage', updateCredits);
-    return () => {
-      window.removeEventListener('focus', updateCredits);
-      window.removeEventListener('storage', updateCredits);
-    };
-  }, []);
+      try {
+        const { createSupabaseBrowserClient } = await import('@/lib/supabase/client');
+        const supabase = createSupabaseBrowserClient();
+
+        // Get credits balance from credits_ledger
+        const { data: ledger } = await supabase
+          .from('credits_ledger')
+          .select('delta')
+          .eq('user_id', user.id);
+
+        const totalCredits = ledger?.reduce((sum, entry) => sum + entry.delta, 0) || REPORT_LIMIT;
+        setCreditsRemaining(Math.max(0, totalCredits));
+      } catch (error) {
+        console.error('Error loading credits:', error);
+        setCreditsRemaining(REPORT_LIMIT); // Default to free plan limit
+      }
+    }
+
+    loadCredits();
+
+    // Reload on focus
+    const handleFocus = () => loadCredits();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user?.id]);
 
   // Load draft from IndexedDB on mount
   useEffect(() => {
@@ -281,17 +213,68 @@ export default function GeneratePage() {
     }
   }, [findings, selectedTemplateId, saveToIndexedDBDraft]);
 
-  // Load templates on mount and when user changes
+  // Load templates from Supabase on mount and when user changes
   useEffect(() => {
-    const storedTemplates = getStoredTemplates(user?.id);
-    // Combine mock templates with stored ones (stored take precedence by ID)
-    const storedIds = new Set(storedTemplates.map(t => t.id));
-    const combinedTemplates = [
-      ...storedTemplates,
-      ...mockTemplates.filter(t => !storedIds.has(t.id)),
-    ];
-    setTemplates(combinedTemplates);
-    setIsLoading(false);
+    async function loadTemplates() {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { createSupabaseBrowserClient } = await import('@/lib/supabase/client');
+        const supabase = createSupabaseBrowserClient();
+
+        // Fetch personal templates
+        const { data: personalTemplates } = await supabase
+          .from('templates_personal')
+          .select('*')
+          .eq('user_id', user.id);
+
+        // Fetch published global templates
+        const { data: globalTemplates } = await supabase
+          .from('templates_global')
+          .select('*')
+          .eq('is_published', true);
+
+        // Convert to Template interface
+        const personal: Template[] = (personalTemplates || []).map(t => ({
+          id: t.id,
+          name: t.name,
+          modality: t.modality,
+          bodyPart: t.body_part,
+          description: t.description || '',
+          isGlobal: false,
+          content: t.content?.sections?.map((s: { name: string; content?: string }) =>
+            `${s.name}:\n${s.content || ''}`
+          ).join('\n\n') || '',
+          createdAt: t.created_at,
+          updatedAt: t.updated_at,
+        }));
+
+        const global: Template[] = (globalTemplates || []).map(t => ({
+          id: t.id,
+          name: t.name,
+          modality: t.modality,
+          bodyPart: t.body_part,
+          description: t.description || '',
+          isGlobal: true,
+          content: t.content?.sections?.map((s: { name: string; content?: string }) =>
+            `${s.name}:\n${s.content || ''}`
+          ).join('\n\n') || '',
+          createdAt: t.created_at,
+          updatedAt: t.updated_at,
+        }));
+
+        setTemplates([...personal, ...global]);
+      } catch (error) {
+        console.error('Error loading templates:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadTemplates();
   }, [user?.id]);
 
   // Load draft on mount
@@ -418,65 +401,119 @@ export default function GeneratePage() {
     if (!selectedTemplateId || !findings.trim()) return;
 
     // Check for remaining credits
-    if (!hasCreditsRemaining()) {
+    if (creditsRemaining <= 0) {
       setNoCreditsDialogOpen(true);
       return;
     }
 
     setIsGenerating(true);
+    setGeneratedReport(''); // Clear previous report
     generationCancelledRef.current = false;
 
-    // Simulate AI generation with streaming-like chunked behavior
-    // This allows for cancellation at each chunk (in production, would use OpenAI streaming)
-    const chunks = 5;
-    const chunkDelay = 300; // 300ms per chunk = 1.5 seconds total
-
-    for (let i = 0; i < chunks; i++) {
-      if (generationCancelledRef.current) {
-        setIsGenerating(false);
-        return;
-      }
-      await new Promise(resolve => setTimeout(resolve, chunkDelay));
-    }
-
-    // Check if generation was cancelled
-    if (generationCancelledRef.current) {
-      setIsGenerating(false);
-      return;
-    }
+    // Create AbortController for cancellation
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     const template = templates.find(t => t.id === selectedTemplateId);
-    const report = `RADIOLOGY REPORT
 
-Template: ${template?.name || 'Unknown'}
-Modality: ${template?.modality || 'Unknown'}
-Body Part: ${template?.bodyPart || 'Unknown'}
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          templateId: selectedTemplateId,
+          findings,
+          templateName: template?.name || 'Unknown',
+          modality: template?.modality || 'Unknown',
+          bodyPart: template?.bodyPart || 'Unknown',
+          templateContent: template?.content,
+        }),
+        signal: abortController.signal,
+      });
 
-CLINICAL INDICATION:
-${findings}
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Generation failed (${response.status})`);
+      }
 
-${template?.content || 'No template content available.'}
+      // Read streaming response
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No response body');
+      }
 
----
-Generated by AI Radiologist`;
+      const decoder = new TextDecoder();
+      let accumulated = '';
 
-    setGeneratedReport(report);
-    setIsGenerating(false);
+      while (true) {
+        const { done, value } = await reader.read();
 
-    // Clear the draft after successful generation
-    clearDraft(user?.id);
-    setDraftRestored(false);
-    setDraftSavedAt(null);
+        if (done) break;
 
-    // Increment the report count in usage stats
-    incrementReportCount();
+        // Check if cancelled
+        if (generationCancelledRef.current) {
+          reader.cancel();
+          return;
+        }
 
-    // Update credits state
-    setCreditsRemaining(getCreditsRemaining());
+        // Decode and accumulate text
+        const chunk = decoder.decode(value, { stream: true });
+        accumulated += chunk;
+        setGeneratedReport(accumulated);
+      }
+
+      // Final update with complete report
+      setGeneratedReport(accumulated);
+
+      // Clear the draft after successful generation
+      clearDraft(user?.id);
+      setDraftRestored(false);
+      setDraftSavedAt(null);
+
+      // Decrement credits
+      setCreditsRemaining(prev => Math.max(0, prev - 1));
+
+      // Record usage in Supabase
+      try {
+        const { createSupabaseBrowserClient } = await import('@/lib/supabase/client');
+        const supabase = createSupabaseBrowserClient();
+        await supabase.from('credits_ledger').insert({
+          user_id: user?.id,
+          delta: -1,
+          reason: 'debit',
+          meta: { action: 'report_generation', template_id: selectedTemplateId },
+          idempotency_key: `report-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        });
+      } catch (error) {
+        console.error('Error recording credit usage:', error);
+      }
+
+    } catch (error) {
+      // Handle AbortError gracefully (user cancelled)
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Already handled by handleCancelGeneration
+        return;
+      }
+
+      // Show error toast for other errors
+      console.error('Generation error:', error);
+      showToast(
+        error instanceof Error ? error.message : 'Failed to generate report. Please try again.',
+        'error'
+      );
+    } finally {
+      setIsGenerating(false);
+      abortControllerRef.current = null;
+    }
   };
 
   const handleCancelGeneration = () => {
     generationCancelledRef.current = true;
+    // Abort the fetch request if in progress
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
     setIsGenerating(false);
     showToast('Report generation cancelled', 'info');
   };
