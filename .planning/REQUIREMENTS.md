@@ -46,9 +46,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Admin
 
-- [ ] **ADMIN-01**: Admin can view and manage users in real database
-- [ ] **ADMIN-02**: Admin can publish/unpublish global templates
-- [ ] **ADMIN-03**: Admin can view system-wide usage analytics
+- [x] **ADMIN-01**: Admin can view and manage users in real database
+- [x] **ADMIN-02**: Admin can publish/unpublish global templates
+- [x] **ADMIN-03**: Admin can view system-wide usage analytics
 
 ### Database
 
@@ -125,9 +125,9 @@ Which phases cover which requirements. Updated by create-roadmap.
 | BILL-01 | Phase 9 | Complete |
 | BILL-02 | Phase 9 | Complete |
 | BILL-03 | Phase 9 | Complete |
-| ADMIN-01 | Phase 10 | Pending |
-| ADMIN-02 | Phase 10 | Pending |
-| ADMIN-03 | Phase 10 | Pending |
+| ADMIN-01 | Phase 10 | Complete |
+| ADMIN-02 | Phase 10 | Complete |
+| ADMIN-03 | Phase 10 | Complete |
 
 **Coverage:**
 - v1 requirements: 27 total
@@ -136,4 +136,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after Phase 9 completion*
+*Last updated: 2026-01-16 after Phase 10 completion*
