@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 11 — UI/UX Overhaul (auth pages polished)
+**Current focus:** Phase 11 — UI/UX Overhaul (protected pages polished)
 
 ## Current Position
 
 Phase: 11 of 11 (UI/UX Overhaul)
-Plan: 3 of 5 complete
+Plan: 4 of 5 complete
 Status: In progress
-Last activity: 2026-01-16 - Completed 11-03-PLAN.md (Auth Pages Polish)
+Last activity: 2026-01-16 - Completed 11-04-PLAN.md (Protected Pages Polish)
 
-Progress: [█████████░] 93% (10/11 phases complete, 11-01, 11-02, 11-03 done)
+Progress: [█████████░] 95% (10/11 phases complete, 11-01 through 11-04 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
-- Average duration: 7.0 min
+- Total plans completed: 17
+- Average duration: 6.8 min
 - Total execution time: 1.9 hours
 
 **By Phase:**
@@ -37,10 +37,10 @@ Progress: [█████████░] 93% (10/11 phases complete, 11-01, 11
 | 08-user-settings-macros | 2 | 50 min | 25 min |
 | 09-stripe-billing | 2 | 6 min | 3 min |
 | 10-admin-dashboard | 1 | 3 min | 3 min |
-| 11-ui-ux-overhaul | 3 | 9 min | 3 min |
+| 11-ui-ux-overhaul | 4 | 14 min | 3.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 10-01 (3 min), 11-01 (2 min), 11-02 (3 min), 11-03 (4 min)
+- Last 5 plans: 11-01 (2 min), 11-02 (3 min), 11-03 (4 min), 11-04 (5 min)
 - Trend: Fast execution continues for UI/UX overhaul
 
 ## Accumulated Context
@@ -102,6 +102,10 @@ Recent decisions affecting current work:
 | Emoji branding for auth pages | Medical-themed emojis for quick visual identity | 11-03 |
 | StaggerContainer for auth forms | Sequential field animation for polished first impression | 11-03 |
 | PageWrapper + Card auth layout | Consistent layout pattern across all 5 auth pages | 11-03 |
+| PageWrapper wraps all protected pages | Consistent fade-in effect across dashboard, settings, etc. | 11-04 |
+| AnimatePresence for sidebar dropdown | Smooth exit animations for user menu | 11-04 |
+| StaggerContainer for grids | Quick Actions, template cards, macro lists stagger in | 11-04 |
+| Section delay increment 0.1s | Sequential reveal from header down (0 -> 0.1 -> 0.2 -> 0.3) | 11-04 |
 
 ### Pending Todos
 
@@ -121,7 +125,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 11-03-PLAN.md (Auth Pages Polish)
+Stopped at: Completed 11-04-PLAN.md (Protected Pages Polish)
 Resume file: None
 
 ## Completed Plans
@@ -144,3 +148,4 @@ Resume file: None
 | 11-01 | Motion System Foundation | 2 min | 61e15c3, 25dca7d, 7dcb791 |
 | 11-02 | Core UI Micro-interactions | 3 min | e5d8fa4, 30b8f08, f8ed2e6 |
 | 11-03 | Auth Pages Polish | 4 min | dd2cec4, 01d05da |
+| 11-04 | Protected Pages Polish | 5 min | cd33b2c, 49fccec, 922582d |
