@@ -199,7 +199,6 @@ export default function TranscribePage() {
   const [detectedBodyPart, setDetectedBodyPart] = useState<string | null>(null);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
   const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   // Audio playback state
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -433,117 +432,70 @@ export default function TranscribePage() {
       timerRef.current = null;
     }
 
-    // Stop the media recorder if active
+    // Stop the media recorder if active - this triggers onstop which sets audioBlob
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
 
     // Calculate minutes recorded (minimum 0.1 minutes)
     const minutes = Math.max(0.1, Math.round((recordingTime / 60) * 10) / 10);
-    const recordedDuration = recordingTime;
 
     setIsProcessing(true);
+    setTranscriptionError(null);
 
-    // Simulate transcription processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait a moment for mediaRecorder.onstop to fire and set audioBlob
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    // If no real recording, create a sample audio blob for demo
-    if (!audioBlob && audioChunksRef.current.length === 0) {
-      // Create a simple audio context to generate a sample tone
-      try {
-        const audioContext = new AudioContext();
-        const duration = Math.min(recordedDuration, 5); // Cap at 5 seconds for demo
-        const sampleRate = audioContext.sampleRate;
-        const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
-        const data = buffer.getChannelData(0);
-
-        // Generate a simple tone that fades
-        for (let i = 0; i < data.length; i++) {
-          const t = i / sampleRate;
-          const envelope = Math.exp(-t * 2); // Fade out
-          data[i] = envelope * Math.sin(2 * Math.PI * 440 * t) * 0.3;
-        }
-
-        // Encode to WAV (simplified)
-        const wavBlob = audioBufferToWav(buffer);
-        setAudioBlob(wavBlob);
-        const url = URL.createObjectURL(wavBlob);
-        setAudioUrl(url);
-        setAudioDuration(duration);
-      } catch {
-        console.log('Could not create sample audio');
-      }
+    // Get the audio blob from chunks if not already set
+    let blobToSend = audioBlob;
+    if (!blobToSend && audioChunksRef.current.length > 0) {
+      blobToSend = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      setAudioBlob(blobToSend);
+      const url = URL.createObjectURL(blobToSend);
+      setAudioUrl(url);
     }
 
-    // Generate sample transcription based on recording duration
-    // Include modality keywords for YOLO mode detection testing
-    const sampleTranscription = `[Transcribed audio - ${recordedDuration} seconds]
-
-The patient presents for CT scan of the chest. Clinical history indicates prior CT examination showed areas of concern in the lung fields.
-
-EXAMINATION: CT scan of the chest was performed using standard protocol with IV contrast.
-
-TECHNIQUE: Helical CT scan from thoracic inlet to adrenal glands with 5mm slice thickness.
-
-FINDINGS: Initial CT review demonstrates no significant interval changes. The previously noted pulmonary nodule appears stable.
-
-IMPRESSION: No acute findings on CT. Recommend continued monitoring as clinically indicated.`;
-
-    setTranscribedText(sampleTranscription);
-    setIsProcessing(false);
-
-    // Add transcription minutes to usage stats
-    addTranscriptionMinutes(minutes);
-  };
-
-  // Helper function to convert AudioBuffer to WAV blob
-  const audioBufferToWav = (buffer: AudioBuffer): Blob => {
-    const numChannels = buffer.numberOfChannels;
-    const sampleRate = buffer.sampleRate;
-    const format = 1; // PCM
-    const bitDepth = 16;
-    const bytesPerSample = bitDepth / 8;
-    const blockAlign = numChannels * bytesPerSample;
-
-    const data = buffer.getChannelData(0);
-    const samples = data.length;
-    const dataSize = samples * blockAlign;
-    const bufferSize = 44 + dataSize;
-
-    const arrayBuffer = new ArrayBuffer(bufferSize);
-    const view = new DataView(arrayBuffer);
-
-    // WAV header
-    const writeString = (offset: number, str: string) => {
-      for (let i = 0; i < str.length; i++) {
-        view.setUint8(offset + i, str.charCodeAt(i));
-      }
-    };
-
-    writeString(0, 'RIFF');
-    view.setUint32(4, bufferSize - 8, true);
-    writeString(8, 'WAVE');
-    writeString(12, 'fmt ');
-    view.setUint32(16, 16, true);
-    view.setUint16(20, format, true);
-    view.setUint16(22, numChannels, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * blockAlign, true);
-    view.setUint16(32, blockAlign, true);
-    view.setUint16(34, bitDepth, true);
-    writeString(36, 'data');
-    view.setUint32(40, dataSize, true);
-
-    // Write audio data
-    let offset = 44;
-    for (let i = 0; i < samples; i++) {
-      const sample = Math.max(-1, Math.min(1, data[i]));
-      const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-      view.setInt16(offset, intSample, true);
-      offset += 2;
+    if (!blobToSend) {
+      // No audio recorded (microphone access denied or no data)
+      setIsProcessing(false);
+      const errorMsg = 'No audio recorded. Please ensure microphone access is granted.';
+      setTranscriptionError(errorMsg);
+      showToast(errorMsg, 'error');
+      return;
     }
 
-    return new Blob([arrayBuffer], { type: 'audio/wav' });
+    try {
+      // Call the transcription API
+      const formData = new FormData();
+      formData.append('audio', blobToSend, 'recording.webm');
+
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Transcription failed');
+      }
+
+      if (result.success && result.transcript) {
+        setTranscribedText(result.transcript);
+        showToast('Transcription completed successfully!', 'success');
+        // Add transcription minutes to usage stats
+        addTranscriptionMinutes(minutes);
+      } else {
+        throw new Error(result.message || 'Failed to transcribe audio');
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Transcription service temporarily unavailable. Please try again.';
+      setTranscriptionError(errorMsg);
+      showToast(errorMsg, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -588,69 +540,81 @@ IMPRESSION: No acute findings on CT. Recommend continued monitoring as clinicall
     setTranscribedText('');
     setTranscriptionError(null);
 
-    // Simulate file processing (assume 1 minute for demo)
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    try {
+      // Call the transcription API
+      const formData = new FormData();
+      formData.append('audio', file);
 
-    // Simulate occasional API failure (20% chance on first attempt, 0% on retry)
-    // Check URL param for forced error simulation
-    const urlParams = new URLSearchParams(window.location.search);
-    const forceError = urlParams.get('simulate_error') === 'true';
-    const shouldFail = forceError || (retryCount === 0 && Math.random() < 0.2);
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
 
-    if (shouldFail) {
-      setIsProcessing(false);
-      const errorMsg = 'Transcription service temporarily unavailable. Please try again.';
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Transcription failed');
+      }
+
+      if (result.success && result.transcript) {
+        setTranscribedText(result.transcript);
+        showToast('Transcription completed successfully!', 'success');
+        // Estimate transcription minutes based on processing time (assume 1 min minimum)
+        const minutes = Math.max(1, Math.round(result.duration / 60 * 10) / 10);
+        addTranscriptionMinutes(minutes);
+      } else {
+        throw new Error(result.message || 'Failed to transcribe audio');
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Transcription service temporarily unavailable. Please try again.';
       setTranscriptionError(errorMsg);
       showToast(errorMsg, 'error');
-      return;
+    } finally {
+      setIsProcessing(false);
     }
-
-    const sampleTranscription = `[Transcribed from: ${file.name}]
-
-The patient presents with clinical findings. Examination was performed according to protocol.
-
-TECHNIQUE: Standard imaging technique was employed.
-
-FINDINGS: The examination reveals normal anatomical structures. No significant abnormalities are identified.
-
-IMPRESSION: Normal examination. No acute pathology identified.`;
-
-    setTranscribedText(sampleTranscription);
-    setIsProcessing(false);
-    setRetryCount(0); // Reset retry count on success
-
-    // Add 1 minute of transcription time for uploaded file
-    addTranscriptionMinutes(1);
   };
 
   // Retry transcription function
   const handleRetryTranscription = async () => {
     if (!lastUploadedFile) return;
 
-    setRetryCount(prev => prev + 1);
     setTranscriptionError(null);
     setIsProcessing(true);
 
-    // Simulate processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // Retry the transcription API call
+      const formData = new FormData();
+      formData.append('audio', lastUploadedFile);
 
-    // On retry, always succeed (user experience improvement)
-    const sampleTranscription = `[Transcribed from: ${lastUploadedFile.name}]
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
 
-The patient presents with clinical findings. Examination was performed according to protocol.
+      const result = await response.json();
 
-TECHNIQUE: Standard imaging technique was employed.
+      if (!response.ok) {
+        throw new Error(result.message || 'Transcription failed');
+      }
 
-FINDINGS: The examination reveals normal anatomical structures. No significant abnormalities are identified.
-
-IMPRESSION: Normal examination. No acute pathology identified.`;
-
-    setTranscribedText(sampleTranscription);
-    setIsProcessing(false);
-    showToast('Transcription completed successfully!', 'success');
-
-    // Add 1 minute of transcription time for uploaded file
-    addTranscriptionMinutes(1);
+      if (result.success && result.transcript) {
+        setTranscribedText(result.transcript);
+        showToast('Transcription completed successfully!', 'success');
+        // Estimate transcription minutes based on processing time (assume 1 min minimum)
+        const minutes = Math.max(1, Math.round(result.duration / 60 * 10) / 10);
+        addTranscriptionMinutes(minutes);
+      } else {
+        throw new Error(result.message || 'Failed to transcribe audio');
+      }
+    } catch (error) {
+      console.error('Transcription retry error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Transcription service temporarily unavailable. Please try again.';
+      setTranscriptionError(errorMsg);
+      showToast(errorMsg, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const formatTime = (seconds: number) => {
