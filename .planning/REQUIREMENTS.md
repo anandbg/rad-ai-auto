@@ -30,7 +30,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **TMPL-04**: User can delete their personal templates
 - [x] **TMPL-05**: User can clone global templates to personal collection
 - [x] **TMPL-06**: Templates are validated using Zod schemas before save
-- [ ] **TMPL-07**: User can get AI-assisted suggestions for template creation/improvement
+- [x] **TMPL-07**: User can get AI-assisted suggestions for template creation/improvement
 
 ### Billing
 
@@ -117,7 +117,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 | REPORT-03 | Phase 4 | Complete |
 | REPORT-05 | Phase 4 | Complete |
 | REPORT-02 | Phase 5 | Complete |
-| TMPL-07 | Phase 6 | Pending |
+| TMPL-07 | Phase 6 | Complete |
 | REPORT-04 | Phase 7 | Pending |
 | SETT-01 | Phase 8 | Pending |
 | SETT-02 | Phase 8 | Pending |
@@ -136,4 +136,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after Phase 5 completion*
+*Last updated: 2026-01-16 after Phase 6 completion*
