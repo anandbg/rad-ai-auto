@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast';
 import { usePreferences } from '@/lib/preferences/preferences-context';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 // Template interface
 interface Template {
@@ -22,146 +23,6 @@ interface Template {
   createdAt: string;
   updatedAt: string;
   content?: string;
-  // Institution sharing
-  institutionId?: string;
-  isSharedWithInstitution?: boolean;
-  sharedBy?: string;
-}
-
-// Seed global templates (only used if no global templates exist in storage)
-const seedGlobalTemplates: Template[] = [
-  {
-    id: 'tpl-001',
-    name: 'Chest X-Ray Standard',
-    modality: 'X-Ray',
-    bodyPart: 'Chest',
-    description: 'Standard chest X-ray report template with PA and lateral views',
-    isGlobal: true,
-    createdAt: '2024-01-10T10:00:00Z',
-    updatedAt: '2024-01-10T10:00:00Z',
-  },
-  {
-    id: 'tpl-002',
-    name: 'CT Abdomen',
-    modality: 'CT',
-    bodyPart: 'Abdomen',
-    description: 'CT scan of abdomen and pelvis with and without contrast',
-    isGlobal: true,
-    createdAt: '2024-01-12T14:30:00Z',
-    updatedAt: '2024-01-12T14:30:00Z',
-  },
-];
-
-// Global templates storage key (shared across all users)
-const GLOBAL_TEMPLATES_KEY = 'ai-rad-global-templates';
-
-// Institution templates storage key
-const INSTITUTION_TEMPLATES_KEY = 'ai-rad-institution-templates';
-
-// Institution members storage key
-const INSTITUTION_MEMBERS_KEY = 'ai-rad-institution-members';
-
-// Institutions storage key
-const INSTITUTIONS_KEY = 'ai-rad-institutions';
-
-// Helper to get institution templates from localStorage
-function getInstitutionTemplates(institutionId: string): Template[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(INSTITUTION_TEMPLATES_KEY);
-  if (!stored) return [];
-  try {
-    const allTemplates: Template[] = JSON.parse(stored);
-    return allTemplates.filter(t => t.institutionId === institutionId);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to save institution template
-function saveInstitutionTemplate(template: Template) {
-  if (typeof window === 'undefined') return;
-  const stored = localStorage.getItem(INSTITUTION_TEMPLATES_KEY);
-  const allTemplates: Template[] = stored ? JSON.parse(stored) : [];
-  const existingIndex = allTemplates.findIndex(t => t.id === template.id);
-  if (existingIndex >= 0) {
-    allTemplates[existingIndex] = template;
-  } else {
-    allTemplates.push(template);
-  }
-  localStorage.setItem(INSTITUTION_TEMPLATES_KEY, JSON.stringify(allTemplates));
-}
-
-// Helper to get user's institution membership
-function getUserInstitution(userId: string): string | null {
-  if (typeof window === 'undefined') return null;
-  const stored = localStorage.getItem(INSTITUTION_MEMBERS_KEY);
-  if (!stored) return null;
-  try {
-    const members: { id: string; institutionId: string; userId: string }[] = JSON.parse(stored);
-    const membership = members.find(m => m.userId === userId);
-    return membership?.institutionId || null;
-  } catch {
-    return null;
-  }
-}
-
-// Helper to get institution name
-function getInstitutionName(institutionId: string): string {
-  if (typeof window === 'undefined') return '';
-  const stored = localStorage.getItem(INSTITUTIONS_KEY);
-  if (!stored) return '';
-  try {
-    const institutions = JSON.parse(stored);
-    const inst = institutions.find((i: { id: string; name: string }) => i.id === institutionId);
-    return inst?.name || '';
-  } catch {
-    return '';
-  }
-}
-
-// Helper to get global templates from localStorage
-function getGlobalTemplates(): Template[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(GLOBAL_TEMPLATES_KEY);
-  if (!stored) {
-    // Initialize with seed templates if nothing exists
-    localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(seedGlobalTemplates));
-    return seedGlobalTemplates;
-  }
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to save global templates to localStorage
-function saveGlobalTemplates(templates: Template[]) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(GLOBAL_TEMPLATES_KEY, JSON.stringify(templates));
-}
-
-// Helper to get user-specific storage key
-function getStorageKey(userId: string | undefined): string {
-  return userId ? `ai-rad-templates-${userId}` : 'ai-rad-templates';
-}
-
-// Helper to get templates from localStorage (user-specific)
-function getStoredTemplates(userId: string | undefined): Template[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(getStorageKey(userId));
-  if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to save templates to localStorage (user-specific)
-function saveTemplates(templates: Template[], userId: string | undefined) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(getStorageKey(userId), JSON.stringify(templates));
 }
 
 export default function TemplatesPage() {
@@ -182,16 +43,14 @@ export default function TemplatesPage() {
   const [templateToClone, setTemplateToClone] = useState<Template | null>(null);
   const [cloneName, setCloneName] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
-  const [userInstitutionId, setUserInstitutionId] = useState<string | null>(null);
-  const [institutionName, setInstitutionName] = useState('');
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [templateToShare, setTemplateToShare] = useState<Template | null>(null);
   // Bulk selection state
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+  // Action loading states
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Read URL query params on mount
   useEffect(() => {
@@ -247,52 +106,75 @@ export default function TemplatesPage() {
     }
   }, [searchQuery, selectedModality]);
 
-  // Load templates on mount and when user changes
-  useEffect(() => {
-    const storedTemplates = getStoredTemplates(user?.id);
-    const globalTemplates = getGlobalTemplates();
-
-    // Check if user belongs to an institution
-    const instId = user?.id ? getUserInstitution(user.id) : null;
-    setUserInstitutionId(instId);
-    if (instId) {
-      setInstitutionName(getInstitutionName(instId));
+  // Load templates from Supabase
+  const loadTemplates = useCallback(async () => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
     }
 
-    // Get institution templates if user belongs to one
-    const instTemplates = instId ? getInstitutionTemplates(instId) : [];
+    const supabase = createSupabaseBrowserClient();
 
-    // Combine all templates (excluding duplicates)
-    const seenIds = new Set<string>();
-    const combinedTemplates: Template[] = [];
+    try {
+      // Fetch personal templates
+      const { data: personalTemplates, error: personalError } = await supabase
+        .from('templates_personal')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    // Add personal templates first
-    for (const t of storedTemplates) {
-      if (!seenIds.has(t.id)) {
-        seenIds.add(t.id);
-        combinedTemplates.push(t);
+      if (personalError) {
+        console.error('Error fetching personal templates:', personalError);
       }
-    }
 
-    // Add institution templates
-    for (const t of instTemplates) {
-      if (!seenIds.has(t.id)) {
-        seenIds.add(t.id);
-        combinedTemplates.push(t);
+      // Fetch published global templates
+      const { data: globalTemplates, error: globalError } = await supabase
+        .from('templates_global')
+        .select('*')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false });
+
+      if (globalError) {
+        console.error('Error fetching global templates:', globalError);
       }
-    }
 
-    // Add global templates
-    for (const t of globalTemplates) {
-      if (!seenIds.has(t.id)) {
-        seenIds.add(t.id);
-        combinedTemplates.push(t);
-      }
-    }
+      // Format templates
+      const formattedTemplates: Template[] = [
+        ...(personalTemplates || []).map(t => ({
+          id: t.id,
+          name: t.name,
+          modality: t.modality,
+          bodyPart: t.body_part,
+          description: t.description || '',
+          content: t.content,
+          isGlobal: false,
+          createdAt: t.created_at,
+          updatedAt: t.updated_at,
+        })),
+        ...(globalTemplates || []).map(t => ({
+          id: t.id,
+          name: t.name,
+          modality: t.modality,
+          bodyPart: t.body_part,
+          description: t.description || '',
+          content: t.content,
+          isGlobal: true,
+          createdAt: t.created_at,
+          updatedAt: t.updated_at,
+        })),
+      ];
 
-    setTemplates(combinedTemplates);
-    setIsLoading(false);
+      setTemplates(formattedTemplates);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    loadTemplates();
+  }, [loadTemplates]);
 
   // Filter templates
   const filteredTemplates = templates.filter(template => {
@@ -326,10 +208,9 @@ export default function TemplatesPage() {
   // Get unique modalities for filter
   const modalities = ['all', ...new Set(templates.map(t => t.modality))];
 
-  // Personal vs Institution vs Global templates (sorted)
-  const allPersonalTemplates = sortTemplates(filteredTemplates.filter(t => !t.isGlobal && !t.isSharedWithInstitution));
-  const institutionTemplates = sortTemplates(filteredTemplates.filter(t => t.isSharedWithInstitution));
-  const globalTemplates = sortTemplates(filteredTemplates.filter(t => t.isGlobal));
+  // Personal vs Global templates (sorted)
+  const allPersonalTemplates = sortTemplates(filteredTemplates.filter(t => !t.isGlobal));
+  const globalTemplatesList = sortTemplates(filteredTemplates.filter(t => t.isGlobal));
 
   // Pagination calculations for personal templates
   const totalPersonalTemplates = allPersonalTemplates.length;
@@ -355,30 +236,37 @@ export default function TemplatesPage() {
   };
 
   const confirmDelete = async () => {
-    if (!templateToDelete) return;
+    if (!templateToDelete || !user?.id) return;
 
-    const updatedTemplates = templates.filter(t => t.id !== templateToDelete.id);
-    setTemplates(updatedTemplates);
+    setActionLoading(templateToDelete.id);
 
-    if (templateToDelete.isGlobal) {
-      // Admin deleting a global template
-      saveGlobalTemplates(updatedTemplates.filter(t => t.isGlobal));
-    } else {
-      // User deleting personal template
-      saveTemplates(updatedTemplates.filter(t => !t.isGlobal), user?.id);
+    try {
+      const response = await fetch(`/api/templates/${templateToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok && response.status !== 204) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to delete template');
+      }
+
+      // Update local state
+      setTemplates(templates.filter(t => t.id !== templateToDelete.id));
+
+      // Clear default template preference if deleted template was the default
+      if (preferences.defaultTemplate === templateToDelete.id) {
+        await updatePreference('defaultTemplate', null);
+      }
+
+      showToast(`Template "${templateToDelete.name}" deleted successfully!`, 'success');
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      showToast(error instanceof Error ? error.message : 'Failed to delete template', 'error');
+    } finally {
+      setActionLoading(null);
+      setDeleteDialogOpen(false);
+      setTemplateToDelete(null);
     }
-
-    // Clear default template preference if deleted template was the default
-    if (preferences.defaultTemplate === templateToDelete.id) {
-      await updatePreference('defaultTemplate', null);
-    }
-
-    // Show success toast
-    showToast(`Template "${templateToDelete.name}" deleted successfully!`, 'success');
-
-    // Close dialog
-    setDeleteDialogOpen(false);
-    setTemplateToDelete(null);
   };
 
   const handleClone = (id: string) => {
@@ -391,73 +279,52 @@ export default function TemplatesPage() {
     setCloneDialogOpen(true);
   };
 
-  const handleShareWithInstitution = (id: string) => {
-    const template = templates.find(t => t.id === id);
-    if (!template || !userInstitutionId) return;
+  const confirmClone = async () => {
+    if (!templateToClone || !user?.id) return;
 
-    // Open share dialog
-    setTemplateToShare(template);
-    setShareDialogOpen(true);
-  };
+    setActionLoading('clone');
 
-  const confirmShare = () => {
-    if (!templateToShare || !userInstitutionId) return;
+    try {
+      const response = await fetch('/api/templates/clone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          globalTemplateId: templateToClone.id,
+          name: cloneName.trim() || undefined,
+        }),
+      });
 
-    // Create a shared copy for the institution
-    const sharedTemplate: Template = {
-      ...templateToShare,
-      id: 'tpl-inst-' + Math.random().toString(36).substring(2, 9),
-      isSharedWithInstitution: true,
-      institutionId: userInstitutionId,
-      sharedBy: user?.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to clone template');
+      }
 
-    // Save to institution templates
-    saveInstitutionTemplate(sharedTemplate);
+      const { data: newTemplate } = await response.json();
 
-    // Update local state
-    setTemplates([sharedTemplate, ...templates]);
+      // Add to local state
+      const formattedTemplate: Template = {
+        id: newTemplate.id,
+        name: newTemplate.name,
+        modality: newTemplate.modality,
+        bodyPart: newTemplate.bodyPart,
+        description: newTemplate.description || '',
+        content: newTemplate.content,
+        isGlobal: false,
+        createdAt: newTemplate.createdAt,
+        updatedAt: newTemplate.updatedAt,
+      };
 
-    // Show success toast
-    showToast(`Template "${sharedTemplate.name}" shared with ${institutionName}!`, 'success');
-
-    // Log for verification
-    console.log(`[Institution Template] Template "${sharedTemplate.name}" shared with institution ${userInstitutionId}`);
-
-    // Close dialog
-    setShareDialogOpen(false);
-    setTemplateToShare(null);
-  };
-
-  const confirmClone = () => {
-    if (!templateToClone) return;
-
-    // Create a new personal copy of the template
-    const clonedTemplate: Template = {
-      ...templateToClone,
-      id: 'tpl-' + Math.random().toString(36).substring(2, 9),
-      name: cloneName.trim() || `${templateToClone.name} (Copy)`,
-      isGlobal: false, // Cloned template is always personal
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Add to personal templates
-    const currentPersonalTemplates = getStoredTemplates(user?.id);
-    saveTemplates([clonedTemplate, ...currentPersonalTemplates], user?.id);
-
-    // Update local state
-    setTemplates([clonedTemplate, ...templates]);
-
-    // Show success toast
-    showToast(`Template "${clonedTemplate.name}" cloned successfully!`, 'success');
-
-    // Close dialog
-    setCloneDialogOpen(false);
-    setTemplateToClone(null);
-    setCloneName('');
+      setTemplates([formattedTemplate, ...templates]);
+      showToast(`Template "${formattedTemplate.name}" cloned successfully!`, 'success');
+    } catch (error) {
+      console.error('Error cloning template:', error);
+      showToast(error instanceof Error ? error.message : 'Failed to clone template', 'error');
+    } finally {
+      setActionLoading(null);
+      setCloneDialogOpen(false);
+      setTemplateToClone(null);
+      setCloneName('');
+    }
   };
 
   // Bulk selection handlers
@@ -487,28 +354,47 @@ export default function TemplatesPage() {
   };
 
   const confirmBulkDelete = async () => {
-    if (selectedTemplateIds.size === 0) return;
+    if (selectedTemplateIds.size === 0 || !user?.id) return;
 
-    const deletedCount = selectedTemplateIds.size;
-    const updatedTemplates = templates.filter(t => !selectedTemplateIds.has(t.id));
-    setTemplates(updatedTemplates);
+    setActionLoading('bulk-delete');
 
-    // Save personal templates (excluding deleted ones)
-    saveTemplates(updatedTemplates.filter(t => !t.isGlobal), user?.id);
+    try {
+      const idsToDelete = Array.from(selectedTemplateIds);
 
-    // Clear default template preference if any deleted template was the default
-    if (preferences.defaultTemplate && selectedTemplateIds.has(preferences.defaultTemplate)) {
-      await updatePreference('defaultTemplate', null);
+      // Delete each template via API endpoint
+      const deletePromises = idsToDelete.map(async (id) => {
+        const response = await fetch(`/api/templates/${id}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok && response.status !== 204) {
+          throw new Error(`Failed to delete template ${id}`);
+        }
+        return id;
+      });
+
+      await Promise.all(deletePromises);
+
+      const deletedCount = selectedTemplateIds.size;
+
+      // Update local state
+      setTemplates(templates.filter(t => !selectedTemplateIds.has(t.id)));
+
+      // Clear default template preference if any deleted template was the default
+      if (preferences.defaultTemplate && selectedTemplateIds.has(preferences.defaultTemplate)) {
+        await updatePreference('defaultTemplate', null);
+      }
+
+      // Clear selection
+      setSelectedTemplateIds(new Set());
+
+      showToast(`Successfully deleted ${deletedCount} template${deletedCount > 1 ? 's' : ''}!`, 'success');
+    } catch (error) {
+      console.error('Error bulk deleting templates:', error);
+      showToast(error instanceof Error ? error.message : 'Failed to delete templates', 'error');
+    } finally {
+      setActionLoading(null);
+      setBulkDeleteDialogOpen(false);
     }
-
-    // Clear selection
-    setSelectedTemplateIds(new Set());
-
-    // Show success toast
-    showToast(`Successfully deleted ${deletedCount} template${deletedCount > 1 ? 's' : ''}!`, 'success');
-
-    // Close dialog
-    setBulkDeleteDialogOpen(false);
   };
 
   // Export templates to JSON file
@@ -526,7 +412,7 @@ export default function TemplatesPage() {
           createdAt: t.createdAt,
           updatedAt: t.updatedAt,
         })),
-        global: globalTemplates.map(t => ({
+        global: globalTemplatesList.map(t => ({
           name: t.name,
           modality: t.modality,
           bodyPart: t.bodyPart,
@@ -536,7 +422,7 @@ export default function TemplatesPage() {
           updatedAt: t.updatedAt,
         })),
       },
-      totalCount: personalTemplates.length + globalTemplates.length,
+      totalCount: personalTemplates.length + globalTemplatesList.length,
     };
 
     // Create blob and download
@@ -557,7 +443,7 @@ export default function TemplatesPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="mb-4 text-4xl">Loading...</div>
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent mx-auto" />
           <p className="text-text-secondary">Loading templates...</p>
         </div>
       </div>
@@ -706,21 +592,12 @@ export default function TemplatesPage() {
                     <Link href={`/templates/${template.id}`}>Edit</Link>
                   </Button>
                   <div className="flex gap-2">
-                    {userInstitutionId && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleShareWithInstitution(template.id)}
-                        data-testid={`share-template-${template.id}`}
-                      >
-                        Share
-                      </Button>
-                    )}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(template.id)}
                       className="text-error hover:text-error"
+                      disabled={actionLoading === template.id}
                     >
                       Delete
                     </Button>
@@ -773,102 +650,59 @@ export default function TemplatesPage() {
         )}
       </div>
 
-      {/* Institution Templates */}
-      {userInstitutionId && (
-        <div className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-text-primary">
-            {institutionName || 'Institution'} Templates ({institutionTemplates.length})
-          </h2>
-          {institutionTemplates.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <div className="mb-4 text-5xl">🏢</div>
-                <h3 className="mb-2 text-lg font-semibold text-text-primary">No institution templates</h3>
-                <p className="mb-4 text-center text-sm text-text-secondary">
-                  Share your personal templates with your institution
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {institutionTemplates.map((template) => (
-                <Card key={template.id} data-testid={`template-card-${template.id}`}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
-                        <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
-                      </div>
-                      <span className="shrink-0 rounded-full bg-info/10 px-2 py-0.5 text-xs font-medium text-info" data-testid="institution-badge">
-                        Institution
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-text-secondary line-clamp-2">
-                      {template.description}
-                    </p>
-                  </CardContent>
-                  <CardFooter className="justify-between">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/templates/${template.id}`}>View</Link>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleClone(template.id)}
-                      data-testid={`clone-template-${template.id}`}
-                    >
-                      Clone
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Global Templates */}
       <div>
         <h2 className="mb-4 text-lg font-semibold text-text-primary">
-          Global Templates ({globalTemplates.length})
+          Global Templates ({globalTemplatesList.length})
         </h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {globalTemplates.map((template) => (
-            <Card key={template.id} data-testid={`template-card-${template.id}`}>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
-                    <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
+        {globalTemplatesList.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="mb-4 text-5xl">🌍</div>
+              <h3 className="mb-2 text-lg font-semibold text-text-primary">No global templates</h3>
+              <p className="text-center text-sm text-text-secondary">
+                Global templates are managed by administrators
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {globalTemplatesList.map((template) => (
+              <Card key={template.id} data-testid={`template-card-${template.id}`}>
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle data-testid={`template-name-${template.id}`}>{template.name}</CardTitle>
+                      <CardDescription>{template.modality} - {template.bodyPart}</CardDescription>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
+                      Global
+                    </span>
                   </div>
-                  <span className="shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">
-                    Global
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-text-secondary line-clamp-2">
-                  {template.description}
-                </p>
-              </CardContent>
-              <CardFooter className="justify-between">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/templates/${template.id}`}>View</Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleClone(template.id)}
-                  data-testid={`clone-template-${template.id}`}
-                >
-                  Clone
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-text-secondary line-clamp-2">
+                    {template.description}
+                  </p>
+                </CardContent>
+                <CardFooter className="justify-between">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={`/templates/${template.id}`}>View</Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleClone(template.id)}
+                    data-testid={`clone-template-${template.id}`}
+                    disabled={actionLoading === 'clone'}
+                  >
+                    Clone
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Empty state if no templates match filter */}
@@ -902,8 +736,9 @@ export default function TemplatesPage() {
               variant="danger"
               onClick={confirmDelete}
               data-testid="confirm-delete-button"
+              disabled={actionLoading !== null}
             >
-              Delete Template
+              {actionLoading ? 'Deleting...' : 'Delete Template'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -941,40 +776,9 @@ export default function TemplatesPage() {
             <Button
               onClick={confirmClone}
               data-testid="confirm-clone-button"
+              disabled={actionLoading === 'clone'}
             >
-              Clone Template
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Share with Institution Dialog */}
-      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent data-testid="share-template-dialog">
-          <DialogHeader>
-            <DialogTitle>Share with Institution</DialogTitle>
-            <DialogDescription>
-              Share &quot;{templateToShare?.name}&quot; with {institutionName}. All members of your institution will be able to view and use this template.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 rounded-lg bg-info/10 px-4">
-            <p className="text-sm text-info">
-              <strong>Note:</strong> A copy of this template will be shared with your institution. You will keep your original personal template.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setShareDialogOpen(false)}
-              data-testid="cancel-share-button"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={confirmShare}
-              data-testid="confirm-share-button"
-            >
-              Share Template
+              {actionLoading === 'clone' ? 'Cloning...' : 'Clone Template'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1015,8 +819,9 @@ export default function TemplatesPage() {
               variant="danger"
               onClick={confirmBulkDelete}
               data-testid="confirm-bulk-delete-button"
+              disabled={actionLoading === 'bulk-delete'}
             >
-              Delete {selectedTemplateIds.size} Template{selectedTemplateIds.size > 1 ? 's' : ''}
+              {actionLoading === 'bulk-delete' ? 'Deleting...' : `Delete ${selectedTemplateIds.size} Template${selectedTemplateIds.size > 1 ? 's' : ''}`}
             </Button>
           </DialogFooter>
         </DialogContent>
