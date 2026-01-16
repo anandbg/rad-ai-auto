@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useCsrf } from '@/lib/hooks/use-csrf';
 
@@ -26,20 +25,7 @@ const signupSchema = z.object({
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
-// Check if Supabase is configured
-function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return false;
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export default function SignupPage() {
-  const router = useRouter();
   const { CsrfInput, validateToken } = useCsrf();
 
   const [formData, setFormData] = useState<SignupFormData>({
@@ -51,23 +37,7 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof SignupFormData, string>>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isDev, setIsDev] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [verificationLink, setVerificationLink] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsDev(!isSupabaseConfigured());
-  }, []);
-
-  // Generate verification token
-  const generateVerificationToken = (): string => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let token = '';
-    for (let i = 0; i < 64; i++) {
-      token += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return token;
-  };
 
   const handleChange = (field: keyof SignupFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -116,50 +86,15 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      if (isDev) {
-        // Development mode: create unverified user in localStorage
-        const verificationToken = generateVerificationToken();
-        const verifyLink = `${window.location.origin}/verify-email?token=${verificationToken}&email=${encodeURIComponent(formData.email)}`;
-
-        // Store user as unverified
-        const mockUsers = JSON.parse(localStorage.getItem('ai-rad-mock-users') || '{}');
-        mockUsers[formData.email] = {
-          password: formData.password,
-          name: formData.name,
-          role: 'radiologist',
-          emailVerified: false,
-          verificationToken,
-          createdAt: new Date().toISOString(),
-        };
-        localStorage.setItem('ai-rad-mock-users', JSON.stringify(mockUsers));
-
-        // Log verification email to console
-        console.log('='.repeat(60));
-        console.log('📧 EMAIL VERIFICATION (Development Mode)');
-        console.log('='.repeat(60));
-        console.log(`To: ${formData.email}`);
-        console.log(`Subject: Verify your AI Radiologist account`);
-        console.log('');
-        console.log('Welcome to AI Radiologist!');
-        console.log('');
-        console.log('Click the link below to verify your email:');
-        console.log(verifyLink);
-        console.log('');
-        console.log('This link will expire in 24 hours.');
-        console.log('='.repeat(60));
-
-        setVerificationLink(verifyLink);
-        setSuccess(true);
-        return;
-      }
-
-      // Production mode: use real Supabase
       const { createSupabaseBrowserClient } = await import('@/lib/supabase/client');
       const supabase = createSupabaseBrowserClient();
-      const { error: signUpError } = await supabase.auth.signUp({
+
+      // Sign up with Supabase
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/dashboard`,
           data: {
             name: formData.name,
           },
@@ -169,6 +104,23 @@ export default function SignupPage() {
       if (signUpError) {
         setGeneralError(signUpError.message);
         return;
+      }
+
+      // Create profile in profiles table
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: data.user.id,
+            name: formData.name,
+            role: 'radiologist',
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          // Don't fail signup if profile creation fails
+          // Profile can be created on first login
+        }
       }
 
       // Successful signup
@@ -195,25 +147,6 @@ export default function SignupPage() {
             Please check your inbox and click the link to activate your account.
           </p>
 
-          {/* Development mode: show verification link */}
-          {isDev && verificationLink && (
-            <div className="mb-6 rounded-lg border border-warning/30 bg-warning/10 p-4 text-left">
-              <p className="mb-2 text-sm font-medium text-warning">
-                Development Mode - Verification Link:
-              </p>
-              <p className="mb-3 text-xs text-text-muted">
-                In production, this link would be sent via email. Check the browser console for the full email.
-              </p>
-              <Link
-                href={verificationLink}
-                className="block break-all text-sm text-brand hover:underline"
-                data-testid="dev-verification-link"
-              >
-                {verificationLink}
-              </Link>
-            </div>
-          )}
-
           <div className="space-y-3">
             <Link href="/login" className="btn-secondary inline-block">
               Go to Login
@@ -223,7 +156,6 @@ export default function SignupPage() {
               <button
                 onClick={() => {
                   setSuccess(false);
-                  setVerificationLink(null);
                 }}
                 className="text-brand hover:underline"
               >
@@ -372,16 +304,6 @@ export default function SignupPage() {
               {loading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
-
-          {/* Development mode note */}
-          {isDev && (
-            <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-3">
-              <p className="text-sm text-warning">
-                <strong>Development Mode:</strong> Supabase is not configured.
-                Signup will simulate success but no account will be created.
-              </p>
-            </div>
-          )}
 
           <div className="mt-6 text-center text-sm">
             <p className="text-text-secondary">

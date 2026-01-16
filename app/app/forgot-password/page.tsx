@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { z } from 'zod';
 import { useCsrf } from '@/lib/hooks/use-csrf';
@@ -12,46 +12,17 @@ const emailSchema = z.object({
     .email('Please enter a valid email address'),
 });
 
-// Check if Supabase is configured
-function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return false;
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Generate a mock reset token
-function generateResetToken(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let token = '';
-  for (let i = 0; i < 64; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
-}
-
 export default function ForgotPasswordPage() {
   const { CsrfInput, validateToken } = useCsrf();
 
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isDev, setIsDev] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [devResetLink, setDevResetLink] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsDev(!isSupabaseConfigured());
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    setDevResetLink(null);
 
     // Validate CSRF token
     const formData = new FormData(e.currentTarget);
@@ -66,51 +37,17 @@ export default function ForgotPasswordPage() {
     // Validate email
     const result = emailSchema.safeParse({ email });
     if (!result.success) {
-      setError(result.error.errors[0].message);
+      setError(result.error.errors[0]?.message || 'Please enter a valid email');
       return;
     }
 
     setLoading(true);
 
     try {
-      if (isDev) {
-        // Development mode: generate mock reset token and log to console
-        const resetToken = generateResetToken();
-        const resetLink = `${window.location.origin}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
-
-        // Store the token for verification later (in a real app, this would be in database)
-        const resetTokens = JSON.parse(localStorage.getItem('ai-rad-reset-tokens') || '{}');
-        resetTokens[email] = {
-          token: resetToken,
-          expires: Date.now() + (60 * 60 * 1000), // 1 hour expiry
-          createdAt: new Date().toISOString(),
-        };
-        localStorage.setItem('ai-rad-reset-tokens', JSON.stringify(resetTokens));
-
-        // Log to console (simulating email being sent)
-        console.log('='.repeat(60));
-        console.log('📧 PASSWORD RESET EMAIL (Development Mode)');
-        console.log('='.repeat(60));
-        console.log(`To: ${email}`);
-        console.log(`Subject: Reset your AI Radiologist password`);
-        console.log('');
-        console.log('Click the link below to reset your password:');
-        console.log(resetLink);
-        console.log('');
-        console.log('This link will expire in 1 hour.');
-        console.log('='.repeat(60));
-
-        // Also show in UI for easier testing
-        setDevResetLink(resetLink);
-        setSuccess(true);
-        return;
-      }
-
-      // Production mode: use real Supabase
       const { createSupabaseBrowserClient } = await import('@/lib/supabase/client');
       const supabase = createSupabaseBrowserClient();
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/api/auth/callback?next=/reset-password`,
       });
 
       if (resetError) {
@@ -140,25 +77,6 @@ export default function ForgotPasswordPage() {
             If an account exists for <strong>{email}</strong>, we&apos;ve sent a password reset link.
           </p>
 
-          {/* Development mode: show the reset link directly */}
-          {isDev && devResetLink && (
-            <div className="mb-6 rounded-lg border border-warning/30 bg-warning/10 p-4 text-left">
-              <p className="mb-2 text-sm font-medium text-warning">
-                Development Mode - Reset Link:
-              </p>
-              <p className="mb-3 text-xs text-text-muted">
-                In production, this link would be sent via email. Check the browser console for the full email.
-              </p>
-              <Link
-                href={devResetLink}
-                className="block break-all text-sm text-brand hover:underline"
-                data-testid="dev-reset-link"
-              >
-                {devResetLink}
-              </Link>
-            </div>
-          )}
-
           <div className="space-y-3">
             <Link href="/login" className="btn-primary inline-block">
               Back to Login
@@ -168,7 +86,6 @@ export default function ForgotPasswordPage() {
               <button
                 onClick={() => {
                   setSuccess(false);
-                  setDevResetLink(null);
                 }}
                 className="text-brand hover:underline"
               >
@@ -235,15 +152,6 @@ export default function ForgotPasswordPage() {
               {loading ? 'Sending...' : 'Send reset link'}
             </button>
           </form>
-
-          {/* Development mode note */}
-          {isDev && (
-            <div className="mt-4 rounded-lg border border-info/30 bg-info/10 p-3">
-              <p className="text-sm text-info">
-                <strong>Development Mode:</strong> The reset link will be logged to the browser console and displayed on screen instead of being sent via email.
-              </p>
-            </div>
-          )}
 
           <div className="mt-6 text-center text-sm">
             <p className="text-text-secondary">
