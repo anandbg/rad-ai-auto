@@ -646,6 +646,17 @@ export default function GeneratePage() {
     if (!generatedReport) return;
 
     const template = templates.find(t => t.id === selectedTemplateId);
+    const sections = parseReportSections(generatedReport);
+    const generationDate = new Date();
+    const formattedDate = generationDate.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const formattedTime = generationDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
     // Create a printable HTML document
     const printWindow = window.open('', '_blank');
@@ -654,61 +665,226 @@ export default function GeneratePage() {
       return;
     }
 
+    // Build sections HTML with professional styling
+    const sectionsHtml = sections.map(section => {
+      if (section.name === 'HEADER') {
+        return ''; // Skip header section, we have custom header
+      }
+      if (section.name === 'FOOTER') {
+        return ''; // Skip footer section, we have custom footer
+      }
+      return `
+        <div class="report-section">
+          <h3 class="section-header">${section.name}</h3>
+          <div class="section-content">${section.content.replace(/\n/g, '<br>')}</div>
+        </div>
+      `;
+    }).join('');
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <title>Radiology Report - ${template?.name || 'Report'}</title>
           <style>
-            body {
-              font-family: 'Times New Roman', serif;
-              max-width: 800px;
-              margin: 40px auto;
-              padding: 20px;
-              line-height: 1.6;
+            /* Base document styling */
+            * {
+              box-sizing: border-box;
             }
-            .header {
+            body {
+              font-family: 'Times New Roman', 'Georgia', serif;
+              max-width: 8.5in;
+              margin: 0 auto;
+              padding: 1in;
+              line-height: 1.6;
+              color: #000;
+              background: #fff;
+            }
+
+            /* Header styling */
+            .document-header {
               text-align: center;
-              border-bottom: 2px solid #333;
+              border-bottom: 3px double #000;
               padding-bottom: 20px;
               margin-bottom: 30px;
             }
-            .header h1 {
-              font-size: 24px;
-              margin: 0;
+            .document-header h1 {
+              font-size: 28px;
+              font-weight: bold;
+              margin: 0 0 5px 0;
+              text-transform: uppercase;
+              letter-spacing: 2px;
+            }
+            .document-header .subtitle {
+              font-size: 16px;
+              font-weight: normal;
+              margin: 0 0 15px 0;
               color: #333;
             }
-            .header p {
-              margin: 5px 0;
-              color: #666;
-            }
-            .report-content {
-              white-space: pre-wrap;
-              font-size: 14px;
-            }
-            .footer {
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 1px solid #ccc;
-              text-align: center;
+
+            /* Metadata table */
+            .metadata {
+              width: 100%;
+              margin: 15px 0;
+              border-collapse: collapse;
               font-size: 12px;
-              color: #666;
             }
+            .metadata td {
+              padding: 4px 10px;
+              vertical-align: top;
+            }
+            .metadata .label {
+              font-weight: bold;
+              width: 120px;
+              text-align: right;
+              color: #333;
+            }
+            .metadata .value {
+              text-align: left;
+            }
+
+            /* AI indicator badge */
+            .ai-indicator {
+              display: inline-block;
+              background: #f0f0f0;
+              border: 1px solid #ccc;
+              border-radius: 4px;
+              padding: 4px 12px;
+              font-size: 11px;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              margin-top: 10px;
+            }
+
+            /* Report sections */
+            .report-body {
+              margin: 30px 0;
+            }
+            .report-section {
+              margin-bottom: 24px;
+              page-break-inside: avoid;
+            }
+            .section-header {
+              font-size: 14px;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              margin: 0 0 8px 0;
+              padding-bottom: 4px;
+              border-bottom: 1px solid #999;
+            }
+            .section-content {
+              font-size: 13px;
+              line-height: 1.8;
+              margin-left: 0;
+              text-align: justify;
+            }
+
+            /* Footer styling */
+            .document-footer {
+              margin-top: 50px;
+              padding-top: 20px;
+              border-top: 2px solid #000;
+            }
+            .disclaimer {
+              font-size: 11px;
+              color: #333;
+              text-align: center;
+              font-style: italic;
+              line-height: 1.6;
+              margin: 0;
+              padding: 15px 20px;
+              background: #f9f9f9;
+              border: 1px solid #ddd;
+            }
+            .footer-note {
+              font-size: 10px;
+              color: #666;
+              text-align: center;
+              margin-top: 15px;
+            }
+
+            /* Print optimization */
             @media print {
-              body { margin: 0; padding: 20px; }
+              body {
+                margin: 0;
+                padding: 0.75in;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .document-header {
+                page-break-after: avoid;
+              }
+              .report-section {
+                page-break-inside: avoid;
+              }
+              .section-header {
+                page-break-after: avoid;
+              }
+              .document-footer {
+                page-break-inside: avoid;
+              }
+              /* Remove any background colors for print */
+              .ai-indicator {
+                background: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .disclaimer {
+                background: #f9f9f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+            }
+
+            @page {
+              margin: 0.5in;
+              size: letter;
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h1>AI Radiologist</h1>
-            <p>Medical Imaging Report</p>
-            <p>Generated: ${new Date().toLocaleString()}</p>
+          <div class="document-header">
+            <h1>Radiology Report</h1>
+            <p class="subtitle">Medical Imaging Documentation</p>
+            <table class="metadata">
+              <tr>
+                <td class="label">Template:</td>
+                <td class="value">${template?.name || 'Standard Report'}</td>
+                <td class="label">Date:</td>
+                <td class="value">${formattedDate}</td>
+              </tr>
+              <tr>
+                <td class="label">Modality:</td>
+                <td class="value">${template?.modality || 'N/A'}</td>
+                <td class="label">Time:</td>
+                <td class="value">${formattedTime}</td>
+              </tr>
+              <tr>
+                <td class="label">Body Part:</td>
+                <td class="value">${template?.bodyPart || 'N/A'}</td>
+                <td class="label"></td>
+                <td class="value"></td>
+              </tr>
+            </table>
+            <span class="ai-indicator">AI-Generated Report</span>
           </div>
-          <div class="report-content">${generatedReport.replace(/\n/g, '<br>')}</div>
-          <div class="footer">
-            <p>This report was generated using AI Radiologist software.</p>
-            <p>Please review all findings with a qualified radiologist.</p>
+
+          <div class="report-body">
+            ${sectionsHtml}
+          </div>
+
+          <div class="document-footer">
+            <p class="disclaimer">
+              This report was generated using AI Radiologist software. All AI-generated findings
+              and impressions should be reviewed and verified by a qualified radiologist before
+              clinical use. This document is intended to assist, not replace, professional
+              medical judgment.
+            </p>
+            <p class="footer-note">
+              Generated by AI Radiologist &bull; ${formattedDate} at ${formattedTime}
+            </p>
           </div>
         </body>
       </html>
