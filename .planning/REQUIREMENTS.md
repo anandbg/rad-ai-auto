@@ -17,7 +17,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Report Generation
 
 - [x] **REPORT-01**: User can generate radiology report using GPT-4o from text input
-- [ ] **REPORT-02**: User can transcribe voice input to text using Whisper API
+- [x] **REPORT-02**: User can transcribe voice input to text using Whisper API
 - [x] **REPORT-03**: User can view generated report with section-based display (findings, impressions, recommendations)
 - [ ] **REPORT-04**: User can export generated report as professional PDF
 - [x] **REPORT-05**: User receives report text via SSE streaming as GPT-4o generates it
@@ -116,7 +116,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 | REPORT-01 | Phase 4 | Complete |
 | REPORT-03 | Phase 4 | Complete |
 | REPORT-05 | Phase 4 | Complete |
-| REPORT-02 | Phase 5 | Pending |
+| REPORT-02 | Phase 5 | Complete |
 | TMPL-07 | Phase 6 | Pending |
 | REPORT-04 | Phase 7 | Pending |
 | SETT-01 | Phase 8 | Pending |
@@ -136,4 +136,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after Phase 4 completion*
+*Last updated: 2026-01-16 after Phase 5 completion*

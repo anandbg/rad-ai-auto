@@ -5,13 +5,13 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 6 — PDF Export (next)
+**Current focus:** Phase 6 — AI Template Suggestions (next)
 
 ## Current Position
 
 Phase: 5 of 10 (Voice Transcription) — COMPLETE
 Plan: 1 of 1 complete
-Status: Phase 5 complete, ready for Phase 6
+Status: Phase 5 verified complete, ready for Phase 6
 Last activity: 2026-01-16 - Completed 05-01-PLAN.md
 
 Progress: [█████░░░░░] 50%

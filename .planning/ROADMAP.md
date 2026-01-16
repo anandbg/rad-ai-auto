@@ -14,7 +14,7 @@ Transform a functional UI prototype into a production-ready AI radiology applica
 - [x] **Phase 2: Authentication** - Real Supabase Auth with email/password
 - [x] **Phase 3: Template System** - CRUD operations connected to real database
 - [x] **Phase 4: AI Report Generation** - GPT-4o streaming report generation
-- [ ] **Phase 5: Voice Transcription** - Whisper API voice-to-text
+- [x] **Phase 5: Voice Transcription** - Whisper API voice-to-text
 - [ ] **Phase 6: AI Template Suggestions** - GPT-4o template recommendations
 - [ ] **Phase 7: PDF Export** - Professional PDF report export
 - [ ] **Phase 8: User Settings & Macros** - Preferences and macros in database
@@ -98,7 +98,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 05-01: Whisper API integration
+- [x] 05-01: Whisper API integration
 
 ### Phase 6: AI Template Suggestions
 **Goal**: Users can get AI-assisted template recommendations
@@ -182,7 +182,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Authentication | 1/1 | Complete | 2026-01-16 |
 | 3. Template System | 2/2 | Complete | 2026-01-16 |
 | 4. AI Report Generation | 1/1 | Complete | 2026-01-16 |
-| 5. Voice Transcription | 0/1 | Not started | - |
+| 5. Voice Transcription | 1/1 | Complete | 2026-01-16 |
 | 6. AI Template Suggestions | 0/1 | Not started | - |
 | 7. PDF Export | 0/1 | Not started | - |
 | 8. User Settings & Macros | 0/1 | Not started | - |
