@@ -108,9 +108,18 @@
     ring-offset-color: var(--bg);
   }
 
-  /* Custom focus-visible styles */
+  /* Custom focus-visible styles - visible on all interactive elements
+   * Uses ring instead of outline for consistent appearance across browsers.
+   * 2px ring with 2px offset provides clear visibility against any background.
+   */
   :focus-visible {
     @apply focus-ring;
+  }
+
+  /* Fallback outline style for elements that may not support ring properly */
+  :focus-visible:not(:has(*)) {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
   }
 }
 
@@ -204,5 +213,21 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+}
+
+/* Accessibility: Reduced Motion
+ * Disables all animations for users who prefer reduced motion.
+ * This is a CSS fallback - motion components also use useReducedMotion hook.
+ * WCAG 2.1 AA Success Criterion 2.3.3: Animation from Interactions
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
