@@ -34,9 +34,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Billing
 
-- [ ] **BILL-01**: User can subscribe to a plan via Stripe (test mode)
-- [ ] **BILL-02**: System processes Stripe webhook events (payment success, subscription changes)
-- [ ] **BILL-03**: User can view their usage statistics (reports generated, transcriptions)
+- [x] **BILL-01**: User can subscribe to a plan via Stripe (test mode)
+- [x] **BILL-02**: System processes Stripe webhook events (payment success, subscription changes)
+- [x] **BILL-03**: User can view their usage statistics (reports generated, transcriptions)
 
 ### Settings
 
@@ -122,9 +122,9 @@ Which phases cover which requirements. Updated by create-roadmap.
 | SETT-01 | Phase 8 | Complete |
 | SETT-02 | Phase 8 | Complete |
 | SETT-03 | Phase 8 | Complete |
-| BILL-01 | Phase 9 | Pending |
-| BILL-02 | Phase 9 | Pending |
-| BILL-03 | Phase 9 | Pending |
+| BILL-01 | Phase 9 | Complete |
+| BILL-02 | Phase 9 | Complete |
+| BILL-03 | Phase 9 | Complete |
 | ADMIN-01 | Phase 10 | Pending |
 | ADMIN-02 | Phase 10 | Pending |
 | ADMIN-03 | Phase 10 | Pending |
@@ -136,4 +136,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after Phase 8 completion*
+*Last updated: 2026-01-16 after Phase 9 completion*
