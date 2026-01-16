@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 10 — Admin Dashboard (next)
+**Current focus:** Phase 10 — Admin Dashboard (in progress)
 
 ## Current Position
 
-Phase: 9 of 10 (Stripe Billing)
-Plan: 09-02 complete (2 of 2 in phase)
+Phase: 10 of 10 (Admin Dashboard)
+Plan: 10-01 complete (1 of 1 in phase)
 Status: Phase complete
-Last activity: 2026-01-16 - Completed 09-02-PLAN.md (Webhook Handlers)
+Last activity: 2026-01-16 - Completed 10-01-PLAN.md (Admin Statistics API)
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: 8.3 min
+- Total plans completed: 13
+- Average duration: 7.8 min
 - Total execution time: 1.7 hours
 
 **By Phase:**
@@ -36,10 +36,11 @@ Progress: [█████████░] 90%
 | 07-pdf-export | 1 | 5 min | 5 min |
 | 08-user-settings-macros | 2 | 50 min | 25 min |
 | 09-stripe-billing | 2 | 6 min | 3 min |
+| 10-admin-dashboard | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 08-02 (5 min), 08-01 (45 min), 09-01 (2 min), 09-02 (4 min)
-- Trend: Stripe billing phase fast execution
+- Last 5 plans: 08-01 (45 min), 09-01 (2 min), 09-02 (4 min), 10-01 (3 min)
+- Trend: Fast execution continues for admin dashboard
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 | Access period dates from subscription item | Stripe API 2025-04-30.basil moved current_period_start/end to SubscriptionItem | 09-02 |
 | Use meta.type for usage classification | credits_ledger.reason enum is generic (debit); meta.type specifies report vs transcription | 09-02 |
 | Try/catch per webhook case | Prevents one failing case from blocking other event processing | 09-02 |
+| Parallel Promise.all for statistics queries | All 11 Supabase queries run in parallel for maximum performance | 10-01 |
+| Use count with head:true for efficient counting | Efficient counting without fetching actual rows for large tables | 10-01 |
+| UTC start of month calculation | Ensures consistent monthly stats regardless of server timezone | 10-01 |
 
 ### Pending Todos
 
@@ -106,7 +110,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 09-02-PLAN.md (Webhook Handlers)
+Stopped at: Completed 10-01-PLAN.md (Admin Statistics API)
 Resume file: None
 
 ## Completed Plans
@@ -125,3 +129,4 @@ Resume file: None
 | 08-01 | Preferences API Integration | 45 min | c463c54, 21c43d3, 50bc944 |
 | 09-01 | Stripe API Endpoints | 2 min | be73281, d077dda |
 | 09-02 | Webhook Handlers | 4 min | a919ec1, fced612 |
+| 10-01 | Admin Statistics API | 3 min | 3306910, d91eb3e |
