@@ -40,9 +40,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Settings
 
-- [ ] **SETT-01**: User preferences are stored in real database
-- [ ] **SETT-02**: User can create and manage personal macros (text shortcuts)
-- [ ] **SETT-03**: User can update their profile (display name, email settings)
+- [x] **SETT-01**: User preferences are stored in real database
+- [x] **SETT-02**: User can create and manage personal macros (text shortcuts)
+- [x] **SETT-03**: User can update their profile (display name, email settings)
 
 ### Admin
 
@@ -119,9 +119,9 @@ Which phases cover which requirements. Updated by create-roadmap.
 | REPORT-02 | Phase 5 | Complete |
 | TMPL-07 | Phase 6 | Complete |
 | REPORT-04 | Phase 7 | Complete |
-| SETT-01 | Phase 8 | Pending |
-| SETT-02 | Phase 8 | Pending |
-| SETT-03 | Phase 8 | Pending |
+| SETT-01 | Phase 8 | Complete |
+| SETT-02 | Phase 8 | Complete |
+| SETT-03 | Phase 8 | Complete |
 | BILL-01 | Phase 9 | Pending |
 | BILL-02 | Phase 9 | Pending |
 | BILL-03 | Phase 9 | Pending |
@@ -136,4 +136,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after Phase 7 completion*
+*Last updated: 2026-01-16 after Phase 8 completion*

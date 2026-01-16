@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 8 — User Settings & Macros (in progress)
+**Current focus:** Phase 9 — Stripe Billing (next)
 
 ## Current Position
 
 Phase: 8 of 10 (User Settings & Macros) — COMPLETE
-Plan: 08-01 complete (phase complete)
-Status: Phase complete
-Last activity: 2026-01-16 - Completed 08-01-PLAN.md (Preferences API Integration)
+Plan: 08-02 complete (phase complete)
+Status: Phase verified and complete
+Last activity: 2026-01-16 - Completed phase 08 (User Settings & Macros)
 
 Progress: [████████░░] 80%
 
