@@ -1,13 +1,56 @@
+'use client';
+
+import { motion, useReducedMotion } from "framer-motion";
 import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@/lib/shared/cn";
 
-export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("rounded-xl border border-border bg-surface shadow-sm transition-shadow hover:shadow-md", className)}
-    {...props}
-  />
-));
+export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  /** When true, adds hover lift animation for interactive cards */
+  interactive?: boolean;
+}
+
+// Motion variants for hover elevation
+const cardHoverVariants = {
+  rest: { y: 0 },
+  hover: { y: -2, transition: { duration: 0.2 } }
+};
+
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ className, interactive = false, ...props }, ref) => {
+    const shouldReduceMotion = useReducedMotion();
+
+    const baseClassName = cn(
+      "rounded-xl border border-border bg-surface shadow-sm transition-shadow hover:shadow-lg",
+      className
+    );
+
+    // Non-interactive cards or reduced motion preference: use static div
+    if (!interactive || shouldReduceMotion) {
+      return (
+        <div
+          ref={ref}
+          className={baseClassName}
+          {...props}
+        />
+      );
+    }
+
+    // Interactive cards get hover lift animation
+    // Extract drag handlers to avoid type conflicts with Framer Motion
+    const { onDrag, onDragStart, onDragEnd, onDragOver, onDragEnter, onDragLeave, onDrop, onAnimationStart, onAnimationEnd, ...safeProps } = props;
+
+    return (
+      <motion.div
+        ref={ref}
+        className={baseClassName}
+        variants={cardHoverVariants}
+        initial="rest"
+        whileHover="hover"
+        {...safeProps}
+      />
+    );
+  }
+);
 Card.displayName = "Card";
 
 export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
