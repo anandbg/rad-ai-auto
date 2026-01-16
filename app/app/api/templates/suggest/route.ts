@@ -205,6 +205,12 @@ export async function POST(request: Request) {
 
     const { modality, bodyPart, description, existingSections, requestType } = validation.data;
 
+    // Transform existingSections to ensure proper typing
+    const sections = existingSections?.map(s => ({
+      name: s.name,
+      content: s.content,
+    }));
+
     // Check for OpenAI API key
     if (!process.env.OPENAI_API_KEY) {
       console.error('OPENAI_API_KEY is not configured');
@@ -224,7 +230,7 @@ export async function POST(request: Request) {
       modality,
       bodyPart,
       description,
-      existingSections
+      sections
     );
 
     // Build user prompt

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
@@ -144,6 +144,12 @@ export default function NewTemplatePage() {
   const [sections, setSections] = useState<TemplateSection[]>([]);
   const [newSectionName, setNewSectionName] = useState('');
 
+  // AI Suggestions state
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsAbortRef = useRef<AbortController | null>(null);
+
   // Load draft on mount
   useEffect(() => {
     const draft = loadDraft(user?.id);
@@ -226,6 +232,58 @@ export default function NewTemplatePage() {
     setSections(sections.map(s =>
       s.id === id ? { ...s, content } : s
     ));
+  };
+
+  // Handle getting AI suggestions
+  const handleGetSuggestions = async (requestType: 'sections' | 'improvements' | 'normalFindings') => {
+    // Abort any existing request
+    if (suggestionsAbortRef.current) {
+      suggestionsAbortRef.current.abort();
+    }
+
+    const abortController = new AbortController();
+    suggestionsAbortRef.current = abortController;
+
+    setIsLoadingSuggestions(true);
+    setSuggestions('');
+    setShowSuggestions(true);
+
+    try {
+      const response = await fetch('/api/templates/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modality: formData.modality,
+          bodyPart: formData.bodyPart,
+          description: formData.description,
+          existingSections: sections,
+          requestType,
+        }),
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to get suggestions');
+      }
+
+      // Stream the response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value, { stream: true });
+        setSuggestions(prev => prev + text);
+      }
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        showToast(error instanceof Error ? error.message : 'Failed to get suggestions', 'error');
+      }
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
   };
 
   const validateForm = (): boolean => {
@@ -543,6 +601,72 @@ export default function NewTemplatePage() {
                   No sections added yet. Add sections to organize your template.
                 </div>
               )}
+
+              {/* AI Suggestions Buttons */}
+              <div className="mt-4 pt-4 border-t border-border">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="text-sm font-medium text-text-primary">AI Suggestions</h4>
+                    <p className="text-xs text-text-muted">Get AI-powered suggestions for your template</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleGetSuggestions('sections')}
+                    disabled={isLoadingSuggestions || !formData.modality || !formData.bodyPart}
+                    data-testid="suggest-sections-btn"
+                  >
+                    {isLoadingSuggestions ? 'Getting Suggestions...' : 'Suggest Sections'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleGetSuggestions('improvements')}
+                    disabled={isLoadingSuggestions || !formData.modality || !formData.bodyPart || sections.length === 0}
+                    data-testid="suggest-improvements-btn"
+                  >
+                    Suggest Improvements
+                  </Button>
+                </div>
+
+                {/* Suggestions Panel */}
+                {showSuggestions && (
+                  <div className="mt-4 p-4 rounded-lg border border-brand/30 bg-brand/5" data-testid="suggestions-panel">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-text-primary">AI Suggestions</h4>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setShowSuggestions(false);
+                          setSuggestions('');
+                          if (suggestionsAbortRef.current) {
+                            suggestionsAbortRef.current.abort();
+                          }
+                        }}
+                        data-testid="close-suggestions-btn"
+                      >
+                        Close
+                      </Button>
+                    </div>
+                    <div className="prose prose-sm max-w-none">
+                      <pre className="whitespace-pre-wrap font-mono text-sm text-text-secondary bg-surface-muted p-3 rounded">
+                        {suggestions || 'Generating suggestions...'}
+                      </pre>
+                    </div>
+                    {!isLoadingSuggestions && suggestions && (
+                      <p className="mt-2 text-xs text-text-muted">
+                        Copy relevant suggestions and paste into your template sections above.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Template Content (Legacy/General) */}

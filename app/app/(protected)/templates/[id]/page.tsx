@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -169,6 +169,12 @@ export default function TemplateDetailPage() {
   const [editorTab, setEditorTab] = useState<EditorTab>('sections');
   const [editSections, setEditSections] = useState<TemplateSection[]>([]);
   const [isCloning, setIsCloning] = useState(false);
+
+  // AI Suggestions state
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsAbortRef = useRef<AbortController | null>(null);
 
   // Check if form has unsaved changes
   const hasUnsavedChanges = useMemo(() => {
@@ -483,6 +489,58 @@ export default function TemplateDetailPage() {
     }
   };
 
+  // Handle getting AI suggestions
+  const handleGetSuggestions = async (requestType: 'sections' | 'improvements' | 'normalFindings') => {
+    // Abort any existing request
+    if (suggestionsAbortRef.current) {
+      suggestionsAbortRef.current.abort();
+    }
+
+    const abortController = new AbortController();
+    suggestionsAbortRef.current = abortController;
+
+    setIsLoadingSuggestions(true);
+    setSuggestions('');
+    setShowSuggestions(true);
+
+    try {
+      const response = await fetch('/api/templates/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modality: formData.modality,
+          bodyPart: formData.bodyPart,
+          description: formData.description,
+          existingSections: editSections,
+          requestType,
+        }),
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to get suggestions');
+      }
+
+      // Stream the response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value, { stream: true });
+        setSuggestions(prev => prev + text);
+      }
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        showToast(error instanceof Error ? error.message : 'Failed to get suggestions', 'error');
+      }
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
   // Clone global template to personal collection
   const handleCloneToPersonal = async () => {
     if (!template || !template.isGlobal) return;
@@ -782,6 +840,72 @@ export default function TemplateDetailPage() {
                     data-testid="template-content-editor"
                   />
                 </div>
+
+                {/* AI Suggestions Buttons */}
+                <div className="mt-6 pt-6 border-t border-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h4 className="text-sm font-medium text-text-primary">AI Suggestions</h4>
+                      <p className="text-xs text-text-muted">Get AI-powered suggestions for your template</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGetSuggestions('sections')}
+                      disabled={isLoadingSuggestions || !formData.modality || !formData.bodyPart}
+                      data-testid="suggest-sections-btn"
+                    >
+                      {isLoadingSuggestions ? 'Getting Suggestions...' : 'Suggest Sections'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleGetSuggestions('improvements')}
+                      disabled={isLoadingSuggestions || !formData.modality || !formData.bodyPart || editSections.length === 0}
+                      data-testid="suggest-improvements-btn"
+                    >
+                      Suggest Improvements
+                    </Button>
+                  </div>
+
+                  {/* Suggestions Panel */}
+                  {showSuggestions && (
+                    <div className="mt-4 p-4 rounded-lg border border-brand/30 bg-brand/5" data-testid="suggestions-panel">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-text-primary">AI Suggestions</h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setShowSuggestions(false);
+                            setSuggestions('');
+                            if (suggestionsAbortRef.current) {
+                              suggestionsAbortRef.current.abort();
+                            }
+                          }}
+                          data-testid="close-suggestions-btn"
+                        >
+                          Close
+                        </Button>
+                      </div>
+                      <div className="prose prose-sm max-w-none">
+                        <pre className="whitespace-pre-wrap font-mono text-sm text-text-secondary bg-surface-muted p-3 rounded">
+                          {suggestions || 'Generating suggestions...'}
+                        </pre>
+                      </div>
+                      {!isLoadingSuggestions && suggestions && (
+                        <p className="mt-2 text-xs text-text-muted">
+                          Copy relevant suggestions and paste into your template sections above.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -888,12 +1012,60 @@ The lungs are clear. No focal consolidation, pleural effusion, or pneumothorax. 
                 />
 
                 <div className="mt-4 p-4 rounded-lg bg-surface-muted border border-border">
-                  <h4 className="text-sm font-medium text-text-primary mb-2">💡 Tips</h4>
+                  <h4 className="text-sm font-medium text-text-primary mb-2">Tips</h4>
                   <ul className="text-sm text-text-secondary space-y-1">
-                    <li>• Use clear, concise language that accurately describes normal anatomy</li>
-                    <li>• Include all relevant structures for the study type</li>
-                    <li>• This text can be inserted with one click during report generation</li>
+                    <li>- Use clear, concise language that accurately describes normal anatomy</li>
+                    <li>- Include all relevant structures for the study type</li>
+                    <li>- This text can be inserted with one click during report generation</li>
                   </ul>
+                </div>
+
+                {/* AI Suggestions for Normal Findings */}
+                <div className="mt-6 pt-6 border-t border-border">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleGetSuggestions('normalFindings')}
+                    disabled={isLoadingSuggestions || !formData.modality || !formData.bodyPart}
+                    data-testid="suggest-normal-findings-btn"
+                  >
+                    {isLoadingSuggestions ? 'Getting Suggestions...' : 'Suggest Normal Findings'}
+                  </Button>
+
+                  {/* Suggestions Panel */}
+                  {showSuggestions && (
+                    <div className="mt-4 p-4 rounded-lg border border-brand/30 bg-brand/5" data-testid="suggestions-panel-normal">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-medium text-text-primary">AI Suggestions</h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setShowSuggestions(false);
+                            setSuggestions('');
+                            if (suggestionsAbortRef.current) {
+                              suggestionsAbortRef.current.abort();
+                            }
+                          }}
+                          data-testid="close-suggestions-normal-btn"
+                        >
+                          Close
+                        </Button>
+                      </div>
+                      <div className="prose prose-sm max-w-none">
+                        <pre className="whitespace-pre-wrap font-mono text-sm text-text-secondary bg-surface-muted p-3 rounded">
+                          {suggestions || 'Generating suggestions...'}
+                        </pre>
+                      </div>
+                      {!isLoadingSuggestions && suggestions && (
+                        <p className="mt-2 text-xs text-text-muted">
+                          Copy the suggested normal findings and paste into the text area above.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
