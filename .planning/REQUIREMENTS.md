@@ -101,38 +101,38 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | - | Pending |
-| AUTH-02 | - | Pending |
-| AUTH-03 | - | Pending |
-| AUTH-04 | - | Pending |
-| REPORT-01 | - | Pending |
-| REPORT-02 | - | Pending |
-| REPORT-03 | - | Pending |
-| REPORT-04 | - | Pending |
-| REPORT-05 | - | Pending |
-| TMPL-01 | - | Pending |
-| TMPL-02 | - | Pending |
-| TMPL-03 | - | Pending |
-| TMPL-04 | - | Pending |
-| TMPL-05 | - | Pending |
-| TMPL-06 | - | Pending |
-| TMPL-07 | - | Pending |
-| BILL-01 | - | Pending |
-| BILL-02 | - | Pending |
-| BILL-03 | - | Pending |
-| SETT-01 | - | Pending |
-| SETT-02 | - | Pending |
-| SETT-03 | - | Pending |
-| ADMIN-01 | - | Pending |
-| ADMIN-02 | - | Pending |
-| ADMIN-03 | - | Pending |
-| DB-01 | - | Pending |
-| DB-02 | - | Pending |
+| DB-01 | Phase 1 | Pending |
+| DB-02 | Phase 1 | Pending |
+| AUTH-01 | Phase 2 | Pending |
+| AUTH-02 | Phase 2 | Pending |
+| AUTH-03 | Phase 2 | Pending |
+| AUTH-04 | Phase 2 | Pending |
+| TMPL-01 | Phase 3 | Pending |
+| TMPL-02 | Phase 3 | Pending |
+| TMPL-03 | Phase 3 | Pending |
+| TMPL-04 | Phase 3 | Pending |
+| TMPL-05 | Phase 3 | Pending |
+| TMPL-06 | Phase 3 | Pending |
+| REPORT-01 | Phase 4 | Pending |
+| REPORT-03 | Phase 4 | Pending |
+| REPORT-05 | Phase 4 | Pending |
+| REPORT-02 | Phase 5 | Pending |
+| TMPL-07 | Phase 6 | Pending |
+| REPORT-04 | Phase 7 | Pending |
+| SETT-01 | Phase 8 | Pending |
+| SETT-02 | Phase 8 | Pending |
+| SETT-03 | Phase 8 | Pending |
+| BILL-01 | Phase 9 | Pending |
+| BILL-02 | Phase 9 | Pending |
+| BILL-03 | Phase 9 | Pending |
+| ADMIN-01 | Phase 10 | Pending |
+| ADMIN-02 | Phase 10 | Pending |
+| ADMIN-03 | Phase 10 | Pending |
 
 **Coverage:**
 - v1 requirements: 27 total
-- Mapped to phases: 0
-- Unmapped: 27 ⚠️ (will be mapped by create-roadmap)
+- Mapped to phases: 27 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-16*
