@@ -24,12 +24,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Templates
 
-- [ ] **TMPL-01**: User can create personal templates stored in real database
-- [ ] **TMPL-02**: User can read/list their templates from database
-- [ ] **TMPL-03**: User can update their existing templates
-- [ ] **TMPL-04**: User can delete their personal templates
-- [ ] **TMPL-05**: User can clone global templates to personal collection
-- [ ] **TMPL-06**: Templates are validated using Zod schemas before save
+- [x] **TMPL-01**: User can create personal templates stored in real database
+- [x] **TMPL-02**: User can read/list their templates from database
+- [x] **TMPL-03**: User can update their existing templates
+- [x] **TMPL-04**: User can delete their personal templates
+- [x] **TMPL-05**: User can clone global templates to personal collection
+- [x] **TMPL-06**: Templates are validated using Zod schemas before save
 - [ ] **TMPL-07**: User can get AI-assisted suggestions for template creation/improvement
 
 ### Billing
@@ -107,12 +107,12 @@ Which phases cover which requirements. Updated by create-roadmap.
 | AUTH-02 | Phase 2 | Complete |
 | AUTH-03 | Phase 2 | Complete |
 | AUTH-04 | Phase 2 | Complete |
-| TMPL-01 | Phase 3 | Pending |
-| TMPL-02 | Phase 3 | Pending |
-| TMPL-03 | Phase 3 | Pending |
-| TMPL-04 | Phase 3 | Pending |
-| TMPL-05 | Phase 3 | Pending |
-| TMPL-06 | Phase 3 | Pending |
+| TMPL-01 | Phase 3 | Complete |
+| TMPL-02 | Phase 3 | Complete |
+| TMPL-03 | Phase 3 | Complete |
+| TMPL-04 | Phase 3 | Complete |
+| TMPL-05 | Phase 3 | Complete |
+| TMPL-06 | Phase 3 | Complete |
 | REPORT-01 | Phase 4 | Pending |
 | REPORT-03 | Phase 4 | Pending |
 | REPORT-05 | Phase 4 | Pending |
@@ -136,4 +136,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after Phase 2 completion*
+*Last updated: 2026-01-16 after Phase 3 completion*

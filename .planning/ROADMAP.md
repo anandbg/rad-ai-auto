@@ -12,7 +12,7 @@ Transform a functional UI prototype into a production-ready AI radiology applica
 
 - [x] **Phase 1: Database Foundation** - Verify and align Supabase schema with RLS
 - [x] **Phase 2: Authentication** - Real Supabase Auth with email/password
-- [ ] **Phase 3: Template System** - CRUD operations connected to real database
+- [x] **Phase 3: Template System** - CRUD operations connected to real database
 - [ ] **Phase 4: AI Report Generation** - GPT-4o streaming report generation
 - [ ] **Phase 5: Voice Transcription** - Whisper API voice-to-text
 - [ ] **Phase 6: AI Template Suggestions** - GPT-4o template recommendations
@@ -66,8 +66,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01: Connect template CRUD to database
-- [ ] 03-02: Global template cloning
+- [x] 03-01: Connect template CRUD to database
+- [x] 03-02: Global template cloning
 
 ### Phase 4: AI Report Generation
 **Goal**: Users can generate and stream AI radiology reports
@@ -180,7 +180,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Database Foundation | 1/1 | Complete | 2026-01-16 |
 | 2. Authentication | 1/1 | Complete | 2026-01-16 |
-| 3. Template System | 0/2 | Not started | - |
+| 3. Template System | 2/2 | Complete | 2026-01-16 |
 | 4. AI Report Generation | 0/1 | Not started | - |
 | 5. Voice Transcription | 0/1 | Not started | - |
 | 6. AI Template Suggestions | 0/1 | Not started | - |
