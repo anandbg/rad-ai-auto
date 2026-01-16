@@ -11,7 +11,7 @@ Transform a functional UI prototype into a production-ready AI radiology applica
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Database Foundation** - Verify and align Supabase schema with RLS
-- [ ] **Phase 2: Authentication** - Real Supabase Auth with email/password
+- [x] **Phase 2: Authentication** - Real Supabase Auth with email/password
 - [ ] **Phase 3: Template System** - CRUD operations connected to real database
 - [ ] **Phase 4: AI Report Generation** - GPT-4o streaming report generation
 - [ ] **Phase 5: Voice Transcription** - Whisper API voice-to-text
@@ -50,7 +50,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 02-01: Replace mock auth with real Supabase Auth
+- [x] 02-01: Replace mock auth with real Supabase Auth
 
 ### Phase 3: Template System
 **Goal**: Users can manage personal templates with real database storage
@@ -179,7 +179,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Database Foundation | 1/1 | Complete | 2026-01-16 |
-| 2. Authentication | 0/1 | Not started | - |
+| 2. Authentication | 1/1 | Complete | 2026-01-16 |
 | 3. Template System | 0/2 | Not started | - |
 | 4. AI Report Generation | 0/1 | Not started | - |
 | 5. Voice Transcription | 0/1 | Not started | - |

@@ -5,13 +5,13 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 2 - Authentication
+**Current focus:** Phase 3 — Template System (next)
 
 ## Current Position
 
-Phase: 2 of 10 (Authentication)
+Phase: 2 of 10 (Authentication) — COMPLETE
 Plan: 1 of 1 complete
-Status: Phase 2 Plan 1 complete
+Status: Phase 2 complete, ready for Phase 3
 Last activity: 2026-01-16 - Completed 02-01-PLAN.md (Supabase Auth Verification)
 
 Progress: [██░░░░░░░░] 20%
