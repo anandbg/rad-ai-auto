@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 11 — UI/UX Overhaul (motion system complete)
+**Current focus:** Phase 11 — UI/UX Overhaul (micro-interactions complete)
 
 ## Current Position
 
 Phase: 11 of 11 (UI/UX Overhaul)
-Plan: 1 of 5 complete
+Plan: 2 of 5 complete
 Status: In progress
-Last activity: 2026-01-16 - Completed 11-01-PLAN.md (Motion System Foundation)
+Last activity: 2026-01-16 - Completed 11-02-PLAN.md (Core UI Micro-interactions)
 
-Progress: [█████████░] 91% (10/11 phases complete, 11-01 done)
+Progress: [█████████░] 91% (10/11 phases complete, 11-01 and 11-02 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: 7.4 min
-- Total execution time: 1.7 hours
+- Total plans completed: 15
+- Average duration: 7.1 min
+- Total execution time: 1.8 hours
 
 **By Phase:**
 
@@ -37,10 +37,10 @@ Progress: [█████████░] 91% (10/11 phases complete, 11-01 don
 | 08-user-settings-macros | 2 | 50 min | 25 min |
 | 09-stripe-billing | 2 | 6 min | 3 min |
 | 10-admin-dashboard | 1 | 3 min | 3 min |
-| 11-ui-ux-overhaul | 1 | 2 min | 2 min |
+| 11-ui-ux-overhaul | 2 | 5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 09-01 (2 min), 09-02 (4 min), 10-01 (3 min), 11-01 (2 min)
+- Last 5 plans: 09-02 (4 min), 10-01 (3 min), 11-01 (2 min), 11-02 (3 min)
 - Trend: Fast execution continues for UI/UX overhaul
 
 ## Accumulated Context
@@ -95,6 +95,10 @@ Recent decisions affecting current work:
 | Centralized motion constants | DURATION/EASE in lib/motion/constants.ts, no magic numbers in components | 11-01 |
 | useReducedMotion in all motion components | WCAG 2.1 AA compliance, respects prefers-reduced-motion setting | 11-01 |
 | EASE.out for entrances, EASE.in for exits | Natural motion feels - quick start/slow stop for entrances | 11-01 |
+| Scale 1.02 hover, 0.98 tap for buttons | Subtle but noticeable feedback without being distracting | 11-02 |
+| Card interactive prop (default false) | Not all cards should animate - opt-in for interactive cards | 11-02 |
+| AnimatedDialogContent for controlled dialogs | Separate export for AnimatePresence exit animations | 11-02 |
+| 150ms transition duration | Fast enough to feel snappy, slow enough to be perceived | 11-02 |
 
 ### Pending Todos
 
@@ -114,7 +118,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 11-01-PLAN.md (Motion System Foundation)
+Stopped at: Completed 11-02-PLAN.md (Core UI Micro-interactions)
 Resume file: None
 
 ## Completed Plans
@@ -135,3 +139,4 @@ Resume file: None
 | 09-02 | Webhook Handlers | 4 min | a919ec1, fced612 |
 | 10-01 | Admin Statistics API | 3 min | 3306910, d91eb3e |
 | 11-01 | Motion System Foundation | 2 min | 61e15c3, 25dca7d, 7dcb791 |
+| 11-02 | Core UI Micro-interactions | 3 min | e5d8fa4, 30b8f08, f8ed2e6 |
