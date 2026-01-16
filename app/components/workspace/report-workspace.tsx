@@ -126,9 +126,11 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
               <AnimatePresence>
                 {templateOpen && (
                   <>
+                    {/* Invisible click-outside overlay */}
                     <div
-                      className="fixed inset-0 z-10"
+                      className="fixed inset-0 z-10 bg-transparent"
                       onClick={() => setTemplateOpen(false)}
+                      aria-hidden="true"
                     />
                     <motion.div
                       initial={{ opacity: 0, y: -8, scale: 0.96 }}
