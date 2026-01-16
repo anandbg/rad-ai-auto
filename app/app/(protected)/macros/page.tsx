@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,6 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useAuth } from '@/lib/auth/auth-context';
 
 // Category interface
 interface MacroCategory {
@@ -44,7 +43,7 @@ interface Macro {
   contextExpansions?: ContextExpansion[];
 }
 
-// Global macros (available to all users)
+// Global macros (available to all users - hardcoded for now)
 const globalMacros: Macro[] = [
   {
     id: 'macro-global-001',
@@ -56,59 +55,11 @@ const globalMacros: Macro[] = [
   },
 ];
 
-// Helper to get user-specific storage key
-function getStorageKey(userId: string | undefined): string {
-  return userId ? `ai-rad-macros-${userId}` : 'ai-rad-macros';
-}
-
-// Helper to get categories storage key
-function getCategoriesStorageKey(userId: string | undefined): string {
-  return userId ? `ai-rad-macro-categories-${userId}` : 'ai-rad-macro-categories';
-}
-
-// Helper to get macros from localStorage
-function getStoredMacros(userId: string | undefined): Macro[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(getStorageKey(userId));
-  if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to get categories from localStorage
-function getStoredCategories(userId: string | undefined): MacroCategory[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(getCategoriesStorageKey(userId));
-  if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-// Helper to save macros to localStorage
-function saveMacros(macros: Macro[], userId: string | undefined) {
-  if (typeof window === 'undefined') return;
-  // Only save non-global macros
-  const userMacros = macros.filter(m => !m.isGlobal);
-  localStorage.setItem(getStorageKey(userId), JSON.stringify(userMacros));
-}
-
-// Helper to save categories to localStorage
-function saveCategories(categories: MacroCategory[], userId: string | undefined) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(getCategoriesStorageKey(userId), JSON.stringify(categories));
-}
-
 export default function MacrosPage() {
-  const { user } = useAuth();
   const { showToast } = useToast();
   const [macros, setMacros] = useState<Macro[]>([]);
   const [categories, setCategories] = useState<MacroCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newMacroName, setNewMacroName] = useState('');
   const [newMacroText, setNewMacroText] = useState('');
@@ -132,41 +83,82 @@ export default function MacrosPage() {
   const [newContextBodyPart, setNewContextBodyPart] = useState('');
   const [newContextText, setNewContextText] = useState('');
 
-  // Load macros and categories on mount and when user changes
-  useEffect(() => {
-    const storedMacros = getStoredMacros(user?.id);
-    const storedCategories = getStoredCategories(user?.id);
-    // Combine user macros with global macros
-    const allMacros = [...storedMacros, ...globalMacros];
-    setMacros(allMacros);
-    setCategories(storedCategories);
-  }, [user?.id]);
+  // Load macros and categories from API
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Fetch macros and categories in parallel
+      const [macrosRes, categoriesRes] = await Promise.all([
+        fetch('/api/macros'),
+        fetch('/api/macros/categories'),
+      ]);
 
-  const handleCreateMacro = () => {
+      if (macrosRes.ok) {
+        const macrosData = await macrosRes.json();
+        // Combine user macros with global macros
+        const allMacros = [...(macrosData.data || []), ...globalMacros];
+        setMacros(allMacros);
+      } else {
+        showToast('Failed to load macros', 'error');
+      }
+
+      if (categoriesRes.ok) {
+        const categoriesData = await categoriesRes.json();
+        setCategories(categoriesData.data || []);
+      } else {
+        showToast('Failed to load categories', 'error');
+      }
+    } catch (error) {
+      console.error('Error loading macros:', error);
+      showToast('Failed to load macros', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
+
+  // Load macros and categories on mount
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleCreateMacro = async () => {
     if (!newMacroName.trim() || !newMacroText.trim()) return;
 
-    const newMacro: Macro = {
-      id: `macro-${Date.now()}`,
-      name: newMacroName.trim().toLowerCase(),
-      replacementText: newMacroText.trim(),
-      isActive: true,
-      isGlobal: false,
-      createdAt: new Date().toISOString(),
-      isSmartMacro: isSmartMacro && contextExpansions.length > 0,
-      contextExpansions: isSmartMacro && contextExpansions.length > 0 ? contextExpansions : undefined,
-    };
+    try {
+      const response = await fetch('/api/macros', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newMacroName.trim().toLowerCase(),
+          replacementText: newMacroText.trim(),
+          isActive: true,
+          isSmartMacro: isSmartMacro && contextExpansions.length > 0,
+          contextExpansions: isSmartMacro && contextExpansions.length > 0 ? contextExpansions : undefined,
+        }),
+      });
 
-    const updatedMacros = [newMacro, ...macros];
-    setMacros(updatedMacros);
-    saveMacros(updatedMacros, user?.id);
-    setNewMacroName('');
-    setNewMacroText('');
-    setIsSmartMacro(false);
-    setContextExpansions([]);
-    setIsDialogOpen(false);
+      if (response.ok) {
+        const data = await response.json();
+        const newMacro = data.data;
+        setMacros([newMacro, ...macros]);
+        setNewMacroName('');
+        setNewMacroText('');
+        setIsSmartMacro(false);
+        setContextExpansions([]);
+        setIsDialogOpen(false);
 
-    if (newMacro.isSmartMacro) {
-      showToast(`Smart macro "${newMacro.name}" created with ${contextExpansions.length} context expansion(s)!`, 'success');
+        if (newMacro.isSmartMacro) {
+          showToast(`Smart macro "${newMacro.name}" created with ${contextExpansions.length} context expansion(s)!`, 'success');
+        } else {
+          showToast(`Macro "${newMacro.name}" created!`, 'success');
+        }
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Failed to create macro', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating macro:', error);
+      showToast('Failed to create macro', 'error');
     }
   };
 
@@ -186,12 +178,27 @@ export default function MacrosPage() {
     setContextExpansions(contextExpansions.filter((_, i) => i !== index));
   };
 
-  const toggleMacro = (id: string) => {
-    const updatedMacros = macros.map(macro =>
-      macro.id === id ? { ...macro, isActive: !macro.isActive } : macro
-    );
-    setMacros(updatedMacros);
-    saveMacros(updatedMacros, user?.id);
+  const toggleMacro = async (id: string) => {
+    const macro = macros.find(m => m.id === id);
+    if (!macro || macro.isGlobal) return;
+
+    try {
+      const response = await fetch(`/api/macros/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !macro.isActive }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMacros(macros.map(m => m.id === id ? data.data : m));
+      } else {
+        showToast('Failed to toggle macro', 'error');
+      }
+    } catch (error) {
+      console.error('Error toggling macro:', error);
+      showToast('Failed to toggle macro', 'error');
+    }
   };
 
   const openDeleteDialog = (macro: Macro) => {
@@ -199,13 +206,27 @@ export default function MacrosPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDeleteMacro = () => {
+  const confirmDeleteMacro = async () => {
     if (!macroToDelete) return;
-    const updatedMacros = macros.filter(macro => macro.id !== macroToDelete.id);
-    setMacros(updatedMacros);
-    saveMacros(updatedMacros, user?.id);
-    setIsDeleteDialogOpen(false);
-    setMacroToDelete(null);
+
+    try {
+      const response = await fetch(`/api/macros/${macroToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok || response.status === 204) {
+        setMacros(macros.filter(macro => macro.id !== macroToDelete.id));
+        showToast(`Macro "${macroToDelete.name}" deleted`, 'success');
+      } else {
+        showToast('Failed to delete macro', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting macro:', error);
+      showToast('Failed to delete macro', 'error');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setMacroToDelete(null);
+    }
   };
 
   const openEditDialog = (macro: Macro) => {
@@ -214,37 +235,60 @@ export default function MacrosPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleEditMacro = () => {
+  const handleEditMacro = async () => {
     if (!editingMacro || !editMacroText.trim()) return;
 
-    const updatedMacros = macros.map(macro =>
-      macro.id === editingMacro.id
-        ? { ...macro, replacementText: editMacroText.trim() }
-        : macro
-    );
-    setMacros(updatedMacros);
-    saveMacros(updatedMacros, user?.id);
-    setIsEditDialogOpen(false);
-    setEditingMacro(null);
-    setEditMacroText('');
+    try {
+      const response = await fetch(`/api/macros/${editingMacro.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ replacementText: editMacroText.trim() }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMacros(macros.map(macro =>
+          macro.id === editingMacro.id ? data.data : macro
+        ));
+        showToast(`Macro "${editingMacro.name}" updated`, 'success');
+      } else {
+        showToast('Failed to update macro', 'error');
+      }
+    } catch (error) {
+      console.error('Error updating macro:', error);
+      showToast('Failed to update macro', 'error');
+    } finally {
+      setIsEditDialogOpen(false);
+      setEditingMacro(null);
+      setEditMacroText('');
+    }
   };
 
   // Category handlers
-  const handleCreateCategory = () => {
+  const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
 
-    const newCategory: MacroCategory = {
-      id: `cat-${Date.now()}`,
-      name: newCategoryName.trim(),
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const response = await fetch('/api/macros/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCategoryName.trim() }),
+      });
 
-    const updatedCategories = [newCategory, ...categories];
-    setCategories(updatedCategories);
-    saveCategories(updatedCategories, user?.id);
-    setNewCategoryName('');
-    setIsCategoryDialogOpen(false);
-    showToast(`Category "${newCategory.name}" created!`, 'success');
+      if (response.ok) {
+        const data = await response.json();
+        setCategories([data.data, ...categories]);
+        setNewCategoryName('');
+        setIsCategoryDialogOpen(false);
+        showToast(`Category "${data.data.name}" created!`, 'success');
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Failed to create category', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating category:', error);
+      showToast('Failed to create category', 'error');
+    }
   };
 
   const openMoveDialog = (macro: Macro) => {
@@ -253,25 +297,37 @@ export default function MacrosPage() {
     setIsMoveDialogOpen(true);
   };
 
-  const handleMoveMacro = () => {
+  const handleMoveMacro = async () => {
     if (!macroToMove) return;
 
-    const updatedMacros = macros.map(macro =>
-      macro.id === macroToMove.id
-        ? { ...macro, categoryId: selectedCategoryId || undefined }
-        : macro
-    );
-    setMacros(updatedMacros);
-    saveMacros(updatedMacros, user?.id);
+    try {
+      const response = await fetch(`/api/macros/${macroToMove.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryId: selectedCategoryId || null }),
+      });
 
-    const categoryName = selectedCategoryId
-      ? categories.find(c => c.id === selectedCategoryId)?.name || 'category'
-      : 'Uncategorized';
-    showToast(`Macro moved to "${categoryName}"`, 'success');
+      if (response.ok) {
+        const data = await response.json();
+        setMacros(macros.map(macro =>
+          macro.id === macroToMove.id ? data.data : macro
+        ));
 
-    setIsMoveDialogOpen(false);
-    setMacroToMove(null);
-    setSelectedCategoryId('');
+        const categoryName = selectedCategoryId
+          ? categories.find(c => c.id === selectedCategoryId)?.name || 'category'
+          : 'Uncategorized';
+        showToast(`Macro moved to "${categoryName}"`, 'success');
+      } else {
+        showToast('Failed to move macro', 'error');
+      }
+    } catch (error) {
+      console.error('Error moving macro:', error);
+      showToast('Failed to move macro', 'error');
+    } finally {
+      setIsMoveDialogOpen(false);
+      setMacroToMove(null);
+      setSelectedCategoryId('');
+    }
   };
 
   // Delete category handler
@@ -280,41 +336,43 @@ export default function MacrosPage() {
     setIsDeleteCategoryDialogOpen(true);
   };
 
-  const handleDeleteCategory = () => {
+  const handleDeleteCategory = async () => {
     if (!categoryToDelete) return;
 
-    // Count macros in this category
+    // Count macros in this category for the toast message
     const macrosInCategory = macros.filter(m => m.categoryId === categoryToDelete.id);
     const macroCount = macrosInCategory.length;
 
-    // Move all macros in this category to uncategorized (remove categoryId)
-    const updatedMacros = macros.map(macro =>
-      macro.categoryId === categoryToDelete.id
-        ? { ...macro, categoryId: undefined }
-        : macro
-    );
-    setMacros(updatedMacros);
-    saveMacros(updatedMacros, user?.id);
+    try {
+      const response = await fetch(`/api/macros/categories/${categoryToDelete.id}`, {
+        method: 'DELETE',
+      });
 
-    // Remove the category
-    const updatedCategories = categories.filter(c => c.id !== categoryToDelete.id);
-    setCategories(updatedCategories);
-    saveCategories(updatedCategories, user?.id);
+      if (response.ok || response.status === 204) {
+        // Update local state: move macros to uncategorized and remove category
+        setMacros(macros.map(macro =>
+          macro.categoryId === categoryToDelete.id
+            ? { ...macro, categoryId: undefined }
+            : macro
+        ));
+        setCategories(categories.filter(c => c.id !== categoryToDelete.id));
 
-    // Show toast with count of moved macros
-    if (macroCount > 0) {
-      showToast(`Category "${categoryToDelete.name}" deleted. ${macroCount} macro${macroCount !== 1 ? 's' : ''} moved to Uncategorized.`, 'success');
-    } else {
-      showToast(`Category "${categoryToDelete.name}" deleted.`, 'success');
+        // Show toast with count of moved macros
+        if (macroCount > 0) {
+          showToast(`Category "${categoryToDelete.name}" deleted. ${macroCount} macro${macroCount !== 1 ? 's' : ''} moved to Uncategorized.`, 'success');
+        } else {
+          showToast(`Category "${categoryToDelete.name}" deleted.`, 'success');
+        }
+      } else {
+        showToast('Failed to delete category', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      showToast('Failed to delete category', 'error');
+    } finally {
+      setIsDeleteCategoryDialogOpen(false);
+      setCategoryToDelete(null);
     }
-
-    setIsDeleteCategoryDialogOpen(false);
-    setCategoryToDelete(null);
-  };
-
-  const getCategoryName = (categoryId: string | undefined): string => {
-    if (!categoryId) return '';
-    return categories.find(c => c.id === categoryId)?.name || '';
   };
 
   const activeMacros = macros.filter(m => m.isActive);
@@ -366,12 +424,12 @@ export default function MacrosPage() {
   };
 
   // Import macros from JSON file
-  const handleImportMacros = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportMacros = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const content = e.target?.result as string;
         const importData = JSON.parse(content);
@@ -387,50 +445,42 @@ export default function MacrosPage() {
         const categoryIdMap: Record<string, string> = {};
 
         if (importData.categories && Array.isArray(importData.categories)) {
-          const newCategories: MacroCategory[] = [];
-          importData.categories.forEach((cat: { name: string; createdAt?: string }) => {
+          for (const cat of importData.categories) {
             // Check if category with same name already exists
             const existing = categories.find(c => c.name.toLowerCase() === cat.name.toLowerCase());
             if (existing) {
               categoryIdMap[cat.name] = existing.id;
             } else {
-              const newCat: MacroCategory = {
-                id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                name: cat.name,
-                createdAt: cat.createdAt || new Date().toISOString(),
-              };
-              newCategories.push(newCat);
-              categoryIdMap[cat.name] = newCat.id;
-              importedCategoriesCount++;
+              // Create new category via API
+              try {
+                const response = await fetch('/api/macros/categories', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: cat.name }),
+                });
+                if (response.ok) {
+                  const data = await response.json();
+                  categoryIdMap[cat.name] = data.data.id;
+                  setCategories(prev => [data.data, ...prev]);
+                  importedCategoriesCount++;
+                }
+              } catch {
+                // Continue with other categories
+              }
             }
-          });
-
-          if (newCategories.length > 0) {
-            const updatedCategories = [...categories, ...newCategories];
-            setCategories(updatedCategories);
-            saveCategories(updatedCategories, user?.id);
           }
         }
 
         // Import personal macros
         let importedCount = 0;
         let skippedCount = 0;
-        const newMacros: Macro[] = [];
 
-        importData.macros.personal.forEach((m: {
-          name: string;
-          replacementText: string;
-          isActive?: boolean;
-          categoryId?: string;
-          isSmartMacro?: boolean;
-          contextExpansions?: ContextExpansion[];
-          createdAt?: string;
-        }) => {
+        for (const m of importData.macros.personal) {
           // Check if macro with same name already exists
           const existingMacro = macros.find(existing => existing.name.toLowerCase() === m.name.toLowerCase());
           if (existingMacro) {
             skippedCount++;
-            return;
+            continue;
           }
 
           // Find new category ID if this macro had a category
@@ -444,25 +494,28 @@ export default function MacrosPage() {
             }
           }
 
-          const newMacro: Macro = {
-            id: `macro-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            name: m.name,
-            replacementText: m.replacementText,
-            isActive: m.isActive ?? true,
-            isGlobal: false,
-            createdAt: m.createdAt || new Date().toISOString(),
-            categoryId: newCategoryId,
-            isSmartMacro: m.isSmartMacro,
-            contextExpansions: m.contextExpansions,
-          };
-          newMacros.push(newMacro);
-          importedCount++;
-        });
-
-        if (newMacros.length > 0) {
-          const updatedMacros = [...newMacros, ...macros];
-          setMacros(updatedMacros);
-          saveMacros(updatedMacros, user?.id);
+          // Create macro via API
+          try {
+            const response = await fetch('/api/macros', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: m.name,
+                replacementText: m.replacementText,
+                isActive: m.isActive ?? true,
+                categoryId: newCategoryId,
+                isSmartMacro: m.isSmartMacro,
+                contextExpansions: m.contextExpansions,
+              }),
+            });
+            if (response.ok) {
+              const data = await response.json();
+              setMacros(prev => [data.data, ...prev]);
+              importedCount++;
+            }
+          } catch {
+            // Continue with other macros
+          }
         }
 
         // Build success message
@@ -492,6 +545,20 @@ export default function MacrosPage() {
     category: cat,
     macros: activeMacros.filter(m => m.categoryId === cat.id)
   })).filter(group => group.macros.length > 0);
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-5xl p-6">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-text-primary">Macros</h1>
+          <p className="mt-1 text-text-secondary">Loading...</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl p-6">
@@ -558,7 +625,7 @@ export default function MacrosPage() {
                   data-testid="macro-name-input"
                 />
                 <p className="mt-1 text-xs text-text-secondary">
-                  The abbreviation you'll type during transcription
+                  The abbreviation you&apos;ll type during transcription
                 </p>
               </div>
               <div>
@@ -588,7 +655,7 @@ export default function MacrosPage() {
                 />
                 <div>
                   <label htmlFor="smart-macro" className="text-sm font-medium text-text-primary cursor-pointer">
-                    🧠 Smart Macro (Context-Aware)
+                    Smart Macro (Context-Aware)
                   </label>
                   <p className="text-xs text-text-secondary">
                     Expands differently based on the body part being examined
@@ -615,7 +682,7 @@ export default function MacrosPage() {
                         onClick={() => removeContextExpansion(index)}
                         className="text-danger"
                       >
-                        ✕
+                        X
                       </Button>
                     </div>
                   ))}
@@ -713,7 +780,7 @@ export default function MacrosPage() {
       {categorizedMacros.map(({ category, macros: categoryMacros }) => (
         <div key={category.id} className="mb-8">
           <h2 className="mb-4 text-lg font-semibold text-text-primary flex items-center gap-2">
-            <span className="text-brand">📁</span>
+            <span className="text-brand">[Folder]</span>
             {category.name} ({categoryMacros.length})
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
@@ -805,7 +872,7 @@ export default function MacrosPage() {
                         )}
                         {macro.isSmartMacro && (
                           <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning" data-testid={`smart-badge-${macro.id}`}>
-                            🧠 Smart
+                            Smart
                           </span>
                         )}
                       </div>
@@ -922,7 +989,7 @@ export default function MacrosPage() {
 
       {macros.length === 0 && (
         <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center">
-          <div className="mb-4 text-5xl">⚡</div>
+          <div className="mb-4 text-5xl">[Lightning]</div>
           <h3 className="mb-2 text-lg font-semibold text-text-primary">No macros yet</h3>
           <p className="mb-4 text-sm text-text-secondary">
             Create your first macro to speed up transcription
