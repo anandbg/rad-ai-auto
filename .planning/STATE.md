@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 5 — Voice Transcription (next)
+**Current focus:** Phase 6 — PDF Export (next)
 
 ## Current Position
 
-Phase: 4 of 10 (AI Report Generation) — COMPLETE
+Phase: 5 of 10 (Voice Transcription) — COMPLETE
 Plan: 1 of 1 complete
-Status: Phase 4 verified complete, ready for Phase 5
-Last activity: 2026-01-16 - Phase 4 verified complete
+Status: Phase 5 complete, ready for Phase 6
+Last activity: 2026-01-16 - Completed 05-01-PLAN.md
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 6.6 min
-- Total execution time: 0.5 hours
+- Total plans completed: 6
+- Average duration: 6.3 min
+- Total execution time: 0.6 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [████░░░░░░] 40%
 | 02-authentication | 1 | 3 min | 3 min |
 | 03-template-system | 2 | 8 min | 4 min |
 | 04-ai-report-generation | 1 | 8 min | 8 min |
+| 05-voice-transcription | 1 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3 min), 03-01 (3 min), 03-02 (5 min), 04-01 (8 min)
-- Trend: AI integration plans slightly longer due to SDK API exploration
+- Last 5 plans: 03-01 (3 min), 03-02 (5 min), 04-01 (8 min), 05-01 (5 min)
+- Trend: Consistent execution speed, AI integrations averaging 6-8 min
 
 ## Accumulated Context
 
@@ -62,6 +63,9 @@ Recent decisions affecting current work:
 | Edge runtime for /api/generate | Lower latency for AI streaming | 04-01 |
 | Temperature 0.2 for GPT-4o | Deterministic, consistent medical reports | 04-01 |
 | toTextStreamResponse() for SSE | Plain text streaming simpler than data stream format | 04-01 |
+| Node.js runtime for /api/transcribe | FormData file parsing requires Node.js, not Edge runtime | 05-01 |
+| 120 second maxDuration for transcribe | Audio files take longer to process than text generation | 05-01 |
+| Support webm format | Browser MediaRecorder produces webm by default | 05-01 |
 
 ### Pending Todos
 
@@ -75,12 +79,12 @@ Recent decisions affecting current work:
 1. **Docker not running** - Cannot apply migrations locally or generate Supabase types
 2. **Pre-existing TypeScript errors** - 62 errors in codebase unrelated to current work, documented in CONCERNS.md
 3. **Pre-existing ESLint config error** - @typescript-eslint/no-unused-vars rule not found, affects all files
-4. **OPENAI_API_KEY required** - Generate endpoint returns 500 if not configured
+4. **OPENAI_API_KEY required** - Generate and transcribe endpoints return 500 if not configured
 
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 04-01-PLAN.md
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
 
 ## Completed Plans
@@ -92,3 +96,4 @@ Resume file: None
 | 03-01 | Template CRUD API | 3 min | d6f520b, dc2962c, 1deff1d |
 | 03-02 | Template UI API Integration | 5 min | 1d88bc3, a0e7051, a13d023 |
 | 04-01 | GPT-4o Streaming Generation | 8 min | fb15e6d, e6b66be, 759860a |
+| 05-01 | Whisper Transcription API | 5 min | e3baa54, 70b2500 |
