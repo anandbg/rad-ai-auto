@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 
 export type Theme = 'light' | 'dark' | 'system';
@@ -10,6 +10,15 @@ interface UserPreferences {
   defaultTemplate: string | null;
   autoSave: boolean;
   compactMode: boolean;
+  yoloMode: boolean;
+  onboardingCompleted: boolean;
+}
+
+// API response format
+interface ApiPreferences {
+  theme: Theme;
+  defaultTemplate: string | null;
+  autoSave: boolean;
   yoloMode: boolean;
   onboardingCompleted: boolean;
 }
@@ -50,25 +59,80 @@ function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+// Convert API response to full preferences (adding compactMode which is local-only)
+function apiToFullPreferences(api: ApiPreferences): UserPreferences {
+  return {
+    ...api,
+    compactMode: false, // Local-only preference, not stored in DB
+  };
+}
+
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
+  const hasLoadedRef = useRef(false);
 
   // Resolve theme based on preferences and system
   const resolvedTheme = preferences.theme === 'system' ? systemTheme : preferences.theme;
 
-  // Load preferences from localStorage on mount
+  // Load preferences from API (with localStorage fallback)
   useEffect(() => {
-    const loadPreferences = () => {
+    const loadPreferences = async () => {
+      // Skip if we've already loaded for this user
+      if (hasLoadedRef.current) return;
+
+      // Wait for auth to finish loading
+      if (authLoading) return;
+
       try {
         const storageKey = getStorageKey(user?.id);
+
+        // If user is authenticated, fetch from API
+        if (user?.id) {
+          try {
+            const response = await fetch('/api/preferences');
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.data) {
+                const apiPrefs = data.data as ApiPreferences;
+                const fullPrefs = apiToFullPreferences(apiPrefs);
+
+                // Load compactMode from localStorage (local-only preference)
+                const stored = localStorage.getItem(storageKey);
+                if (stored) {
+                  try {
+                    const localPrefs = JSON.parse(stored) as Partial<UserPreferences>;
+                    if (localPrefs.compactMode !== undefined) {
+                      fullPrefs.compactMode = localPrefs.compactMode;
+                    }
+                  } catch {
+                    // Ignore parse errors
+                  }
+                }
+
+                setPreferences(fullPrefs);
+                // Also save to localStorage as cache
+                localStorage.setItem(storageKey, JSON.stringify(fullPrefs));
+                hasLoadedRef.current = true;
+                setIsLoading(false);
+                return;
+              }
+            }
+          } catch (apiError) {
+            console.error('Error fetching preferences from API:', apiError);
+            // Fall through to localStorage fallback
+          }
+        }
+
+        // Fallback: Load from localStorage
         const stored = localStorage.getItem(storageKey);
         if (stored) {
           const parsed = JSON.parse(stored) as Partial<UserPreferences>;
           setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
         }
+        hasLoadedRef.current = true;
       } catch (error) {
         console.error('Error loading preferences:', error);
       }
@@ -90,6 +154,11 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     return () => {
       mediaQuery.removeEventListener('change', handleChange);
     };
+  }, [user?.id, authLoading]);
+
+  // Reset loaded state when user changes
+  useEffect(() => {
+    hasLoadedRef.current = false;
   }, [user?.id]);
 
   // Apply theme to document
@@ -107,9 +176,10 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     const newPreferences = { ...preferences, [key]: value };
     setPreferences(newPreferences);
 
-    // Save to localStorage (simulates API call to database)
+    const storageKey = getStorageKey(user?.id);
+
+    // Always save to localStorage (for offline support and local-only prefs)
     try {
-      const storageKey = getStorageKey(user?.id);
       localStorage.setItem(storageKey, JSON.stringify(newPreferences));
 
       // Dispatch storage event for other tabs
@@ -117,12 +187,30 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         key: storageKey,
         newValue: JSON.stringify(newPreferences),
       }));
+    } catch (localError) {
+      console.error('Error saving to localStorage:', localError);
+    }
 
-      // Log for debugging/verification that "API call" was made
-      console.log(`[Preferences API] Saved preference: ${key} = ${JSON.stringify(value)}`);
-    } catch (error) {
-      console.error('Error saving preferences:', error);
-      throw error;
+    // Save to API if user is authenticated (skip compactMode which is local-only)
+    if (user?.id && key !== 'compactMode') {
+      try {
+        const response = await fetch('/api/preferences', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ [key]: value }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error saving preference to API:', errorData);
+          // Don't throw - we already saved to localStorage
+        }
+      } catch (apiError) {
+        console.error('Error saving preference to API:', apiError);
+        // Don't throw - we already saved to localStorage
+      }
     }
   }, [preferences, user?.id]);
 
