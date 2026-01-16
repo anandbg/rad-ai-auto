@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-16)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 8 — User Settings & Macros (next)
+**Current focus:** Phase 8 — User Settings & Macros (in progress)
 
 ## Current Position
 
-Phase: 7 of 10 (PDF Export) — COMPLETE
-Plan: 07-01 complete
-Status: Phase complete
-Last activity: 2026-01-16 - Completed 07-01-PLAN.md
+Phase: 8 of 10 (User Settings & Macros) — IN PROGRESS
+Plan: 08-02 complete
+Status: Plan complete
+Last activity: 2026-01-16 - Completed 08-02-PLAN.md
 
-Progress: [███████░░░] 70%
+Progress: [███████░░░] 72%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 6.0 min
-- Total execution time: 0.8 hours
+- Total plans completed: 9
+- Average duration: 5.8 min
+- Total execution time: 0.9 hours
 
 **By Phase:**
 
@@ -34,10 +34,11 @@ Progress: [███████░░░] 70%
 | 05-voice-transcription | 1 | 5 min | 5 min |
 | 06-ai-template-suggestions | 1 | 6 min | 6 min |
 | 07-pdf-export | 1 | 5 min | 5 min |
+| 08-user-settings-macros | 1 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (8 min), 05-01 (5 min), 06-01 (6 min), 07-01 (5 min)
-- Trend: Consistent execution speed, averaging 5-8 min per plan
+- Last 5 plans: 05-01 (5 min), 06-01 (6 min), 07-01 (5 min), 08-02 (5 min)
+- Trend: Consistent execution speed, averaging 5-6 min per plan
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 | Browser print for PDF export | No external library needed, simpler and dependency-free | 07-01 |
 | Georgia serif font for PDF | Professional medical document typography standard | 07-01 |
 | AI indicator in PDF footer | Transparency about AI-generated content for compliance | 07-01 |
+| Map frontend camelCase to DB snake_case in macros API | Consistent field naming convention | 08-02 |
+| Keep hardcoded global macros for now | Admin editing is Phase 10 | 08-02 |
+| Parallel fetch for macros and categories | Better page load performance | 08-02 |
 
 ### Pending Todos
 
@@ -91,7 +95,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 07-01-PLAN.md
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
 
 ## Completed Plans
@@ -106,3 +110,4 @@ Resume file: None
 | 05-01 | Whisper Transcription API | 5 min | e3baa54, 70b2500 |
 | 06-01 | AI Template Suggestions | 6 min | acf5c29, 2557034 |
 | 07-01 | PDF Export Enhancement | 5 min | 52dd397 |
+| 08-02 | Macros API Integration | 5 min | aa558c6, e00452d, 8d63773 |
