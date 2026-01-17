@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PanelLeftClose, PanelLeft, LayoutList } from 'lucide-react';
+import { PanelLeftClose, PanelLeft } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -16,8 +16,6 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: '>' },
-  { href: '/transcribe', label: 'Transcribe', icon: '>' },
-  { href: '/generate', label: 'Generate', icon: '>' },
   { href: '/templates', label: 'Templates', icon: '>' },
   { href: '/brand-templates', label: 'Branding', icon: '>' },
   { href: '/macros', label: 'Macros', icon: '>' },
@@ -30,15 +28,11 @@ const navItems: NavItem[] = [
 interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
-  onToggleReportsPanel?: () => void;
-  reportsPanelVisible?: boolean;
 }
 
 export function Sidebar({
   collapsed = false,
   onToggleCollapse,
-  onToggleReportsPanel,
-  reportsPanelVisible = true,
 }: SidebarProps = {}) {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
@@ -119,33 +113,21 @@ export function Sidebar({
         </Link>
       </div>
 
-      {/* Panel Controls - only show on desktop when props are provided */}
-      {(onToggleCollapse || onToggleReportsPanel) && (
+      {/* Panel Controls - only show on desktop when collapse prop is provided */}
+      {onToggleCollapse && (
         <div className="hidden md:flex items-center gap-1 px-4 py-2 border-b border-border">
-          {onToggleReportsPanel && (
-            <button
-              onClick={onToggleReportsPanel}
-              className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-surface-muted transition-colors"
-              aria-label={reportsPanelVisible ? 'Hide reports panel' : 'Show reports panel'}
-              title={reportsPanelVisible ? 'Hide reports panel' : 'Show reports panel'}
-            >
-              <LayoutList className={`h-4 w-4 ${reportsPanelVisible ? 'text-brand' : 'text-text-secondary'}`} />
-            </button>
-          )}
-          {onToggleCollapse && (
-            <button
-              onClick={onToggleCollapse}
-              className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-surface-muted transition-colors"
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {collapsed ? (
-                <PanelLeft className="h-4 w-4 text-text-secondary" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4 text-text-secondary" />
-              )}
-            </button>
-          )}
+          <button
+            onClick={onToggleCollapse}
+            className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-surface-muted transition-colors"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? (
+              <PanelLeft className="h-4 w-4 text-text-secondary" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4 text-text-secondary" />
+            )}
+          </button>
         </div>
       )}
 
