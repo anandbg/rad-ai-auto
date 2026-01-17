@@ -123,6 +123,7 @@ Recent decisions affecting current work:
 1. Apply database migrations to Supabase cloud project
 2. Generate Supabase TypeScript types after migration
 3. Remove reports panel from dashboard (simplify to 2-panel layout)
+4. Consolidate workflow to workspace hub with functional buttons (remove sidebar nav items, add file upload, wire APIs)
 
 ### Blockers/Concerns
 
