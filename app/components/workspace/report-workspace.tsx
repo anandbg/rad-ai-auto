@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from 'framer-motion';
 import {
@@ -15,23 +15,32 @@ import {
   Loader2,
   Stethoscope,
   CheckCircle2,
+  Upload,
 } from 'lucide-react';
 import { WorkspaceTabs, WorkspaceTab } from './workspace-tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/shared/cn';
+
+interface Template {
+  id: string;
+  label: string;
+  category: string;
+  bodyPart?: string;
+}
 
 interface ReportWorkspaceProps {
   selectedTemplateId?: string;
   onTemplateSelect?: (id: string) => void;
 }
 
-const templates = [
-  { id: 'ct-chest', label: 'CT Chest', category: 'CT' },
-  { id: 'ct-abdomen', label: 'CT Abdomen/Pelvis', category: 'CT' },
-  { id: 'mri-brain', label: 'MRI Brain', category: 'MRI' },
-  { id: 'mri-spine', label: 'MRI Spine', category: 'MRI' },
-  { id: 'xray-chest', label: 'X-Ray Chest', category: 'X-Ray' },
-  { id: 'xray-skeletal', label: 'X-Ray Skeletal', category: 'X-Ray' },
+// Fallback templates for when API fails or user is not authenticated
+const fallbackTemplates: Template[] = [
+  { id: 'ct-chest', label: 'CT Chest', category: 'CT', bodyPart: 'Chest' },
+  { id: 'ct-abdomen', label: 'CT Abdomen/Pelvis', category: 'CT', bodyPart: 'Abdomen' },
+  { id: 'mri-brain', label: 'MRI Brain', category: 'MRI', bodyPart: 'Brain' },
+  { id: 'mri-spine', label: 'MRI Spine', category: 'MRI', bodyPart: 'Spine' },
+  { id: 'xray-chest', label: 'X-Ray Chest', category: 'X-Ray', bodyPart: 'Chest' },
+  { id: 'xray-skeletal', label: 'X-Ray Skeletal', category: 'X-Ray', bodyPart: 'Skeletal' },
 ];
 
 export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: ReportWorkspaceProps) {
@@ -42,6 +51,37 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
   const [templateOpen, setTemplateOpen] = useState(false);
   const [localTemplateId, setLocalTemplateId] = useState(selectedTemplateId);
   const shouldReduceMotion = useReducedMotion();
+
+  // Template loading state
+  const [templates, setTemplates] = useState<Template[]>(fallbackTemplates);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
+
+  // Load templates from API on mount
+  useEffect(() => {
+    async function loadTemplates() {
+      try {
+        const res = await fetch('/api/templates/list');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data && data.data.length > 0) {
+            setTemplates(data.data.map((t: { id: string; name: string; modality: string; bodyPart?: string }) => ({
+              id: t.id,
+              label: t.name,
+              category: t.modality,
+              bodyPart: t.bodyPart,
+            })));
+          }
+          // If no templates returned, keep fallback templates
+        }
+      } catch (error) {
+        console.error('Failed to load templates:', error);
+        // Keep fallback templates on error
+      } finally {
+        setIsLoadingTemplates(false);
+      }
+    }
+    loadTemplates();
+  }, []);
 
   const effectiveTemplateId = selectedTemplateId ?? localTemplateId;
   const selectedTemplate = templates.find(t => t.id === effectiveTemplateId);
@@ -202,6 +242,7 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
                   templateOpen={templateOpen}
                   setTemplateOpen={setTemplateOpen}
                   templates={templates}
+                  isLoadingTemplates={isLoadingTemplates}
                 />
               )}
             </motion.div>
@@ -358,7 +399,8 @@ interface ReportTabProps {
   onTemplateSelect: (id: string) => void;
   templateOpen: boolean;
   setTemplateOpen: (open: boolean) => void;
-  templates: { id: string; label: string; category: string }[];
+  templates: Template[];
+  isLoadingTemplates: boolean;
 }
 
 function ReportTab({
@@ -368,8 +410,12 @@ function ReportTab({
   templateOpen,
   setTemplateOpen,
   templates,
+  isLoadingTemplates,
 }: ReportTabProps) {
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+
+  // Get unique categories from templates (dynamic grouping)
+  const categories = [...new Set(templates.map(t => t.category))];
 
   return (
     <div className="h-full flex flex-col">
@@ -388,6 +434,7 @@ function ReportTab({
           <div className="relative">
             <button
               onClick={() => setTemplateOpen(!templateOpen)}
+              disabled={isLoadingTemplates}
               className={cn(
                 "group flex items-center gap-2 rounded-lg px-3 py-2",
                 "bg-white dark:bg-slate-700",
@@ -395,12 +442,17 @@ function ReportTab({
                 "hover:border-brand/50 dark:hover:border-brand/50",
                 "transition-all duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50",
-                "shadow-sm"
+                "shadow-sm",
+                "disabled:opacity-50 disabled:cursor-wait"
               )}
             >
-              <FileText className="h-4 w-4 text-slate-400" />
+              {isLoadingTemplates ? (
+                <Loader2 className="h-4 w-4 text-slate-400 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4 text-slate-400" />
+              )}
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                {selectedTemplate?.label || 'Select Template'}
+                {isLoadingTemplates ? 'Loading...' : (selectedTemplate?.label || 'Select Template')}
               </span>
               <ChevronDown className={cn(
                 "h-4 w-4 text-slate-400 transition-transform duration-200",
@@ -423,31 +475,35 @@ function ReportTab({
                     transition={{ duration: 0.15 }}
                     className="absolute left-0 top-full z-20 mt-2 w-64 origin-top-left rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-800"
                   >
-                    {['CT', 'MRI', 'X-Ray'].map(category => (
-                      <div key={category} className="mb-2 last:mb-0">
-                        <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                          {category}
+                    {categories.map(category => {
+                      const categoryTemplates = templates.filter(t => t.category === category);
+                      if (categoryTemplates.length === 0) return null;
+                      return (
+                        <div key={category} className="mb-2 last:mb-0">
+                          <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            {category}
+                          </div>
+                          {categoryTemplates.map(template => (
+                            <button
+                              key={template.id}
+                              onClick={() => onTemplateSelect(template.id)}
+                              className={cn(
+                                "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm",
+                                "transition-colors duration-100",
+                                selectedTemplateId === template.id
+                                  ? "bg-brand/10 text-brand font-medium"
+                                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/50"
+                              )}
+                            >
+                              {selectedTemplateId === template.id && (
+                                <CheckCircle2 className="h-4 w-4" />
+                              )}
+                              {template.label}
+                            </button>
+                          ))}
                         </div>
-                        {templates.filter(t => t.category === category).map(template => (
-                          <button
-                            key={template.id}
-                            onClick={() => onTemplateSelect(template.id)}
-                            className={cn(
-                              "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm",
-                              "transition-colors duration-100",
-                              selectedTemplateId === template.id
-                                ? "bg-brand/10 text-brand font-medium"
-                                : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/50"
-                            )}
-                          >
-                            {selectedTemplateId === template.id && (
-                              <CheckCircle2 className="h-4 w-4" />
-                            )}
-                            {template.label}
-                          </button>
-                        ))}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </motion.div>
                 </>
               )}
