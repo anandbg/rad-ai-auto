@@ -1,7 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { experimental_transcribe as transcribe } from 'ai';
-import { openai } from '@ai-sdk/openai';
 
 // Node.js runtime required for FormData file parsing
 export const runtime = 'nodejs';
@@ -198,22 +196,33 @@ export async function POST(request: Request) {
       );
     }
 
-    // Convert File to ArrayBuffer then to Uint8Array for the AI SDK
-    const arrayBuffer = await audioFile.arrayBuffer();
-    const audioData = new Uint8Array(arrayBuffer);
+    // Call OpenAI Whisper API directly to avoid AI SDK media type detection issues
+    const openaiFormData = new FormData();
+    openaiFormData.append('model', 'whisper-1');
+    openaiFormData.append('file', audioFile, audioFile.name);
 
-    // Transcribe using Whisper via Vercel AI SDK
-    const result = await transcribe({
-      model: openai.transcription('whisper-1'),
-      audio: audioData,
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: openaiFormData,
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('OpenAI API error:', response.status, errorData);
+      throw new Error(errorData?.error?.message || `OpenAI API error: ${response.status}`);
+    }
+
+    const result = await response.json();
 
     const processingTime = (Date.now() - startTime) / 1000;
 
     return new Response(
       JSON.stringify({
         success: true,
-        transcript: result.text,
+        transcript: result.text || '',
         duration: processingTime,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
