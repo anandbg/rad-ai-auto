@@ -84,7 +84,6 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
   }, []);
 
   const effectiveTemplateId = selectedTemplateId ?? localTemplateId;
-  const selectedTemplate = templates.find(t => t.id === effectiveTemplateId);
 
   const handleTemplateSelect = (id: string) => {
     setLocalTemplateId(id);
