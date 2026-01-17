@@ -72,7 +72,7 @@ Production readiness polish. Workspace consolidation, AI prompt alignment, expor
 
 ### AI Quality
 
-- [ ] **V1.1-AI-01**: AI system prompts align with reference documentation for production-quality outputs
+- [x] **V1.1-AI-01**: AI system prompts align with reference documentation for production-quality outputs
 
 ### Export
 
@@ -157,7 +157,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 | UX-03 | Phase 11 | Complete |
 | V1.1-WS-01 | Phase 12 | Complete |
 | V1.1-WS-02 | Phase 12 | Complete |
-| V1.1-AI-01 | Phase 13 | Pending |
+| V1.1-AI-01 | Phase 13 | Complete |
 | V1.1-EX-01 | Phase 14 | Pending |
 | V1.1-EX-02 | Phase 14 | Pending |
 

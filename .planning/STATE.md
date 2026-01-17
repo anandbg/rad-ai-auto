@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 13 — AI Prompt Alignment
+**Current focus:** Phase 14 — Export Enhancement
 
 ## Current Position
 
 Milestone: v1.1 Production Readiness
-Phase: 13 of 14 (AI Prompt Alignment)
-Plan: 1 of 1 (Complete)
-Status: Phase complete
-Last activity: 2026-01-17 — Completed 13-01-PLAN.md
+Phase: 14 of 14 (Export Enhancement)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-17 — Phase 13 complete
 
 Progress: [███████░░░] 75% (3/4 plans)
 
