@@ -125,6 +125,7 @@ Recent decisions affecting current work:
 3. Remove reports panel from dashboard (simplify to 2-panel layout)
 4. Consolidate workflow to workspace hub with functional buttons (remove sidebar nav items, add file upload, wire APIs)
 5. Review and align AI system prompts with reference documentation (see .planning/reference/ai-prompts-reference.md)
+6. Fix PDF export (direct download, report content only) and add Word download option
 
 ### Blockers/Concerns
 
