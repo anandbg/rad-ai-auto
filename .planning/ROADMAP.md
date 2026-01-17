@@ -88,7 +88,7 @@
 **Plans**: TBD
 
 Plans:
-- [ ] 12-01: Remove reports panel and consolidate layout
+- [x] 12-01: Remove reports panel and consolidate layout
 - [ ] 12-02: Wire workspace buttons to APIs
 
 ### Phase 13: AI Prompt Alignment
@@ -129,7 +129,7 @@ Phases execute in numeric order: 12 → 13 → 14
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1-11 | v1.0 | 18/18 | Complete | 2026-01-16 |
-| 12. Workspace Consolidation | v1.1 | 0/2 | Not started | - |
+| 12. Workspace Consolidation | v1.1 | 1/2 | In progress | - |
 | 13. AI Prompt Alignment | v1.1 | 0/1 | Not started | - |
 | 14. Export Enhancement | v1.1 | 0/1 | Not started | - |
 
