@@ -8,6 +8,18 @@ import remarkGfm from 'remark-gfm';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import {
+  Document,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  Packer,
+  AlignmentType,
+  Header,
+  Footer,
+  BorderStyle,
+} from 'docx';
+import { saveAs } from 'file-saver';
+import {
   Download,
   Sparkles,
   RotateCcw,
@@ -304,6 +316,210 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
     }
   };
 
+  const handleExportWord = async () => {
+    if (!reportContent) return;
+
+    // Get brand template for styling
+    const brandTemplate = getDefaultBrandTemplate(undefined);
+    const selectedTemplate = templates.find(t => t.id === effectiveTemplateId);
+
+    const institutionName = brandTemplate?.institutionName || 'Medical Center';
+    const institutionAddress = brandTemplate?.institutionAddress || '';
+    const footerText = brandTemplate?.footerText || 'This report is AI-generated and should be reviewed by a qualified radiologist.';
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    // Parse markdown content into docx paragraphs
+    const contentParagraphs: Paragraph[] = [];
+    const lines = reportContent.split('\n');
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        contentParagraphs.push(new Paragraph({ text: '' }));
+        continue;
+      }
+
+      // H2 heading
+      if (trimmed.startsWith('## ')) {
+        contentParagraphs.push(
+          new Paragraph({
+            text: trimmed.replace(/^## /, ''),
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 300, after: 120 },
+          })
+        );
+        continue;
+      }
+
+      // H3 heading
+      if (trimmed.startsWith('### ')) {
+        contentParagraphs.push(
+          new Paragraph({
+            text: trimmed.replace(/^### /, ''),
+            heading: HeadingLevel.HEADING_3,
+            spacing: { before: 200, after: 80 },
+          })
+        );
+        continue;
+      }
+
+      // Bullet point
+      if (trimmed.startsWith('- ')) {
+        const bulletText = trimmed.replace(/^- /, '');
+        // Parse bold text within bullets
+        const runs = parseBoldText(bulletText);
+        contentParagraphs.push(
+          new Paragraph({
+            children: runs,
+            bullet: { level: 0 },
+            spacing: { before: 40, after: 40 },
+          })
+        );
+        continue;
+      }
+
+      // Regular paragraph with bold text support
+      const runs = parseBoldText(trimmed);
+      contentParagraphs.push(
+        new Paragraph({
+          children: runs,
+          spacing: { before: 80, after: 80 },
+        })
+      );
+    }
+
+    // Helper function to parse bold text
+    function parseBoldText(text: string): TextRun[] {
+      const runs: TextRun[] = [];
+      const parts = text.split(/(\*\*[^*]+\*\*)/g);
+
+      for (const part of parts) {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          runs.push(new TextRun({
+            text: part.slice(2, -2),
+            bold: true,
+          }));
+        } else if (part) {
+          runs.push(new TextRun({ text: part }));
+        }
+      }
+
+      return runs.length > 0 ? runs : [new TextRun({ text: '' })];
+    }
+
+    // Create the document
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        headers: {
+          default: new Header({
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: institutionName,
+                    bold: true,
+                    size: 32, // 16pt
+                  }),
+                ],
+              }),
+              ...(institutionAddress ? [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: institutionAddress,
+                      size: 20, // 10pt
+                      color: '666666',
+                    }),
+                  ],
+                }),
+              ] : []),
+              new Paragraph({
+                border: {
+                  bottom: {
+                    color: '7C3AED',
+                    style: BorderStyle.SINGLE,
+                    size: 12,
+                  },
+                },
+                spacing: { after: 200 },
+              }),
+            ],
+          }),
+        },
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: footerText,
+                    size: 18, // 9pt
+                    color: '999999',
+                  }),
+                ],
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: 'AI-Generated Report',
+                    size: 16, // 8pt
+                    color: 'BBBBBB',
+                  }),
+                ],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+        },
+        children: [
+          // Metadata section
+          new Paragraph({
+            children: [
+              new TextRun({ text: 'Template: ', bold: true }),
+              new TextRun({ text: selectedTemplate?.label || 'General' }),
+              new TextRun({ text: '    Modality: ', bold: true }),
+              new TextRun({ text: selectedTemplate?.category || 'N/A' }),
+            ],
+            spacing: { after: 80 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: 'Body Part: ', bold: true }),
+              new TextRun({ text: selectedTemplate?.bodyPart || 'N/A' }),
+              new TextRun({ text: '    Date: ', bold: true }),
+              new TextRun({ text: dateStr }),
+            ],
+            spacing: { after: 200 },
+          }),
+          new Paragraph({
+            border: {
+              bottom: {
+                color: 'E2E8F0',
+                style: BorderStyle.SINGLE,
+                size: 6,
+              },
+            },
+            spacing: { after: 200 },
+          }),
+          // Report content
+          ...contentParagraphs,
+        ],
+      }],
+    });
+
+    // Generate and download the document
+    const blob = await Packer.toBlob(doc);
+    const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
+    saveAs(blob, `radiology-report-${timestamp}.docx`);
+  };
+
   const handleClear = () => {
     setTranscription('');
     setReportContent(null);
@@ -367,6 +583,26 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
             >
               <Download className="h-4 w-4" />
               <span>Export PDF</span>
+            </button>
+
+            {/* Download Word */}
+            <button
+              onClick={handleExportWord}
+              disabled={!reportContent}
+              className={cn(
+                "flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium",
+                "border border-slate-200 dark:border-slate-700",
+                "bg-white dark:bg-slate-800",
+                "text-slate-700 dark:text-slate-200",
+                "hover:bg-slate-50 dark:hover:bg-slate-700",
+                "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-slate-800",
+                "transition-all duration-150",
+                "shadow-sm",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50"
+              )}
+            >
+              <FileText className="h-4 w-4" />
+              <span>Download Word</span>
             </button>
 
             {/* Generate Report */}
