@@ -680,7 +680,7 @@ function ReportTab({
       {/* Report Content */}
       <div className={cn(
         "flex-1 rounded-b-2xl overflow-hidden",
-        "bg-white dark:bg-slate-800/50",
+        "bg-white dark:bg-slate-900",
         "border border-t-0 border-slate-200/80 dark:border-slate-700/50",
         "shadow-sm"
       )}>
@@ -717,9 +717,9 @@ function ReportTab({
               </div>
             </div>
 
-            {/* Report Body */}
-            <div className="p-6">
-              <article className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-semibold prose-h2:text-lg prose-h3:text-base prose-p:leading-relaxed">
+            {/* Report Body - Markdown rendered with typography styles */}
+            <div className="p-6 bg-white dark:bg-slate-900">
+              <article className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-semibold prose-headings:text-slate-900 dark:prose-headings:text-slate-100 prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-p:leading-relaxed prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-li:text-slate-700 dark:prose-li:text-slate-300 prose-ul:my-2 prose-ol:my-2">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {content}
                 </ReactMarkdown>
