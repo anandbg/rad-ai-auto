@@ -1,5 +1,14 @@
 # AI Radiologist - Production Integration
 
+## Current Milestone: v1.1 Production Readiness
+
+**Goal:** Polish the workspace UX, wire all buttons to working APIs, align AI prompts with reference documentation, and improve export functionality.
+
+**Target features:**
+- Consolidate workspace to single hub (remove reports panel, wire APIs)
+- Align AI system prompts with proven reference implementation
+- Fix PDF export (direct download) and add Word download option
+
 ## What This Is
 
 An AI-powered radiology report generation application that helps radiologists create detailed medical reports through voice transcription and AI-assisted generation. Currently a functional UI prototype with mock data — this project connects it to real backends (Supabase, OpenAI, Stripe) for end-to-end functionality.
@@ -24,20 +33,24 @@ A radiologist can sign up, generate a real AI report from voice/text input, and 
 - ✓ Zod validation schemas for templates — existing
 - ✓ Stripe SDK integration patterns — existing
 - ✓ Protected route middleware — existing
+- ✓ Real Supabase Auth (email/password) — v1.0
+- ✓ Supabase schema with RLS policies — v1.0
+- ✓ Template CRUD connected to database — v1.0
+- ✓ User preferences in database — v1.0
+- ✓ GPT-4o streaming report generation — v1.0
+- ✓ Whisper voice transcription — v1.0
+- ✓ AI template suggestions — v1.0
+- ✓ Stripe billing (subscriptions, credits, webhooks) — v1.0
+- ✓ Admin dashboard with user management — v1.0
+- ✓ Macros system in database — v1.0
+- ✓ 3-panel application shell with motion system — v1.0
 
 ### Active
 
-- [ ] Replace mock auth with real Supabase Auth (email/password)
-- [ ] Verify and align Supabase schema with codebase expectations
-- [ ] Connect template CRUD to real database (remove mock data)
-- [ ] Connect user preferences to real database
-- [ ] Implement real GPT-4o report generation (replace simulation)
-- [ ] Implement real Whisper voice transcription
-- [ ] Implement AI-assisted template suggestions
-- [ ] Connect Stripe billing (test mode) — subscriptions, credits, webhooks
-- [ ] Connect admin user management to real database
-- [ ] Connect macros system to real database
-- [ ] Verify credit ledger and usage tracking works end-to-end
+- [ ] Remove reports panel from dashboard (simplify to 2-panel layout)
+- [ ] Consolidate workflow to workspace hub (wire APIs, add file upload)
+- [ ] Review and align AI system prompts with reference documentation
+- [ ] Fix PDF export (direct download) and add Word download option
 
 ### Out of Scope
 
@@ -86,4 +99,4 @@ A radiologist can sign up, generate a real AI report from voice/text input, and 
 | Full user journey priority | End-to-end flow proves architecture works | — Pending |
 
 ---
-*Last updated: 2026-01-16 after initialization*
+*Last updated: 2026-01-17 after milestone v1.1 started*
