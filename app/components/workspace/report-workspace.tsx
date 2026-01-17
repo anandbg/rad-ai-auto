@@ -93,20 +93,53 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
   };
 
   const handleGenerate = async () => {
+    if (!transcription || !effectiveTemplateId) return;
+
     setIsGenerating(true);
-    setTimeout(() => {
-      setReportContent(`
-        <h2>Radiology Report</h2>
-        <p><strong>Procedure:</strong> ${selectedTemplate?.label || 'Diagnostic Imaging'}</p>
-        <p><strong>Clinical History:</strong> ${transcription.slice(0, 100)}...</p>
-        <h3>Findings</h3>
-        <p>AI-generated findings will appear here based on your transcribed observations and selected template.</p>
-        <h3>Impression</h3>
-        <p>Summary impression based on the analysis.</p>
-      `);
+    setReportContent(''); // Clear previous
+    setActiveTab('report');
+
+    const template = templates.find(t => t.id === effectiveTemplateId);
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          templateId: effectiveTemplateId,
+          templateName: template?.label || 'General',
+          modality: template?.category || 'CT',
+          bodyPart: template?.bodyPart || 'Chest',
+          findings: transcription,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Generation failed');
+      }
+
+      // Stream the response
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        setReportContent(prev => (prev || '') + chunk);
+      }
+    } catch (error) {
+      console.error('Generation error:', error);
+      setReportContent(
+        error instanceof Error
+          ? `Error generating report: ${error.message}`
+          : 'Error generating report. Please try again.'
+      );
+    } finally {
       setIsGenerating(false);
-      setActiveTab('report');
-    }, 1500);
+    }
   };
 
   const handleExportPDF = () => {
@@ -181,7 +214,7 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
             {/* Generate Report */}
             <button
               onClick={handleGenerate}
-              disabled={!transcription || isGenerating}
+              disabled={!transcription || !effectiveTemplateId || isGenerating}
               className={cn(
                 "relative flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold",
                 "bg-brand text-white",
