@@ -67,8 +67,8 @@ Production readiness polish. Workspace consolidation, AI prompt alignment, expor
 
 ### Workspace
 
-- [ ] **V1.1-WS-01**: Dashboard uses 2-panel layout (sidebar + workspace, no reports panel)
-- [ ] **V1.1-WS-02**: Workspace hub has all buttons wired to real APIs with file upload support
+- [x] **V1.1-WS-01**: Dashboard uses 2-panel layout (sidebar + workspace, no reports panel)
+- [x] **V1.1-WS-02**: Workspace hub has all buttons wired to real APIs with file upload support
 
 ### AI Quality
 
@@ -155,8 +155,8 @@ Which phases cover which requirements. Updated by create-roadmap.
 | UX-01 | Phase 11 | Complete |
 | UX-02 | Phase 11 | Complete |
 | UX-03 | Phase 11 | Complete |
-| V1.1-WS-01 | Phase 12 | Pending |
-| V1.1-WS-02 | Phase 12 | Pending |
+| V1.1-WS-01 | Phase 12 | Complete |
+| V1.1-WS-02 | Phase 12 | Complete |
 | V1.1-AI-01 | Phase 13 | Pending |
 | V1.1-EX-01 | Phase 14 | Pending |
 | V1.1-EX-02 | Phase 14 | Pending |
