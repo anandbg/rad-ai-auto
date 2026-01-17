@@ -120,18 +120,18 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-1. Apply database migrations to Supabase (requires Docker or remote project)
+1. Apply database migrations to Supabase cloud project
 2. Generate Supabase TypeScript types after migration
-3. Configure OPENAI_API_KEY for production
-4. Configure Stripe environment variables (STRIPE_SECRET_KEY, price IDs, STRIPE_WEBHOOK_SECRET)
+3. Remove reports panel from dashboard (simplify to 2-panel layout)
 
 ### Blockers/Concerns
 
-1. **Docker not running** - Cannot apply migrations locally or generate Supabase types
-2. **Static page generation fails** - Protected pages using auth context fail prerendering (expected for authenticated routes)
-3. **OPENAI_API_KEY required** - Generate, transcribe, and suggest endpoints return 500 if not configured
-4. **STRIPE_SECRET_KEY required** - Billing endpoints return 500 if not configured
-5. **STRIPE_WEBHOOK_SECRET required** - Webhook signature verification requires secret from Stripe CLI or dashboard
+1. **Static page generation fails** - Protected pages using auth context fail prerendering (expected for authenticated routes)
+
+### Resolved
+
+- ✅ All API keys configured in `app/.env.local` (Supabase, OpenAI, Stripe, Upstash)
+- ✅ Using Supabase cloud (not Docker)
 
 ## Session Continuity
 
