@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import {
   Download,
   Sparkles,
@@ -22,6 +24,36 @@ import {
 import { WorkspaceTabs, WorkspaceTab } from './workspace-tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/shared/cn';
+
+// Brand template interface for PDF/Word export styling
+interface BrandTemplate {
+  id: string;
+  name: string;
+  description: string;
+  isDefault: boolean;
+  primaryColor: string;
+  secondaryColor: string;
+  fontFamily: string;
+  institutionName: string;
+  institutionAddress: string;
+  footerText: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Get user's default brand template from localStorage
+function getDefaultBrandTemplate(userId: string | undefined): BrandTemplate | null {
+  if (typeof window === 'undefined') return null;
+  const key = userId ? `ai-rad-brand-templates-${userId}` : 'ai-rad-brand-templates';
+  const stored = localStorage.getItem(key);
+  if (!stored) return null;
+  try {
+    const templates = JSON.parse(stored) as BrandTemplate[];
+    return templates.find((t) => t.isDefault) || templates[0] || null;
+  } catch {
+    return null;
+  }
+}
 
 interface Template {
   id: string;
@@ -143,8 +175,133 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
     }
   };
 
-  const handleExportPDF = () => {
-    window.print();
+  const handleExportPDF = async () => {
+    if (!reportContent) return;
+
+    // Get brand template for styling
+    const brandTemplate = getDefaultBrandTemplate(undefined);
+    const selectedTemplate = templates.find(t => t.id === effectiveTemplateId);
+
+    // Create a hidden container for PDF rendering
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '800px';
+    container.style.padding = '40px';
+    container.style.backgroundColor = '#ffffff';
+    container.style.fontFamily = brandTemplate?.fontFamily === 'System'
+      ? '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      : brandTemplate?.fontFamily || 'Georgia, serif';
+
+    const primaryColor = brandTemplate?.primaryColor || '#7C3AED';
+    const institutionName = brandTemplate?.institutionName || 'Medical Center';
+    const institutionAddress = brandTemplate?.institutionAddress || '';
+    const footerText = brandTemplate?.footerText || 'This report is AI-generated and should be reviewed by a qualified radiologist.';
+
+    // Build the HTML content
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    // Convert markdown to simple HTML for PDF
+    const htmlContent = reportContent
+      .replace(/^## (.+)$/gm, '<h2 style="font-size: 18px; font-weight: bold; margin: 20px 0 10px 0; color: #1e293b;">$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3 style="font-size: 16px; font-weight: bold; margin: 16px 0 8px 0; color: #334155;">$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^- (.+)$/gm, '<li style="margin: 4px 0; margin-left: 20px;">$1</li>')
+      .replace(/\n\n/g, '</p><p style="margin: 8px 0; line-height: 1.6; color: #475569;">')
+      .replace(/\n/g, '<br>');
+
+    container.innerHTML = `
+      <!-- Header -->
+      <div style="border-bottom: 3px solid ${primaryColor}; padding-bottom: 20px; margin-bottom: 20px;">
+        <h1 style="font-size: 24px; font-weight: bold; color: ${primaryColor}; margin: 0 0 8px 0;">
+          ${institutionName}
+        </h1>
+        ${institutionAddress ? `<p style="font-size: 12px; color: #64748b; margin: 0;">${institutionAddress}</p>` : ''}
+      </div>
+
+      <!-- Report Metadata -->
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+        <table style="width: 100%; font-size: 13px; color: #475569;">
+          <tr>
+            <td style="padding: 4px 0;"><strong>Template:</strong> ${selectedTemplate?.label || 'General'}</td>
+            <td style="padding: 4px 0;"><strong>Modality:</strong> ${selectedTemplate?.category || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0;"><strong>Body Part:</strong> ${selectedTemplate?.bodyPart || 'N/A'}</td>
+            <td style="padding: 4px 0;"><strong>Date:</strong> ${dateStr}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Report Content -->
+      <div style="font-size: 14px; line-height: 1.6; color: #334155;">
+        <p style="margin: 8px 0; line-height: 1.6; color: #475569;">
+          ${htmlContent}
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+        <p style="font-size: 11px; color: #94a3b8; margin: 0 0 8px 0;">
+          ${footerText}
+        </p>
+        <p style="font-size: 10px; color: #cbd5e1; margin: 0;">
+          AI-Generated Report | Exported: ${now.toISOString()}
+        </p>
+      </div>
+    `;
+
+    document.body.appendChild(container);
+
+    try {
+      // Capture the container as a canvas
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      // Create PDF from canvas
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      // Handle multi-page if content is tall
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      // Generate filename with timestamp
+      const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
+      pdf.save(`radiology-report-${timestamp}.pdf`);
+    } finally {
+      // Clean up the hidden container
+      document.body.removeChild(container);
+    }
   };
 
   const handleClear = () => {
