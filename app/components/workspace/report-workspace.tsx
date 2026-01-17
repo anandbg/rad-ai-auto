@@ -6,7 +6,6 @@ import { useReducedMotion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import {
   Document,
   Paragraph,
@@ -194,24 +193,11 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
     const brandTemplate = getDefaultBrandTemplate(undefined);
     const selectedTemplate = templates.find(t => t.id === effectiveTemplateId);
 
-    // Create a hidden container for PDF rendering
-    const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    container.style.width = '800px';
-    container.style.padding = '40px';
-    container.style.backgroundColor = '#ffffff';
-    container.style.fontFamily = brandTemplate?.fontFamily === 'System'
-      ? '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-      : brandTemplate?.fontFamily || 'Georgia, serif';
-
     const primaryColor = brandTemplate?.primaryColor || '#7C3AED';
     const institutionName = brandTemplate?.institutionName || 'Medical Center';
     const institutionAddress = brandTemplate?.institutionAddress || '';
     const footerText = brandTemplate?.footerText || 'This report is AI-generated and should be reviewed by a qualified radiologist.';
 
-    // Build the HTML content
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -219,101 +205,231 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
       day: 'numeric'
     });
 
-    // Convert markdown to simple HTML for PDF
-    const htmlContent = reportContent
-      .replace(/^## (.+)$/gm, '<h2 style="font-size: 18px; font-weight: bold; margin: 20px 0 10px 0; color: #1e293b;">$1</h2>')
-      .replace(/^### (.+)$/gm, '<h3 style="font-size: 16px; font-weight: bold; margin: 16px 0 8px 0; color: #334155;">$1</h3>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/^- (.+)$/gm, '<li style="margin: 4px 0; margin-left: 20px;">$1</li>')
-      .replace(/\n\n/g, '</p><p style="margin: 8px 0; line-height: 1.6; color: #475569;">')
-      .replace(/\n/g, '<br>');
+    // Create PDF with native jsPDF text rendering for proper page breaks
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
 
-    container.innerHTML = `
-      <!-- Header -->
-      <div style="border-bottom: 3px solid ${primaryColor}; padding-bottom: 20px; margin-bottom: 20px;">
-        <h1 style="font-size: 24px; font-weight: bold; color: ${primaryColor}; margin: 0 0 8px 0;">
-          ${institutionName}
-        </h1>
-        ${institutionAddress ? `<p style="font-size: 12px; color: #64748b; margin: 0;">${institutionAddress}</p>` : ''}
-      </div>
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    const contentWidth = pageWidth - margin * 2;
+    const footerHeight = 25;
+    const maxY = pageHeight - margin - footerHeight;
+    let y = margin;
 
-      <!-- Report Metadata -->
-      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
-        <table style="width: 100%; font-size: 13px; color: #475569;">
-          <tr>
-            <td style="padding: 4px 0;"><strong>Template:</strong> ${selectedTemplate?.label || 'General'}</td>
-            <td style="padding: 4px 0;"><strong>Modality:</strong> ${selectedTemplate?.category || 'N/A'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 4px 0;"><strong>Body Part:</strong> ${selectedTemplate?.bodyPart || 'N/A'}</td>
-            <td style="padding: 4px 0;"><strong>Date:</strong> ${dateStr}</td>
-          </tr>
-        </table>
-      </div>
+    // Convert hex color to RGB
+    const hexToRgb = (hex: string): [number, number, number] => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      if (result && result[1] && result[2] && result[3]) {
+        return [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)];
+      }
+      return [124, 58, 237]; // default purple
+    };
 
-      <!-- Report Content -->
-      <div style="font-size: 14px; line-height: 1.6; color: #334155;">
-        <p style="margin: 8px 0; line-height: 1.6; color: #475569;">
-          ${htmlContent}
-        </p>
-      </div>
-
-      <!-- Footer -->
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-        <p style="font-size: 11px; color: #94a3b8; margin: 0 0 8px 0;">
-          ${footerText}
-        </p>
-        <p style="font-size: 10px; color: #cbd5e1; margin: 0;">
-          AI-Generated Report | Exported: ${now.toISOString()}
-        </p>
-      </div>
-    `;
-
-    document.body.appendChild(container);
-
-    try {
-      // Capture the container as a canvas
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      });
-
-      // Create PDF from canvas
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      // Handle multi-page if content is tall
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
+    // Helper to check if we need a new page
+    const checkPageBreak = (neededHeight: number) => {
+      if (y + neededHeight > maxY) {
+        addFooter();
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        y = margin;
+      }
+    };
+
+    // Add footer to current page
+    const addFooter = () => {
+      const footerY = pageHeight - margin;
+      pdf.setDrawColor(226, 232, 240); // slate-200
+      pdf.line(margin, footerY - 15, pageWidth - margin, footerY - 15);
+      pdf.setFontSize(9);
+      pdf.setTextColor(148, 163, 184); // slate-400
+      pdf.text(footerText, margin, footerY - 8);
+      pdf.setFontSize(8);
+      pdf.setTextColor(203, 213, 225); // slate-300
+      pdf.text(`AI-Generated Report | Exported: ${now.toISOString()}`, margin, footerY - 2);
+    };
+
+    // --- HEADER ---
+    const [r, g, b] = hexToRgb(primaryColor);
+    pdf.setFontSize(20);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(r, g, b);
+    pdf.text(institutionName, margin, y);
+    y += 8;
+
+    if (institutionAddress) {
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(100, 116, 139); // slate-500
+      pdf.text(institutionAddress, margin, y);
+      y += 6;
+    }
+
+    // Header line
+    pdf.setDrawColor(r, g, b);
+    pdf.setLineWidth(0.8);
+    pdf.line(margin, y + 2, pageWidth - margin, y + 2);
+    y += 10;
+
+    // --- METADATA BOX ---
+    pdf.setFillColor(248, 250, 252); // slate-50
+    pdf.roundedRect(margin, y, contentWidth, 18, 2, 2, 'F');
+    y += 5;
+
+    pdf.setFontSize(10);
+    pdf.setTextColor(71, 85, 105); // slate-600
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Template:', margin + 4, y + 3);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(selectedTemplate?.label || 'General', margin + 26, y + 3);
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Modality:', margin + contentWidth / 2, y + 3);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(selectedTemplate?.category || 'N/A', margin + contentWidth / 2 + 22, y + 3);
+
+    y += 7;
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Body Part:', margin + 4, y + 3);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(selectedTemplate?.bodyPart || 'N/A', margin + 26, y + 3);
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Date:', margin + contentWidth / 2, y + 3);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(dateStr, margin + contentWidth / 2 + 14, y + 3);
+
+    y += 15;
+
+    // --- CONTENT ---
+    const lines = reportContent.split('\n');
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      if (!trimmed) {
+        y += 3;
+        continue;
       }
 
-      // Generate filename with timestamp
-      const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
-      pdf.save(`radiology-report-${timestamp}.pdf`);
-    } finally {
-      // Clean up the hidden container
-      document.body.removeChild(container);
+      // H2 heading
+      if (trimmed.startsWith('## ')) {
+        checkPageBreak(12);
+        y += 4;
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(30, 41, 59); // slate-800
+        pdf.text(trimmed.replace(/^## /, ''), margin, y);
+        y += 8;
+        continue;
+      }
+
+      // H3 heading
+      if (trimmed.startsWith('### ')) {
+        checkPageBreak(10);
+        y += 2;
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(51, 65, 85); // slate-700
+        pdf.text(trimmed.replace(/^### /, ''), margin, y);
+        y += 7;
+        continue;
+      }
+
+      // Bullet point or numbered list
+      if (trimmed.startsWith('- ') || /^\d+\.\s/.test(trimmed)) {
+        const bulletText = trimmed.replace(/^-\s*/, '').replace(/^\d+\.\s*/, '');
+        const prefix = trimmed.startsWith('- ') ? '•' : trimmed.match(/^\d+\./)?.[0] || '•';
+
+        // Parse bold sections within the line
+        const parts = bulletText.split(/(\*\*[^*]+\*\*)/g);
+
+        // Calculate wrapped lines
+        pdf.setFontSize(10);
+        const wrappedLines = pdf.splitTextToSize(bulletText.replace(/\*\*/g, ''), contentWidth - 10);
+        checkPageBreak(wrappedLines.length * 5 + 2);
+
+        pdf.setTextColor(71, 85, 105); // slate-600
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(prefix, margin + 2, y);
+
+        // Render with bold support
+        let xPos = margin + 8;
+        for (const part of parts) {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            pdf.setFont('helvetica', 'bold');
+            const boldText = part.slice(2, -2);
+            pdf.text(boldText, xPos, y);
+            xPos += pdf.getTextWidth(boldText);
+          } else if (part) {
+            pdf.setFont('helvetica', 'normal');
+            // Handle text wrapping for long content
+            const partLines = pdf.splitTextToSize(part, contentWidth - (xPos - margin));
+            if (partLines.length > 1) {
+              // First line at current position
+              pdf.text(partLines[0], xPos, y);
+              // Remaining lines wrapped
+              for (let i = 1; i < partLines.length; i++) {
+                y += 5;
+                checkPageBreak(5);
+                pdf.text(partLines[i], margin + 8, y);
+              }
+              xPos = margin + 8 + pdf.getTextWidth(partLines[partLines.length - 1]);
+            } else {
+              pdf.text(part, xPos, y);
+              xPos += pdf.getTextWidth(part);
+            }
+          }
+        }
+        y += 5;
+        continue;
+      }
+
+      // Regular paragraph with bold support
+      pdf.setFontSize(10);
+      pdf.setTextColor(71, 85, 105); // slate-600
+
+      // Handle bold text within paragraph
+      const parts = trimmed.split(/(\*\*[^*]+\*\*)/g);
+      const plainText = trimmed.replace(/\*\*/g, '');
+      const wrappedLines = pdf.splitTextToSize(plainText, contentWidth);
+      checkPageBreak(wrappedLines.length * 5 + 2);
+
+      let xPos = margin;
+      for (const part of parts) {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          pdf.setFont('helvetica', 'bold');
+          const boldText = part.slice(2, -2);
+          pdf.text(boldText, xPos, y);
+          xPos += pdf.getTextWidth(boldText);
+        } else if (part) {
+          pdf.setFont('helvetica', 'normal');
+          const partLines = pdf.splitTextToSize(part, contentWidth - (xPos - margin));
+          if (partLines.length > 1) {
+            pdf.text(partLines[0], xPos, y);
+            for (let i = 1; i < partLines.length; i++) {
+              y += 5;
+              checkPageBreak(5);
+              pdf.text(partLines[i], margin, y);
+            }
+            xPos = margin + pdf.getTextWidth(partLines[partLines.length - 1]);
+          } else {
+            pdf.text(part, xPos, y);
+            xPos += pdf.getTextWidth(part);
+          }
+        }
+      }
+      y += 5;
     }
+
+    // Add footer to the last page
+    addFooter();
+
+    // Generate filename with timestamp
+    const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
+    pdf.save(`radiology-report-${timestamp}.pdf`);
   };
 
   const handleExportWord = async () => {
