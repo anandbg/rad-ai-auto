@@ -124,6 +124,7 @@ Recent decisions affecting current work:
 2. Generate Supabase TypeScript types after migration
 3. Remove reports panel from dashboard (simplify to 2-panel layout)
 4. Consolidate workflow to workspace hub with functional buttons (remove sidebar nav items, add file upload, wire APIs)
+5. Review and align AI system prompts with reference documentation (see .planning/reference/ai-prompts-reference.md)
 
 ### Blockers/Concerns
 
