@@ -55,6 +55,30 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DB-01**: Supabase schema verified and aligned with codebase expectations
 - [x] **DB-02**: Row-Level Security policies enforce data isolation per user
 
+### UI/UX
+
+- [x] **UX-01**: Application has modern, distinctive visual design (not generic medical app look)
+- [x] **UX-02**: Consistent design language across all pages with smooth micro-interactions
+- [x] **UX-03**: Responsive design works beautifully on desktop and tablet viewports
+
+## v1.1 Requirements
+
+Production readiness polish. Workspace consolidation, AI prompt alignment, export enhancement.
+
+### Workspace
+
+- [ ] **V1.1-WS-01**: Dashboard uses 2-panel layout (sidebar + workspace, no reports panel)
+- [ ] **V1.1-WS-02**: Workspace hub has all buttons wired to real APIs with file upload support
+
+### AI Quality
+
+- [ ] **V1.1-AI-01**: AI system prompts align with reference documentation for production-quality outputs
+
+### Export
+
+- [ ] **V1.1-EX-01**: PDF export triggers direct download with report content only (no print dialog)
+- [ ] **V1.1-EX-02**: Word/DOCX download option available for reports
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -128,12 +152,21 @@ Which phases cover which requirements. Updated by create-roadmap.
 | ADMIN-01 | Phase 10 | Complete |
 | ADMIN-02 | Phase 10 | Complete |
 | ADMIN-03 | Phase 10 | Complete |
+| UX-01 | Phase 11 | Complete |
+| UX-02 | Phase 11 | Complete |
+| UX-03 | Phase 11 | Complete |
+| V1.1-WS-01 | Phase 12 | Pending |
+| V1.1-WS-02 | Phase 12 | Pending |
+| V1.1-AI-01 | Phase 13 | Pending |
+| V1.1-EX-01 | Phase 14 | Pending |
+| V1.1-EX-02 | Phase 14 | Pending |
 
 **Coverage:**
-- v1 requirements: 27 total
-- Mapped to phases: 27 ✓
+- v1 requirements: 30 total (all complete)
+- v1.1 requirements: 5 total
+- Mapped to phases: 35 ✓
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-16 after Phase 10 completion*
+*Last updated: 2026-01-17 after v1.1 roadmap created*
