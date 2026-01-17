@@ -76,7 +76,22 @@ async function createEdgeSupabaseClient() {
 }
 
 /**
+ * Template syntax reference - used across all request types
+ * Aligned with .planning/reference/ai-prompts-reference.md Section 7
+ */
+const TEMPLATE_SYNTAX_GUIDANCE = `
+Template syntax (radiologists use these patterns):
+- Placeholders: [like this] for dynamic content filled by AI
+  Examples: [patient age], [lesion size], [measurement]
+- Instructions: (like this) for conditional guidance
+  Examples: (only include if mentioned), (leave blank if not applicable)
+- Verbatim: "like this" for exact phrases that should appear every time
+  Examples: "No acute abnormality.", "The study was performed using standard technique."
+`;
+
+/**
  * Build system prompt based on request type
+ * Enhanced with template syntax guidance from reference documentation
  */
 function buildSystemPrompt(
   requestType: 'sections' | 'improvements' | 'normalFindings',
@@ -86,7 +101,8 @@ function buildSystemPrompt(
   existingSections?: Array<{ name: string; content: string }>
 ): string {
   const baseContext = `You are an expert radiology template specialist with extensive experience in ${modality} imaging of the ${bodyPart}.
-${description ? `\nTemplate context: ${description}` : ''}`;
+${description ? `\nTemplate context: ${description}` : ''}
+${TEMPLATE_SYNTAX_GUIDANCE}`;
 
   switch (requestType) {
     case 'sections':
@@ -94,16 +110,21 @@ ${description ? `\nTemplate context: ${description}` : ''}`;
 
 Your task is to suggest 3-5 standard sections for a radiology report template.
 
+Section types to consider:
+- Regular sections: Content with placeholders and instructions
+- Heading-only sections: Title without generated content (empty content)
+- Parent heading sections: Grouping headers with Guidance: prefix
+
 For each section, provide:
 1. The section name (in ALL CAPS, e.g., FINDINGS, IMPRESSION)
 2. A brief description of what should go in this section
-3. Example placeholder content that can be customized
+3. Example placeholder content that can be customized using template syntax
 
 Format your response as follows:
 ## [SECTION NAME]
 **Purpose:** [Brief description]
 **Example content:**
-[Example template text with placeholders like {{FINDING}}, {{MEASUREMENT}}, etc.]
+[Example template text with [placeholders], (instructions), and "verbatim text"]
 
 Consider the standard structure for ${modality} ${bodyPart} reports and include all essential sections.`;
 
@@ -119,11 +140,18 @@ Your task is to analyze the existing template sections and suggest improvements.
 **Existing Sections:**
 ${sectionsText}
 
+When suggesting improvements, check:
+- Are placeholders [like this] used for dynamic content?
+- Are instructions (like this) used for conditional content?
+- Are standard phrases wrapped in verbatim quotes "like this"?
+- Are heading-only sections used where appropriate?
+
 For each section, consider:
 1. Is the section name clear and standard?
 2. Is the content comprehensive for ${modality} ${bodyPart}?
 3. Are there missing elements that should be included?
 4. Could the structure or wording be improved?
+5. Is the template syntax being used correctly?
 
 Provide specific, actionable suggestions for improving each section. If a section is well-structured, acknowledge that and suggest minor enhancements if applicable.
 
@@ -134,12 +162,18 @@ Format your response with clear headings for each section's improvements.`;
 
 Your task is to provide standard "normal findings" text for a ${modality} examination of the ${bodyPart}.
 
+Normal findings will be integrated by the report generator:
+- Added only for structures NOT mentioned in user findings
+- Modified to avoid contradictions with positive findings
+- Written as experienced radiologist would dictate
+
 This text should:
 1. Be comprehensive, covering all standard anatomical structures
 2. Use proper radiological terminology
 3. Be suitable for studies with no significant abnormalities
 4. Be organized in a logical anatomical order
 5. Be concise yet thorough
+6. Use template syntax where appropriate ([placeholders] for variable values)
 
 Provide the normal findings text that a radiologist can use as a quick-insert for normal studies.`;
 
