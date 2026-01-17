@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Download,
   Sparkles,
@@ -717,10 +719,11 @@ function ReportTab({
 
             {/* Report Body */}
             <div className="p-6">
-              <article
-                className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-semibold prose-h2:text-lg prose-h3:text-base prose-p:leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: content }}
-              />
+              <article className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-semibold prose-h2:text-lg prose-h3:text-base prose-p:leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {content}
+                </ReactMarkdown>
+              </article>
             </div>
           </div>
         )}

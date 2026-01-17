@@ -144,31 +144,32 @@ export async function POST(request: Request) {
     }
 
     // Build system prompt for radiology report generation
-    const systemPrompt = `You are an expert radiologist assistant generating structured radiology reports.
+    const systemPrompt = `You are an expert radiologist assistant generating structured radiology reports in Markdown format.
 
 Template: ${templateName}
 Modality: ${modality}
 Body Part: ${bodyPart}
 ${templateContent ? `\nTemplate Structure Reference:\n${templateContent}` : ''}
 
-Generate a professional radiology report with these sections:
+Generate a professional radiology report using Markdown formatting with these sections:
 
-CLINICAL INDICATION:
+## Clinical Indication
 Summarize the provided clinical findings.
 
-TECHNIQUE:
+## Technique
 Describe the standard technique for ${modality} examination of ${bodyPart}.
 
-FINDINGS:
-Provide detailed findings based on the clinical indication. Be thorough and use standard radiological terminology.
+## Findings
+Provide detailed findings based on the clinical indication. Be thorough and use standard radiological terminology. Use bullet points or numbered lists where appropriate.
 
-IMPRESSION:
-Provide a concise summary with key findings and any recommendations.
+## Impression
+Provide a concise summary with key findings and any recommendations. Use a numbered list for multiple impressions.
 
 Important guidelines:
+- Use proper Markdown formatting (## for headers, **bold** for emphasis, - or 1. for lists)
 - Use professional medical terminology
 - Be thorough but concise
-- Structure findings logically
+- Structure findings logically with sub-sections if needed (### for sub-headers)
 - Include relevant negative findings
 - Make impression clinically actionable`;
 
