@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** v1.1 Milestone Complete — Ready for v1.2 planning
+**Current focus:** v1.2 Template Experience — Phase 15 (Template Creation UX Overhaul)
 
 ## Current Position
 
-Milestone: v1.1 Production Readiness — COMPLETE
-Phase: 14 of 14 (Export Enhancement) — COMPLETE
-Plan: All complete
-Status: Milestone complete
-Last activity: 2026-01-17 — Phase 14 complete
+Milestone: v1.2 Template Experience — IN PROGRESS
+Phase: 15 (Template Creation UX Overhaul) — PLANNED
+Plan: 15-01 to 15-05 ready for execution
+Status: Ready for execution
+Last activity: 2026-01-18 — Phase 15 planned (5 plans in 3 waves)
 
-Progress: [██████████] 100% (4/4 plans)
+Progress: [░░░░░░░░░░] 0% (0/5 plans)
 
 ## Performance Metrics
 
@@ -59,6 +59,10 @@ Progress: [██████████] 100% (4/4 plans)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 15 Planning]: Use @dnd-kit for drag-drop (not react-beautiful-dnd - deprecated)
+- [Phase 15 Planning]: Use react-resizable-panels for split pane layout
+- [Phase 15 Planning]: Use AI SDK Output.object() with Zod for structured template generation
+- [Phase 15 Planning]: 4 creation pathways: Manual, AI-Assisted, Clone, Import
 - [Phase 14-01]: Use native jsPDF text rendering instead of html2canvas (for proper page breaks)
 - [Phase 14-01]: Remove html2canvas dependency (no longer needed)
 - [Phase 13-01]: Keep Markdown output format (not JSON) for react-markdown compatibility
@@ -72,6 +76,10 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 7 pending — post-v1.1 improvements and bug fixes
+
+### Roadmap Evolution
+
+- Phase 15 added: Template Creation UX Overhaul (2026-01-18)
 
 ### Blockers/Concerns
 

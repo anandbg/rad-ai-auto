@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 MVP** - Phases 1-11 (shipped 2026-01-16)
 - ✅ **v1.1 Production Readiness** - Phases 12-14 (shipped 2026-01-17)
+- 🚧 **v1.2 Template Experience** - Phase 15+ (in progress)
 
 ## Phases
 
@@ -71,68 +72,63 @@
 
 </details>
 
-## ✅ v1.1 Production Readiness (SHIPPED 2026-01-17)
+<details>
+<summary>✅ v1.1 Production Readiness (Phases 12-14) - SHIPPED 2026-01-17</summary>
 
 **Milestone Goal:** Polish the workspace UX, wire all buttons to working APIs, align AI prompts with reference documentation, and improve export functionality.
 
 ### Phase 12: Workspace Consolidation
 **Goal**: Single workspace hub with all workflow functionality
-**Depends on**: Phase 11
-**Requirements**: V1.1-WS-01, V1.1-WS-02
-**Success Criteria** (what must be TRUE):
-  1. Dashboard shows 2-panel layout (sidebar + workspace) — no reports panel
-  2. Workspace hub has functional buttons (all wired to real APIs)
-  3. File upload functionality works in workspace
-  4. Sidebar navigation simplified (removed redundant items)
-**Research**: Unlikely (internal UI refactoring)
-**Plans**: TBD
-
-Plans:
-- [x] 12-01: Remove reports panel and consolidate layout
-- [x] 12-02: Wire workspace buttons to APIs
+**Plans**: 2 plans (complete)
 
 ### Phase 13: AI Prompt Alignment
 **Goal**: Production-quality AI outputs matching reference documentation
-**Depends on**: Phase 12
-**Requirements**: V1.1-AI-01
-**Success Criteria** (what must be TRUE):
-  1. Report generation prompts match reference documentation patterns
-  2. AI outputs are consistent and production-appropriate for medical use
-  3. Template suggestion prompts produce quality recommendations
-**Research**: Unlikely (prompt engineering, reference docs exist)
-**Plans**: TBD
-
-Plans:
-- [x] 13-01: Align AI system prompts with reference
+**Plans**: 1 plan (complete)
 
 ### Phase 14: Export Enhancement
 **Goal**: Professional document export with multiple format options
-**Depends on**: Phase 12
-**Requirements**: V1.1-EX-01, V1.1-EX-02
+**Plans**: 1 plan (complete)
+
+</details>
+
+## 🚧 v1.2 Template Experience (IN PROGRESS)
+
+**Milestone Goal:** Overhaul the template creation and management experience with AI-assisted workflows, making it easy for radiologists to create, customize, and maintain templates.
+
+### Phase 15: Template Creation UX Overhaul
+**Goal**: AI-assisted template builder with intuitive creation pathways
+**Depends on**: Phase 14
+**Requirements**: V1.2-TMPL-01
 **Success Criteria** (what must be TRUE):
-  1. PDF export triggers direct download (no print dialog)
-  2. PDF contains report content only (clean, professional)
-  3. Word/DOCX download option available
-  4. Both export formats produce professional medical documents
-**Research**: Likely (docx library, direct PDF download)
-**Research topics**: docx-js library, Blob download patterns, jsPDF vs react-pdf
-**Plans**: TBD
+  1. Users can create templates via multiple pathways (manual, AI-assisted, clone, import)
+  2. AI can generate structured templates from freeform user descriptions
+  3. Section management UI allows add/edit/delete/reorder operations
+  4. Live preview shows rendered template as user edits
+  5. Validation ensures saved templates conform to schema (never fails on load)
+  6. Clone workflow allows starting from existing template
+**Research**: Likely (UX patterns for template builders, AI-assisted form generation)
+**Research topics**: Template builder UX patterns, drag-drop section editors, AI form generation
+**Plans**: 5 plans in 3 waves
 
 Plans:
-- [x] 14-01: Fix PDF export and add Word download
+- [ ] 15-01: Foundation - Dependencies + Drag-Drop Components (Wave 1)
+- [ ] 15-02: AI Generation Endpoint with Structured Output (Wave 1)
+- [ ] 15-03: Preview + Pathway Modal Components (Wave 1)
+- [ ] 15-04: Editor Integration - Split Pane + Import (Wave 2)
+- [ ] 15-05: AI Flow Wiring + Verification Checkpoint (Wave 3)
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 12 → 13 → 14
+Phases execute in numeric order: 15 → ...
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1-11 | v1.0 | 18/18 | Complete | 2026-01-16 |
-| 12. Workspace Consolidation | v1.1 | 2/2 | Complete | 2026-01-17 |
-| 13. AI Prompt Alignment | v1.1 | 1/1 | Complete | 2026-01-17 |
-| 14. Export Enhancement | v1.1 | 1/1 | Complete | 2026-01-17 |
+| 12-14 | v1.1 | 4/4 | Complete | 2026-01-17 |
+| 15. Template Creation UX | v1.2 | 0/5 | Planned | - |
 
 ---
 *Roadmap created: 2026-01-16*
 *v1.1 added: 2026-01-17*
+*v1.2 added: 2026-01-18*
