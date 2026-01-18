@@ -133,8 +133,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 17-01: Foundation - Copy components, screenshots, update styles/Tailwind (Wave 1)
-- [ ] 17-02: Integration - Wire to root URL with auth redirect + verify (Wave 2)
+- [x] 17-01: Foundation - Copy components, screenshots, update styles/Tailwind (Wave 1)
+- [x] 17-02: Integration - Wire to root URL with auth redirect + verify (Wave 2)
 
 ## 📋 v1.3 Production Infrastructure (PLANNED)
 
@@ -301,7 +301,7 @@ Phases execute in numeric order: 15 → 16 → ...
 | 12-14 | v1.1 | 4/4 | Complete | 2026-01-17 |
 | 15. Template Creation UX | v1.2 | 0/5 | Planned | - |
 | 16. Infrastructure Setup | v1.3 | 0/5 | Planned | - |
-| 17. Landing Page Integration | v1.2 | 0/2 | Planned | - |
+| 17. Landing Page Integration | v1.2 | 2/2 | Complete | 2026-01-18 |
 
 ---
 *Roadmap created: 2026-01-16*

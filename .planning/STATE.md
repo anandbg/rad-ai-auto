@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** v1.3 Marketing & Distribution — Phase 17 (Landing Page Integration)
+**Current focus:** v1.2 Template Experience — Phase 17 complete, Phase 15 ready
 
 ## Current Position
 
-Milestone: v1.3 Marketing & Distribution — IN PROGRESS
+Milestone: v1.2 Template Experience — IN PROGRESS
 Phase: 17 (Landing Page Integration) — COMPLETE
-Plan: 17-02 complete
-Status: Phase complete
-Last activity: 2026-01-18 — Completed 17-02-PLAN.md
+Plan: All plans complete (2/2)
+Status: Phase verified and complete
+Last activity: 2026-01-18 — Phase 17 executed and verified (2 plans in 2 waves)
 
-Progress: [██░░░░░░░░] 20% (2/10 plans - estimated across phases 15 & 17)
+Progress: [██████████] 100% (2/2 plans for Phase 17)
 
 ## Performance Metrics
 
@@ -48,7 +48,7 @@ Progress: [██░░░░░░░░] 20% (2/10 plans - estimated across ph
 | 13-ai-prompt-alignment | 1 | 8 min | 8 min |
 | 14-export-enhancement | 1 | 35 min | 35 min |
 
-**By Phase (v1.3):**
+**By Phase (v1.2):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
