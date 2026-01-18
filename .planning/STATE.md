@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** v1.2 Template Experience — Phase 15 (Template Creation UX Overhaul)
+**Current focus:** v1.3 Marketing & Distribution — Phase 17 (Landing Page Integration)
 
 ## Current Position
 
-Milestone: v1.2 Template Experience — IN PROGRESS
-Phase: 15 (Template Creation UX Overhaul) — PLANNED
-Plan: 15-01 to 15-05 ready for execution
-Status: Ready for execution
-Last activity: 2026-01-18 — Phase 15 planned (5 plans in 3 waves)
+Milestone: v1.3 Marketing & Distribution — IN PROGRESS
+Phase: 17 (Landing Page Integration) — IN PROGRESS
+Plan: 17-01 complete, ready for 17-02
+Status: In progress
+Last activity: 2026-01-18 — Completed 17-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0% (0/5 plans)
+Progress: [█░░░░░░░░░] 10% (1/10 plans - estimated across phases 15 & 17)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
-- Average duration: 7.5 min
-- Total execution time: 2.63 hours
+- Total plans completed: 22
+- Average duration: 7.4 min
+- Total execution time: 2.73 hours
 
 **By Phase (v1.0):**
 
@@ -48,9 +48,15 @@ Progress: [░░░░░░░░░░] 0% (0/5 plans)
 | 13-ai-prompt-alignment | 1 | 8 min | 8 min |
 | 14-export-enhancement | 1 | 35 min | 35 min |
 
+**By Phase (v1.3):**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 17-landing-page-integration | 1 | 6 min | 6 min |
+
 **Recent Trend:**
-- Last 5 plans: 12-01 (4 min), 12-02 (15 min), 13-01 (8 min), 14-01 (35 min)
-- Trend: 14-01 longer due to checkpoint verification and PDF page break fix
+- Last 5 plans: 12-02 (15 min), 13-01 (8 min), 14-01 (35 min), 17-01 (6 min)
+- Trend: 17-01 fast - straightforward component copy and style integration
 
 ## Accumulated Context
 
@@ -59,6 +65,9 @@ Progress: [░░░░░░░░░░] 0% (0/5 plans)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 17-01]: Use modern blue-purple brand colors for landing page (distinct from app burgundy)
+- [Phase 17-01]: Update link paths: /sign-up -> /signup, /sign-in -> /login for consistency
+- [Phase 17-01]: Add bg-grid-pattern utility for subtle background decoration
 - [Phase 15 Planning]: Use @dnd-kit for drag-drop (not react-beautiful-dnd - deprecated)
 - [Phase 15 Planning]: Use react-resizable-panels for split pane layout
 - [Phase 15 Planning]: Use AI SDK Output.object() with Zod for structured template generation
@@ -88,6 +97,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-01-17
-Stopped at: Completed 14-01-PLAN.md (v1.1 Milestone complete)
+Last session: 2026-01-18
+Stopped at: Completed 17-01-PLAN.md (Landing page components integrated)
 Resume file: None
