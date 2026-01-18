@@ -68,7 +68,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-4 pending — converted to v1.1 requirements
+5 pending — converted to v1.1 requirements
 
 ### Blockers/Concerns
 
