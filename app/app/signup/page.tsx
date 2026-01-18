@@ -9,6 +9,7 @@ import { FadeIn } from '@/components/motion/fade-in';
 import { StaggerContainer } from '@/components/motion/stagger-container';
 import { Card } from '@/components/ui/card';
 import { AnimatePresence, motion } from 'framer-motion';
+import { GoogleAuthButton } from '@/components/auth/google-auth-button';
 
 // Zod schema for signup form validation
 const signupSchema = z.object({
@@ -217,6 +218,23 @@ export default function SignupPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Google OAuth Button */}
+              <FadeIn>
+                <GoogleAuthButton mode="signup" disabled={loading} />
+              </FadeIn>
+
+              {/* Divider */}
+              <FadeIn>
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-surface px-2 text-text-muted">Or sign up with email</span>
+                  </div>
+                </div>
+              </FadeIn>
 
               {/* Name */}
               <FadeIn>
