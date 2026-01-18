@@ -36,6 +36,11 @@ export async function middleware(request: NextRequest) {
   // Check if the current path is an auth route (login/signup)
   const isAuthRoute = authRoutes.some((route) => pathname === route);
 
+  // Redirect authenticated users from root to dashboard
+  if (pathname === '/' && user) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
   // Redirect unauthenticated users from protected routes to login
   if (isProtectedRoute && !user) {
     const loginUrl = new URL('/login', request.url);
