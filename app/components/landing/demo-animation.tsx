@@ -109,6 +109,10 @@ export function DemoAnimation({
 
   const currentScreenshot = screenshots[currentIndex];
 
+  if (!currentScreenshot) {
+    return null;
+  }
+
   return (
     <section
       ref={containerRef}

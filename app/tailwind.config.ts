@@ -27,7 +27,17 @@ const config: Config = {
         brand: {
           DEFAULT: 'var(--brand)',
           foreground: 'var(--brand-foreground)',
+          light: 'var(--brand-light)',
+          muted: 'var(--brand-muted)',
+          strong: 'var(--brand-strong)',
         },
+        'brand-light': 'var(--brand-light)',
+        'brand-muted': 'var(--brand-muted)',
+        'brand-strong': 'var(--brand-strong)',
+        'success-light': 'var(--success-light)',
+        'foreground-secondary': 'var(--foreground-secondary)',
+        'foreground-muted': 'var(--foreground-muted)',
+        'surface-border': 'var(--surface-border)',
         success: {
           DEFAULT: 'var(--success)',
           foreground: 'var(--success-foreground)',

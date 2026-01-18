@@ -37,6 +37,15 @@
   --brand: #7c2d3c;
   --brand-foreground: #ffffff;
 
+  /* Landing page brand colors - modern blue-purple */
+  --brand-light: #eef2ff;
+  --brand-muted: #e0e7ff;
+  --brand-strong: #4f46e5;
+  --success-light: #d1fae5;
+  --foreground-secondary: #475569;
+  --foreground-muted: #94a3b8;
+  --surface-border: #e2e8f0;
+
   /* Semantic colors - WCAG AA compliant (4.5:1 contrast with white) */
   --success: #166534;
   --success-foreground: #ffffff;
@@ -72,6 +81,15 @@
 
   --brand: #e08a98;
   --brand-foreground: #0f172a;
+
+  /* Landing page brand colors - dark mode */
+  --brand-light: #1e3a8a;
+  --brand-muted: #1e3a8a;
+  --brand-strong: #3b82f6;
+  --success-light: #14532d;
+  --foreground-secondary: #d4d4d8;
+  --foreground-muted: #a1a1aa;
+  --surface-border: #3f3f46;
 
   /* Lighter focus color for dark mode - 6.59:1 contrast */
   --focus: #60a5fa;
@@ -190,6 +208,15 @@
 }
 
 @layer utilities {
+  /* Grid pattern background */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, var(--border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.1;
+  }
+
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;
