@@ -80,6 +80,7 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 15 added: Template Creation UX Overhaul (2026-01-18)
+- Phase 17 added: Landing Page Integration (2026-01-18)
 
 ### Blockers/Concerns
 
