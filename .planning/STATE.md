@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 ## Current Position
 
 Milestone: v1.3 Marketing & Distribution — IN PROGRESS
-Phase: 17 (Landing Page Integration) — IN PROGRESS
-Plan: 17-01 complete, ready for 17-02
-Status: In progress
-Last activity: 2026-01-18 — Completed 17-01-PLAN.md
+Phase: 17 (Landing Page Integration) — COMPLETE
+Plan: 17-02 complete
+Status: Phase complete
+Last activity: 2026-01-18 — Completed 17-02-PLAN.md
 
-Progress: [█░░░░░░░░░] 10% (1/10 plans - estimated across phases 15 & 17)
+Progress: [██░░░░░░░░] 20% (2/10 plans - estimated across phases 15 & 17)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
-- Average duration: 7.4 min
-- Total execution time: 2.73 hours
+- Total plans completed: 23
+- Average duration: 7.7 min
+- Total execution time: 2.98 hours
 
 **By Phase (v1.0):**
 
@@ -52,11 +52,11 @@ Progress: [█░░░░░░░░░] 10% (1/10 plans - estimated across ph
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 17-landing-page-integration | 1 | 6 min | 6 min |
+| 17-landing-page-integration | 2 | 21 min | 10.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 12-02 (15 min), 13-01 (8 min), 14-01 (35 min), 17-01 (6 min)
-- Trend: 17-01 fast - straightforward component copy and style integration
+- Last 5 plans: 13-01 (8 min), 14-01 (35 min), 17-01 (6 min), 17-02 (15 min)
+- Trend: Phase 17 complete - landing page integration straightforward
 
 ## Accumulated Context
 
@@ -65,6 +65,8 @@ Progress: [█░░░░░░░░░] 10% (1/10 plans - estimated across ph
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 17-02]: Root page displays landing page for public, redirects authenticated users via middleware
+- [Phase 17-02]: Middleware handles /dashboard redirect for authenticated users
 - [Phase 17-01]: Use modern blue-purple brand colors for landing page (distinct from app burgundy)
 - [Phase 17-01]: Update link paths: /sign-up -> /signup, /sign-in -> /login for consistency
 - [Phase 17-01]: Add bg-grid-pattern utility for subtle background decoration
@@ -98,5 +100,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-18
-Stopped at: Completed 17-01-PLAN.md (Landing page components integrated)
+Stopped at: Completed 17-02-PLAN.md (Landing page routing and middleware configured)
 Resume file: None
+
+**Phase 17 Complete:** Landing page integration fully complete. Root route displays landing page for unauthenticated users, middleware redirects authenticated users to dashboard.
