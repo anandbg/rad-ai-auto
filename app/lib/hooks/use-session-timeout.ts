@@ -18,7 +18,7 @@ const ACTIVITY_EVENTS = [
 const LAST_ACTIVITY_KEY = 'ai-rad-last-activity';
 
 export function useSessionTimeout() {
-  const { user, signOut } = useAuth();
+  const { user, isLoading, signOut } = useAuth();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -94,14 +94,13 @@ export function useSessionTimeout() {
 
   // Set up activity listeners
   useEffect(() => {
+    // Wait for auth to finish loading before checking anything
+    if (isLoading) return;
     if (!user) return;
 
-    // Check if session is already expired on mount
-    if (checkSessionExpired()) {
-      console.log('[Session] Session already expired, signing out');
-      handleTimeout();
-      return;
-    }
+    // Don't check expiration on initial mount - the auth context already
+    // reset the activity timestamp when it restored the session.
+    // Only enforce timeout for ongoing inactivity, not browser reopens.
 
     // Add activity listeners
     ACTIVITY_EVENTS.forEach((event) => {
@@ -123,7 +122,7 @@ export function useSessionTimeout() {
         clearTimeout(warningRef.current);
       }
     };
-  }, [user, handleActivity, resetTimeout, checkSessionExpired, handleTimeout]);
+  }, [user, isLoading, handleActivity, resetTimeout]);
 
   // Listen for storage events from other tabs
   useEffect(() => {
