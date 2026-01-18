@@ -71,7 +71,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-5 pending — post-v1.1 improvements and bug fixes
+7 pending — post-v1.1 improvements and bug fixes
 
 ### Blockers/Concerns
 
