@@ -1,3 +1,9 @@
+import bundleAnalyzer from '@next/bundle-analyzer';
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -13,6 +19,8 @@ const nextConfig = {
         hostname: '*.supabase.co',
       },
     ],
+    // Optimize image formats for modern browsers
+    formats: ['image/avif', 'image/webp'],
   },
   // Security headers for production
   async headers() {
@@ -54,4 +62,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
