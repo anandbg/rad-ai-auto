@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v1.2 Template Experience — IN PROGRESS
 Phase: 15 (Template Creation UX Overhaul) — IN PROGRESS
-Plan: 02 of 06
+Plan: 04 of 06
 Status: In progress
-Last activity: 2026-01-19 — Completed 15-02-PLAN.md (AI template generation endpoint)
+Last activity: 2026-01-19 — Completed 15-04-PLAN.md (Template builder page integration)
 
-Progress: [███░░░░░░░] 33% (2/6 plans for Phase 15)
+Progress: [████░░░░░░] 50% (3/6 plans for Phase 15)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
-- Average duration: 7.6 min
-- Total execution time: 2.80 hours
+- Total plans completed: 23
+- Average duration: 7.3 min
+- Total execution time: 2.88 hours
 
 **By Phase (v1.0):**
 
@@ -52,12 +52,12 @@ Progress: [███░░░░░░░] 33% (2/6 plans for Phase 15)
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 15-template-creation-ux-overhaul | 2 | 6 min | 3 min |
+| 15-template-creation-ux-overhaul | 3 | 11 min | 3.7 min |
 | 17-landing-page-integration | 2 | 21 min | 10.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 14-01 (35 min), 17-01 (6 min), 17-02 (15 min), 15-01 (3 min), 15-02 (3 min)
-- Trend: Phase 15 foundational work very fast - dnd-kit and AI SDK patterns quick to implement
+- Last 5 plans: 17-01 (6 min), 17-02 (15 min), 15-01 (3 min), 15-02 (3 min), 15-04 (5 min)
+- Trend: Phase 15 integration work efficient - component composition pattern working well
 
 ## Accumulated Context
 
@@ -66,6 +66,10 @@ Progress: [███░░░░░░░] 33% (2/6 plans for Phase 15)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 15-04]: Use Group/Panel/Separator from react-resizable-panels (correct API names)
+- [Phase 15-04]: Show pathway modal on mount for guided creation flow
+- [Phase 15-04]: Import shared schema from template-schema.ts (no duplication)
+- [Phase 15-04]: Clone pathway navigates to /templates?clone=true
 - [Phase 15-02]: Use Output.object() with aiGeneratedTemplateSchema for guaranteed schema compliance
 - [Phase 15-02]: Temperature 0.3 for deterministic AI template generation
 - [Phase 15-02]: Schema .describe() annotations guide GPT-4o output structure
@@ -108,7 +112,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 15-02-PLAN.md (AI template generation endpoint)
+Stopped at: Completed 15-04-PLAN.md (Template builder page integration)
 Resume file: None
 
-**Phase 15 Progress:** 2 of 6 plans complete. Drag-drop foundation established with @dnd-kit. AI template generation endpoint ready with structured outputs. Next: Template builder page integration with split pane layout.
+**Phase 15 Progress:** 3 of 6 plans complete (50%). Template builder page now features split-pane layout with live preview, drag-drop sections, and pathway-based creation flow. Next: AI-assisted template generation flow (Plan 15-05).
