@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** v1.3 Production Infrastructure — IN PROGRESS (Phase 19 started)
+**Current focus:** v1.3 Production Infrastructure — IN PROGRESS (Phases 19, 20 active)
 
 ## Current Position
 
 Milestone: v1.3 Production Infrastructure
-Phase: 19 (Stripe Production Setup)
-Plan: 19-01 complete (1/3)
+Phase: 20 (Vercel Deployment Readiness)
+Plan: 20-02 complete (1/4)
 Status: In progress
-Last activity: 2026-01-19 — Completed 19-01-PLAN.md (Stripe CLI local testing setup)
+Last activity: 2026-01-19 — Completed 20-02-PLAN.md (Vercel Configuration & Environment Setup)
 
-Progress: [███-------] 33% (1/3 plans for Phase 19)
+Progress: [██▌-------] 25% (1/4 plans for Phase 20)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 30
-- Average duration: 8.4 min
-- Total execution time: 4.18 hours
+- Total plans completed: 31
+- Average duration: 8.2 min
+- Total execution time: 4.24 hours
 
 **By Phase (v1.0):**
 
@@ -61,10 +61,11 @@ Progress: [███-------] 33% (1/3 plans for Phase 19)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 19-stripe-production-setup | 1 | 1 min | 1 min |
+| 20-vercel-deployment-readiness | 1 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 15-04 (5 min), 15-05 (15 min), 17-01 (10 min), 18-01 (45 min), 19-01 (1 min)
-- Trend: 19-01 was fast due to Stripe CLI being pre-authenticated
+- Last 5 plans: 15-05 (15 min), 17-01 (10 min), 18-01 (45 min), 19-01 (1 min), 20-02 (4 min)
+- Trend: Infrastructure config plans execute quickly (config + documentation)
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Progress: [███-------] 33% (1/3 plans for Phase 19)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 20-02]: Region iad1 (US East Virginia) for optimal Supabase latency
+- [Phase 20-02]: AI routes get 60s timeout, transcribe 120s, webhooks 30s
+- [Phase 20-02]: Environment scoping documented for dev/preview/prod
 - [Phase 19-01]: Stripe CLI already authenticated - skipped login checkpoint
 - [Phase 19-01]: Webhook secret already configured in .env.local - verified match
 - [Phase 18-01]: Use Playwright MCP browser automation for screenshot capture (agent-browser skill)
@@ -129,7 +133,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 19-01-PLAN.md (Stripe CLI Local Testing Setup)
+Stopped at: Completed 20-02-PLAN.md (Vercel Configuration & Environment Setup)
 Resume file: None
 
-**Stripe CLI Ready:** Account authenticated to Ask Digital Consultancy Ltd sandbox (acct_1SYQ7v5pdloqz3iU). Test mode keys valid until 2026-02-27. Next: 19-02 (Subscription Flow Testing).
+**Vercel Config Ready:** vercel.json created with function timeouts. Environment variables documented in .env.example. Next: 20-03 (Build Validation) to verify successful Vercel build.
