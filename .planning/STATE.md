@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v1.2 Template Experience — IN PROGRESS
 Phase: 15 (Template Creation UX Overhaul) — IN PROGRESS
-Plan: 01 of 06
+Plan: 02 of 06
 Status: In progress
-Last activity: 2026-01-19 — Completed 15-01-PLAN.md (Drag-drop foundation with @dnd-kit)
+Last activity: 2026-01-19 — Completed 15-02-PLAN.md (AI template generation endpoint)
 
-Progress: [██░░░░░░░░] 17% (1/6 plans for Phase 15)
+Progress: [███░░░░░░░] 33% (2/6 plans for Phase 15)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
-- Average duration: 7.9 min
-- Total execution time: 2.76 hours
+- Total plans completed: 22
+- Average duration: 7.6 min
+- Total execution time: 2.80 hours
 
 **By Phase (v1.0):**
 
@@ -52,12 +52,12 @@ Progress: [██░░░░░░░░] 17% (1/6 plans for Phase 15)
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 15-template-creation-ux-overhaul | 1 | 3 min | 3 min |
+| 15-template-creation-ux-overhaul | 2 | 6 min | 3 min |
 | 17-landing-page-integration | 2 | 21 min | 10.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 13-01 (8 min), 14-01 (35 min), 17-01 (6 min), 17-02 (15 min), 15-01 (3 min)
-- Trend: Phase 15 starting - foundational drag-drop components quick to implement
+- Last 5 plans: 14-01 (35 min), 17-01 (6 min), 17-02 (15 min), 15-01 (3 min), 15-02 (3 min)
+- Trend: Phase 15 foundational work very fast - dnd-kit and AI SDK patterns quick to implement
 
 ## Accumulated Context
 
@@ -66,6 +66,9 @@ Progress: [██░░░░░░░░] 17% (1/6 plans for Phase 15)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 15-02]: Use Output.object() with aiGeneratedTemplateSchema for guaranteed schema compliance
+- [Phase 15-02]: Temperature 0.3 for deterministic AI template generation
+- [Phase 15-02]: Schema .describe() annotations guide GPT-4o output structure
 - [Phase 15-01]: Used @dnd-kit over react-beautiful-dnd (deprecated)
 - [Phase 15-01]: Implemented accessible drag-drop with keyboard support and screen reader announcements
 - [Phase 15-01]: Applied CSS.Transform for smooth drag animations
@@ -105,7 +108,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 15-01-PLAN.md (Drag-drop foundation with @dnd-kit)
+Stopped at: Completed 15-02-PLAN.md (AI template generation endpoint)
 Resume file: None
 
-**Phase 15 Progress:** 1 of 6 plans complete. Drag-drop foundation established with @dnd-kit. SortableSection and SectionList components ready for integration. Next: Template builder page integration.
+**Phase 15 Progress:** 2 of 6 plans complete. Drag-drop foundation established with @dnd-kit. AI template generation endpoint ready with structured outputs. Next: Template builder page integration with split pane layout.
