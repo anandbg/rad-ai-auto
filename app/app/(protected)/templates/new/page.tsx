@@ -116,7 +116,6 @@ export default function NewTemplatePage() {
 
   // Pathway modal state
   const [showPathwayModal, setShowPathwayModal] = useState(true); // Show on mount
-  const [selectedPathway, setSelectedPathway] = useState<PathwayType | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showAIDialog, setShowAIDialog] = useState(false);
 
@@ -201,7 +200,6 @@ export default function NewTemplatePage() {
 
   // Handle pathway selection
   const handlePathwaySelect = (pathway: PathwayType) => {
-    setSelectedPathway(pathway);
     setShowPathwayModal(false);
 
     switch (pathway) {
