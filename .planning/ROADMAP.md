@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 MVP** - Phases 1-11 (shipped 2026-01-16)
 - ✅ **v1.1 Production Readiness** - Phases 12-14 (shipped 2026-01-17)
-- 🚧 **v1.2 Template Experience** - Phases 15, 17 (in progress)
+- 🚧 **v1.2 Template Experience** - Phases 15, 17, 18 (in progress)
 - 📋 **v1.3 Production Infrastructure** - Phase 16 (planned)
 
 ## Phases
@@ -112,11 +112,11 @@
 **Plans**: 5 plans in 3 waves
 
 Plans:
-- [ ] 15-01: Foundation - Dependencies + Drag-Drop Components (Wave 1)
-- [ ] 15-02: AI Generation Endpoint with Structured Output (Wave 1)
-- [ ] 15-03: Preview + Pathway Modal Components (Wave 1)
-- [ ] 15-04: Editor Integration - Split Pane + Import (Wave 2)
-- [ ] 15-05: AI Flow Wiring + Verification Checkpoint (Wave 3)
+- [x] 15-01: Foundation - Dependencies + Drag-Drop Components (Wave 1)
+- [x] 15-02: AI Generation Endpoint with Structured Output (Wave 1)
+- [x] 15-03: Preview + Pathway Modal Components (Wave 1)
+- [x] 15-04: Editor Integration - Split Pane + Import (Wave 2)
+- [x] 15-05: AI Flow Wiring + Verification Checkpoint (Wave 3)
 
 ### Phase 17: Landing Page Integration
 **Goal**: Marketing landing page as app entry point with auth routing
@@ -135,6 +135,23 @@ Plans:
 Plans:
 - [x] 17-01: Foundation - Copy components, screenshots, update styles/Tailwind (Wave 1)
 - [x] 17-02: Integration - Wire to root URL with auth redirect + verify (Wave 2)
+
+### Phase 18: Landing Page Carousel Enhancement
+**Goal**: Replace placeholder carousel with real app screenshots showcasing key features
+**Depends on**: Phase 17
+**Requirements**: V1.2-LAND-02
+**Success Criteria** (what must be TRUE):
+  1. Browser automation captures screenshots of all key app features
+  2. Carousel displays real screenshots instead of placeholders
+  3. Supporting text explains selling points clearly and compellingly
+  4. Screenshots showcase: workspace, voice transcription, AI generation, templates, PDF export
+  5. Carousel demonstrates the complete workflow value proposition
+  6. Images are optimized for web delivery (size/format)
+**Research**: None (browser automation with Playwright via agent-browser skill)
+**Plans**: TBD
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 18 to break down)
 
 ## 📋 v1.3 Production Infrastructure (PLANNED)
 
@@ -299,9 +316,10 @@ Phases execute in numeric order: 15 → 16 → ...
 |-------|-----------|----------------|--------|-----------|
 | 1-11 | v1.0 | 18/18 | Complete | 2026-01-16 |
 | 12-14 | v1.1 | 4/4 | Complete | 2026-01-17 |
-| 15. Template Creation UX | v1.2 | 0/5 | Planned | - |
+| 15. Template Creation UX | v1.2 | 5/5 | Complete | 2026-01-19 |
 | 16. Infrastructure Setup | v1.3 | 0/5 | Planned | - |
 | 17. Landing Page Integration | v1.2 | 2/2 | Complete | 2026-01-18 |
+| 18. Landing Page Carousel Enhancement | v1.2 | 0/? | Planned | - |
 
 ---
 *Roadmap created: 2026-01-16*
@@ -309,3 +327,4 @@ Phases execute in numeric order: 15 → 16 → ...
 *v1.2 added: 2026-01-18*
 *v1.3 added: 2026-01-18*
 *Phase 17 added: 2026-01-18*
+*Phase 18 added: 2026-01-19*
