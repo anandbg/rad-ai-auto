@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast';
 import { useCsrf } from '@/lib/hooks/use-csrf';
 import { TemplatePreview } from '@/components/template-builder/template-preview';
+import { SectionList } from '@/components/template-builder/section-list';
 
 // Zod schema for template validation
 const templateSectionSchema = z.object({
@@ -223,18 +224,6 @@ export default function NewTemplatePage() {
 
     setSections([...sections, newSection]);
     setNewSectionName('');
-  };
-
-  // Remove a section
-  const handleRemoveSection = (id: string) => {
-    setSections(sections.filter(s => s.id !== id));
-  };
-
-  // Update section content
-  const handleUpdateSectionContent = (id: string, content: string) => {
-    setSections(sections.map(s =>
-      s.id === id ? { ...s, content } : s
-    ));
   };
 
   // Handle getting AI suggestions
@@ -572,39 +561,22 @@ export default function NewTemplatePage() {
               </div>
 
               {/* Sections list */}
-              {sections.length > 0 && (
-                <div className="space-y-4" data-testid="sections-list">
-                  {sections.map((section, index) => (
-                    <div
-                      key={section.id}
-                      className="rounded-lg border border-border bg-surface-muted p-4"
-                      data-testid={`section-${index}`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-text-primary">{section.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSection(section.id)}
-                          className="text-sm text-error hover:underline"
-                          data-testid={`remove-section-${index}`}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                      <Textarea
-                        placeholder={`Enter content for ${section.name}...`}
-                        value={section.content}
-                        onChange={(e) => handleUpdateSectionContent(section.id, e.target.value)}
-                        rows={3}
-                        className="font-mono text-sm"
-                        data-testid={`section-content-${index}`}
-                      />
-                    </div>
-                  ))}
+              {sections.length > 0 ? (
+                <div data-testid="sections-list">
+                  <SectionList
+                    sections={sections}
+                    onReorder={setSections}
+                    onUpdateSection={(id, field, value) => {
+                      setSections(sections.map(s =>
+                        s.id === id ? { ...s, [field]: value } : s
+                      ));
+                    }}
+                    onRemoveSection={(id) => {
+                      setSections(sections.filter(s => s.id !== id));
+                    }}
+                  />
                 </div>
-              )}
-
-              {sections.length === 0 && (
+              ) : (
                 <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-text-secondary">
                   No sections added yet. Add sections to organize your template.
                 </div>
