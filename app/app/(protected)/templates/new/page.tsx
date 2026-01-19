@@ -14,7 +14,8 @@ import { useCsrf } from '@/lib/hooks/use-csrf';
 import { TemplatePreview } from '@/components/template-builder/template-preview';
 import { SectionList } from '@/components/template-builder/section-list';
 import { CreationPathwayModal, PathwayType } from '@/components/template-builder/creation-pathway-modal';
-import { templateFormSchema, formatZodErrors, type TemplateSection } from '@/lib/validation/template-schema';
+import { AIGenerationDialog } from '@/components/template-builder/ai-generation-dialog';
+import { templateFormSchema, formatZodErrors, type TemplateSection, type AIGeneratedTemplate } from '@/lib/validation/template-schema';
 
 // Form draft storage key
 const FORM_DRAFT_KEY = 'ai-rad-template-draft';
@@ -117,6 +118,7 @@ export default function NewTemplatePage() {
   const [showPathwayModal, setShowPathwayModal] = useState(true); // Show on mount
   const [selectedPathway, setSelectedPathway] = useState<PathwayType | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showAIDialog, setShowAIDialog] = useState(false);
 
   // AI Suggestions state
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -202,15 +204,34 @@ export default function NewTemplatePage() {
     setSelectedPathway(pathway);
     setShowPathwayModal(false);
 
-    if (pathway === 'import') {
-      // Trigger file picker
-      fileInputRef.current?.click();
-    } else if (pathway === 'clone') {
-      // Navigate to templates list with clone mode
-      router.push('/templates?clone=true');
+    switch (pathway) {
+      case 'ai':
+        setShowAIDialog(true);
+        break;
+      case 'import':
+        fileInputRef.current?.click();
+        break;
+      case 'clone':
+        // Navigate to templates list with clone mode
+        router.push('/templates?action=clone');
+        break;
+      case 'manual':
+        // Default, just close modal
+        break;
     }
-    // 'ai' pathway will be handled in Plan 15-05
-    // 'manual' is default, just close modal
+  };
+
+  // Handle AI generation
+  const handleAIGenerated = (data: AIGeneratedTemplate) => {
+    setFormData({
+      name: data.name,
+      modality: data.modality,
+      bodyPart: data.bodyPart,
+      description: data.description,
+      content: '',
+    });
+    setSections(data.sections);
+    showToast('Template generated! Review and customize below.', 'success');
   };
 
   // Handle JSON import
@@ -754,6 +775,15 @@ export default function NewTemplatePage() {
         open={showPathwayModal}
         onOpenChange={setShowPathwayModal}
         onSelect={handlePathwaySelect}
+      />
+
+      {/* AI Generation Dialog */}
+      <AIGenerationDialog
+        open={showAIDialog}
+        onOpenChange={setShowAIDialog}
+        onGenerated={handleAIGenerated}
+        initialModality={formData.modality}
+        initialBodyPart={formData.bodyPart}
       />
     </div>
   );
