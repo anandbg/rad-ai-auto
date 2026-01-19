@@ -61,6 +61,7 @@ export default function TemplatesPage() {
     const searchParam = searchParams.get('search');
     const sortParam = searchParams.get('sort');
     const pageParam = searchParams.get('page');
+    const actionParam = searchParams.get('action');
 
     if (modalityParam) {
       setSelectedModality(modalityParam);
@@ -77,8 +78,16 @@ export default function TemplatesPage() {
         setCurrentPage(page);
       }
     }
+    // Handle clone action - show toast to guide user
+    if (actionParam === 'clone') {
+      showToast('Select a template below and click "Clone" to copy it as your starting point.', 'info');
+      // Clear the action param from URL to prevent toast on refresh
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.delete('action');
+      router.replace(`/templates${newParams.toString() ? `?${newParams.toString()}` : ''}`);
+    }
     setIsInitialized(true);
-  }, [searchParams]);
+  }, [searchParams, showToast, router]);
 
   // Sync URL when filters change (after initial load)
   const updateUrlParams = useCallback((search: string, modality: string, sort: string, page: number) => {

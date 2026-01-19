@@ -19,8 +19,8 @@ const overlayVariants = {
 
 // Animation variants for content
 const contentVariants = {
-  hidden: { opacity: 0, scale: 0.95, y: '0%' },
-  visible: { opacity: 1, scale: 1, y: '0%' }
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1 }
 };
 
 export const DialogOverlay = forwardRef<
@@ -70,20 +70,23 @@ export const DialogContent = forwardRef<
     return (
       <DialogPortal forceMount={forceMount}>
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
-        <DialogPrimitive.Content
-          ref={ref}
-          className={cn(
-            "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface shadow-xl focus-visible:outline-none",
-            className
-          )}
-          {...props}
-        >
-          {children}
-          <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-all duration-200 hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close dialog</span>
-          </DialogPrimitive.Close>
-        </DialogPrimitive.Content>
+        {/* Flex container for centering */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <DialogPrimitive.Content
+            ref={ref}
+            className={cn(
+              "w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-xl border border-border bg-surface shadow-xl focus-visible:outline-none",
+              className
+            )}
+            {...props}
+          >
+            {children}
+            <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-all duration-200 hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close dialog</span>
+            </DialogPrimitive.Close>
+          </DialogPrimitive.Content>
+        </div>
       </DialogPortal>
     );
   }
@@ -101,25 +104,28 @@ export const DialogContent = forwardRef<
           transition={{ duration: 0.15 }}
         />
       </DialogPrimitive.Overlay>
-      <DialogPrimitive.Content ref={ref} asChild {...props}>
-        <motion.div
-          className={cn(
-            "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface shadow-xl focus-visible:outline-none",
-            className
-          )}
-          variants={contentVariants}
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-          transition={{ duration: 0.15 }}
-        >
-          {children}
-          <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-all duration-200 hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close dialog</span>
-          </DialogPrimitive.Close>
-        </motion.div>
-      </DialogPrimitive.Content>
+      {/* Flex container for centering */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <DialogPrimitive.Content ref={ref} asChild {...props}>
+          <motion.div
+            className={cn(
+              "w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-xl border border-border bg-surface shadow-xl focus-visible:outline-none",
+              className
+            )}
+            variants={contentVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            transition={{ duration: 0.15 }}
+          >
+            {children}
+            <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-all duration-200 hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close dialog</span>
+            </DialogPrimitive.Close>
+          </motion.div>
+        </DialogPrimitive.Content>
+      </div>
     </DialogPortal>
   );
 });
@@ -159,25 +165,28 @@ export const AnimatedDialogContent = forwardRef<
           transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
         />
       </DialogPrimitive.Overlay>
-      <DialogPrimitive.Content ref={ref} asChild {...props}>
-        <motion.div
-          className={cn(
-            "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-surface shadow-xl focus-visible:outline-none",
-            className
-          )}
-          variants={contentVariants}
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-          transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
-        >
-          {children}
-          <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-all duration-200 hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close dialog</span>
-          </DialogPrimitive.Close>
-        </motion.div>
-      </DialogPrimitive.Content>
+      {/* Flex container for centering */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <DialogPrimitive.Content ref={ref} asChild {...props}>
+          <motion.div
+            className={cn(
+              "w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-xl border border-border bg-surface shadow-xl focus-visible:outline-none",
+              className
+            )}
+            variants={contentVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
+          >
+            {children}
+            <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-all duration-200 hover:bg-surface-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close dialog</span>
+            </DialogPrimitive.Close>
+          </motion.div>
+        </DialogPrimitive.Content>
+      </div>
     </DialogPortal>
   );
 });
