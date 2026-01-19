@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { z } from 'zod';
 import { Panel, Group, Separator } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -14,44 +13,11 @@ import { useToast } from '@/components/ui/toast';
 import { useCsrf } from '@/lib/hooks/use-csrf';
 import { TemplatePreview } from '@/components/template-builder/template-preview';
 import { SectionList } from '@/components/template-builder/section-list';
-
-// Zod schema for template validation
-const templateSectionSchema = z.object({
-  id: z.string(),
-  name: z.string().min(1, 'Section name is required'),
-  content: z.string(),
-});
-
-const templateFormSchema = z.object({
-  name: z.string()
-    .min(1, 'Template name is required')
-    .min(3, 'Template name must be at least 3 characters')
-    .max(100, 'Template name must be less than 100 characters')
-    .refine(
-      (val) => val.length === 0 || /^[a-zA-Z0-9\s\-_]+$/.test(val),
-      'Template name can only contain letters, numbers, spaces, hyphens, and underscores'
-    ),
-  modality: z.string().min(1, 'Please select a modality'),
-  bodyPart: z.string().min(1, 'Please select a body part'),
-  description: z.string()
-    .min(1, 'Description is required')
-    .min(10, 'Description must be at least 10 characters')
-    .max(500, 'Description must be less than 500 characters'),
-  content: z.string().max(10000, 'Template content must be less than 10,000 characters').optional(),
-  sections: z.array(templateSectionSchema).optional(),
-});
-
-export type TemplateFormData = z.infer<typeof templateFormSchema>;
+import { CreationPathwayModal, PathwayType } from '@/components/template-builder/creation-pathway-modal';
+import { templateFormSchema, formatZodErrors, type TemplateSection } from '@/lib/validation/template-schema';
 
 // Form draft storage key
 const FORM_DRAFT_KEY = 'ai-rad-template-draft';
-
-// Section interface for template sections
-interface TemplateSection {
-  id: string;
-  name: string;
-  content: string;
-}
 
 // Modality options
 const modalityOptions = [
@@ -147,6 +113,11 @@ export default function NewTemplatePage() {
   const [sections, setSections] = useState<TemplateSection[]>([]);
   const [newSectionName, setNewSectionName] = useState('');
 
+  // Pathway modal state
+  const [showPathwayModal, setShowPathwayModal] = useState(true); // Show on mount
+  const [selectedPathway, setSelectedPathway] = useState<PathwayType | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // AI Suggestions state
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState('');
@@ -224,6 +195,60 @@ export default function NewTemplatePage() {
 
     setSections([...sections, newSection]);
     setNewSectionName('');
+  };
+
+  // Handle pathway selection
+  const handlePathwaySelect = (pathway: PathwayType) => {
+    setSelectedPathway(pathway);
+    setShowPathwayModal(false);
+
+    if (pathway === 'import') {
+      // Trigger file picker
+      fileInputRef.current?.click();
+    } else if (pathway === 'clone') {
+      // Navigate to templates list with clone mode
+      router.push('/templates?clone=true');
+    }
+    // 'ai' pathway will be handled in Plan 15-05
+    // 'manual' is default, just close modal
+  };
+
+  // Handle JSON import
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      // Validate against schema
+      const result = templateFormSchema.safeParse(data);
+      if (!result.success) {
+        const errors = formatZodErrors(result.error);
+        const firstError = Object.values(errors)[0];
+        showToast(`Invalid template format: ${firstError}`, 'error');
+        return;
+      }
+
+      // Populate form with validated data
+      setFormData({
+        name: result.data.name,
+        modality: result.data.modality,
+        bodyPart: result.data.bodyPart,
+        description: result.data.description,
+        content: result.data.content || '',
+      });
+      if (result.data.sections) {
+        setSections(result.data.sections);
+      }
+      showToast('Template imported successfully', 'success');
+    } catch (error) {
+      showToast('Failed to parse JSON file', 'error');
+    }
+
+    // Reset file input
+    e.target.value = '';
   };
 
   // Handle getting AI suggestions
@@ -419,15 +444,36 @@ export default function NewTemplatePage() {
               </div>
             )}
 
+            {/* Hidden file input for JSON import */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".json"
+              onChange={handleImportFile}
+              className="hidden"
+            />
+
             <form onSubmit={handleSubmit}>
         {/* CSRF Token */}
         <CsrfInput />
         <Card>
           <CardHeader>
-            <CardTitle>Create New Template</CardTitle>
-            <CardDescription>
-              Create a new radiology report template for your personal use
-            </CardDescription>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>Create New Template</CardTitle>
+                <CardDescription>
+                  Create a new radiology report template for your personal use
+                </CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPathwayModal(true)}
+              >
+                Change Creation Method
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Template Name */}
@@ -702,6 +748,13 @@ export default function NewTemplatePage() {
           </div>
         </Panel>
       </Group>
+
+      {/* Creation Pathway Modal */}
+      <CreationPathwayModal
+        open={showPathwayModal}
+        onOpenChange={setShowPathwayModal}
+        onSelect={handlePathwaySelect}
+      />
     </div>
   );
 }
