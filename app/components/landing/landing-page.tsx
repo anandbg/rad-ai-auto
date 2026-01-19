@@ -69,7 +69,7 @@ export function LandingPage() {
         screenshots={[
           {
             id: "transcribe-home",
-            imageSrc: "/demo-screenshots/1-transcribe home.png",
+            imageSrc: "/demo-screenshots/1-transcribe home.webp",
             title: "Transcribe",
             marketingTitle: "Start by Transcribing Your Findings",
             marketingDescription: "The Transcribe page shows step 1 with clear instructions. Click the purple 'Start Recording' button to begin real-time transcription, or use the 'Upload' button to select audio files. The large empty transcript area below will display your transcribed text as you dictate.",
@@ -79,7 +79,7 @@ export function LandingPage() {
           },
           {
             id: "file-upload",
-            imageSrc: "/demo-screenshots/2-file upload.png",
+            imageSrc: "/demo-screenshots/2-file upload.webp",
             title: "Transcribe",
             marketingTitle: "Upload Audio Files",
             marketingDescription: "Click 'Upload' to select audio files from your computer. Browse folders, search for files, and select formats like M4A, MP3, or WAV. The file selection dialog makes it easy to find and upload your existing recordings.",
@@ -89,7 +89,7 @@ export function LandingPage() {
           },
           {
             id: "recording-in-progress",
-            imageSrc: "/demo-screenshots/3-recording in progress.png",
+            imageSrc: "/demo-screenshots/3-recording in progress.webp",
             title: "Transcribe",
             marketingTitle: "Recording in Progress",
             marketingDescription: "While recording, the 'Start Recording' button changes to a red 'Stop Recording' button. The step 1 indicator shows 'Start by transcribing your findings' with instructions. The transcript area displays your real-time transcription as you speak.",
@@ -99,7 +99,7 @@ export function LandingPage() {
           },
           {
             id: "transcribing",
-            imageSrc: "/demo-screenshots/4-transribing.png",
+            imageSrc: "/demo-screenshots/4-transribing.webp",
             title: "Transcribe",
             marketingTitle: "AI Processing Your Audio",
             marketingDescription: "After stopping recording or uploading, a purple circular loading spinner appears in the center of the transcript area with 'Transcribing...' text below it. The step 1 indicator and instructions remain visible. Our AI is converting your audio to text with medical terminology recognition.",
@@ -109,7 +109,7 @@ export function LandingPage() {
           },
           {
             id: "select-template",
-            imageSrc: "/demo-screenshots/5-select template.png",
+            imageSrc: "/demo-screenshots/5-select template.webp",
             title: "Report",
             marketingTitle: "Select a Template to Begin",
             marketingDescription: "The Report page shows step 2 with a purple circle badge displaying '2'. A light grey box displays 'Select a template' with instructions: 'Choose a template that matches your exam type to generate the report.' The empty report area shows 'No report generated yet' with a document icon. Click the purple 'Select Template' button in the top right to proceed.",
@@ -119,7 +119,7 @@ export function LandingPage() {
           },
           {
             id: "choose-template",
-            imageSrc: "/demo-screenshots/6-choose template.png",
+            imageSrc: "/demo-screenshots/6-choose template.webp",
             title: "Templates",
             marketingTitle: "Search and Select Templates",
             marketingDescription: "The 'Select template' modal appears with a search bar. Below is a 'NOTE TEMPLATES' section listing matching templates. Each entry shows the template name, a Global/Personal tag, modality and body part info, and a lightning bolt icon. Click any template to select it.",
@@ -129,7 +129,7 @@ export function LandingPage() {
           },
           {
             id: "ready-to-generate",
-            imageSrc: "/demo-screenshots/7-ready to generate.png",
+            imageSrc: "/demo-screenshots/7-ready to generate.webp",
             title: "Report",
             marketingTitle: "Ready to Generate Your Report",
             marketingDescription: "A light green banner appears with a star icon showing 'Ready to generate' and instructions. Below it is a large purple 'Generate Report' button with a star icon. The report area shows 'No report generated yet' with a document icon. Your selected template is displayed in the top right.",
@@ -139,7 +139,7 @@ export function LandingPage() {
           },
           {
             id: "generating-report",
-            imageSrc: "/demo-screenshots/8-generating report.png",
+            imageSrc: "/demo-screenshots/8-generating report.webp",
             title: "Report",
             marketingTitle: "AI Generating Your Report",
             marketingDescription: "The green banner still shows 'Ready to generate'. The purple button now displays 'Generating...' with a circular loading spinner inside it. In the center of the empty report area, a larger purple circular spinner appears with 'Generating report...' text below it, showing the AI is actively processing.",
@@ -149,7 +149,7 @@ export function LandingPage() {
           },
           {
             id: "generated-report",
-            imageSrc: "/demo-screenshots/9-generated report.png",
+            imageSrc: "/demo-screenshots/9-generated report.webp",
             title: "Report",
             marketingTitle: "Your Report is Complete",
             marketingDescription: "The report panel displays the full radiology report. At the top left is 'Report generated' text. The title shows the exam type and patient information. Structured sections include Clinical Information, Technique, Comparison, and Findings. Export buttons (Copy, MD, HTML, PDF, Regenerate) appear at the top right.",
@@ -159,7 +159,7 @@ export function LandingPage() {
           },
           {
             id: "templates-library",
-            imageSrc: "/demo-screenshots/10-templates library.png",
+            imageSrc: "/demo-screenshots/10-templates library.webp",
             title: "Templates",
             marketingTitle: "Browse Your Template Library",
             marketingDescription: "The Templates page shows a grid of template cards. Use the 'Global' and 'Personal' tabs to filter templates. Each card displays the template name, modality and body part tags, description, version label (v1), and a 'Clone' button. Use the search bar to find specific templates.",
@@ -169,7 +169,7 @@ export function LandingPage() {
           },
           {
             id: "create-template",
-            imageSrc: "/demo-screenshots/11-create template.png",
+            imageSrc: "/demo-screenshots/11-create template.webp",
             title: "Templates",
             marketingTitle: "Clone from Existing Templates",
             marketingDescription: "The 'Create template' modal shows 'Clone from existing' selected (purple background). Below is a search bar and Global/Personal tabs showing template counts. The main area lists templates with their names, tags (MRI, Chest, Global, etc.), and descriptions. Click 'Save' after selecting a template to clone.",
@@ -179,7 +179,7 @@ export function LandingPage() {
           },
           {
             id: "create-template-blank-ai",
-            imageSrc: "/demo-screenshots/12-create template from blank using AI.png",
+            imageSrc: "/demo-screenshots/12-create template from blank using AI.webp",
             title: "Templates",
             marketingTitle: "Create Templates from Scratch with AI",
             marketingDescription: "The 'Create template' modal shows 'Blank template' selected (purple background). The left section has fields for Template Name, Modality, Body Part, Description, and a 'Set as default' checkbox. The right section shows the template content editor with a 'Structure with AI' button that helps you create template syntax automatically.",
@@ -189,7 +189,7 @@ export function LandingPage() {
           },
           {
             id: "macro-library",
-            imageSrc: "/demo-screenshots/13-macro library.png",
+            imageSrc: "/demo-screenshots/13-macro library.webp",
             title: "Macros",
             marketingTitle: "Manage Your Transcription Macros",
             marketingDescription: "The Macros page shows a search bar at the top and a grid of macro cards below. Each card displays the trigger phrase (e.g., 'normal chest', 'BMI') in bold, a match mode tag (like 'WORD BOUNDARY'), and the expanded text description. A purple '+ New macro' button appears in the top right navigation.",
@@ -199,7 +199,7 @@ export function LandingPage() {
           },
           {
             id: "create-macro",
-            imageSrc: "/demo-screenshots/14-create marco.png",
+            imageSrc: "/demo-screenshots/14-create marco.webp",
             title: "Macros",
             marketingTitle: "Create Custom Macros",
             marketingDescription: "The 'Create Macro' modal shows fields for 'TRIGGER PHRASE' (with placeholder 'e.g., normal chest'), 'EXPANDED TEXT' (large textarea with placeholder), 'MATCH MODE' dropdown (showing 'Exact Match'), and a 'CASE SENSITIVE' toggle switch. Helper text explains each field. 'Cancel' and 'Save' buttons appear at the bottom.",
