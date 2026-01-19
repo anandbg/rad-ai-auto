@@ -31,6 +31,32 @@ export const templateFormSchema = z.object({
 export type TemplateFormData = z.infer<typeof templateFormSchema>;
 export type TemplateSection = z.infer<typeof templateSectionSchema>;
 
+// Schema for AI template generation with descriptions for LLM guidance
+export const aiGeneratedTemplateSchema = z.object({
+  name: z.string()
+    .min(3)
+    .max(100)
+    .describe('Template name based on modality and body part, e.g., "CT Chest with Contrast Protocol"'),
+  modality: z.string()
+    .describe('Imaging modality: X-Ray, CT, MRI, Ultrasound, PET, Mammography, Fluoroscopy, Nuclear Medicine, or Other'),
+  bodyPart: z.string()
+    .describe('Body region: Head, Neck, Chest, Abdomen, Pelvis, Spine, Upper Extremity, Lower Extremity, Whole Body, or Other'),
+  description: z.string()
+    .min(10)
+    .max(500)
+    .describe('When to use this template - clinical indications and scenarios'),
+  sections: z.array(z.object({
+    id: z.string().describe('Unique identifier, use format "section-1", "section-2", etc.'),
+    name: z.string().describe('Section name in ALL CAPS, e.g., TECHNIQUE, COMPARISON, FINDINGS, IMPRESSION'),
+    content: z.string().describe('Template content with [placeholders] for variable data and (instructions) for conditional guidance. Use radiology-specific language.')
+  }))
+    .min(3)
+    .max(8)
+    .describe('Ordered list of report sections. Include at minimum: TECHNIQUE, FINDINGS, IMPRESSION')
+});
+
+export type AIGeneratedTemplate = z.infer<typeof aiGeneratedTemplateSchema>;
+
 // Helper function to format Zod errors into a user-friendly format
 export function formatZodErrors(error: z.ZodError): Record<string, string> {
   const errors: Record<string, string> = {};
