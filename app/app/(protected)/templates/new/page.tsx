@@ -211,7 +211,8 @@ export default function NewTemplatePage() {
         break;
       case 'clone':
         // Navigate to templates list with clone mode
-        router.push('/templates?action=clone');
+        // Using window.location to ensure query parameter is preserved
+        window.location.href = '/templates?action=clone';
         break;
       case 'manual':
         // Default, just close modal

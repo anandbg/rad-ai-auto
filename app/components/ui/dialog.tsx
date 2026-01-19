@@ -19,8 +19,8 @@ const overlayVariants = {
 
 // Animation variants for content
 const contentVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: { opacity: 1, scale: 1 }
+  hidden: { opacity: 0, scale: 0.95, y: '0%' },
+  visible: { opacity: 1, scale: 1, y: '0%' }
 };
 
 export const DialogOverlay = forwardRef<
