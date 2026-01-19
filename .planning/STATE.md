@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** v1.2 Template Experience — Phase 15, 17 complete. Phase 18 ready.
+**Current focus:** v1.3 Production Infrastructure — IN PROGRESS (Phase 19 started)
 
 ## Current Position
 
-Milestone: v1.2 Template Experience — IN PROGRESS
-Phase: 15 (Template Creation UX Overhaul) — COMPLETE
-Plan: All plans complete (5/5)
-Status: Phase verified and complete
-Last activity: 2026-01-19 — Phase 15 executed and verified (5 plans in 3 waves)
+Milestone: v1.3 Production Infrastructure
+Phase: 19 (Stripe Production Setup)
+Plan: 19-01 complete (1/3)
+Status: In progress
+Last activity: 2026-01-19 — Completed 19-01-PLAN.md (Stripe CLI local testing setup)
 
-Progress: [██████████] 100% (5/5 plans for Phase 15)
+Progress: [███-------] 33% (1/3 plans for Phase 19)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 28
-- Average duration: 7.3 min
-- Total execution time: 3.41 hours
+- Total plans completed: 30
+- Average duration: 8.4 min
+- Total execution time: 4.18 hours
 
 **By Phase (v1.0):**
 
@@ -54,10 +54,17 @@ Progress: [██████████] 100% (5/5 plans for Phase 15)
 |-------|-------|-------|----------|
 | 15-template-creation-ux-overhaul | 5 | 28 min | 5.6 min |
 | 17-landing-page-integration | 2 | 21 min | 10.5 min |
+| 18-landing-page-carousel-enhancement | 1 | 45 min | 45 min |
+
+**By Phase (v1.3):**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 19-stripe-production-setup | 1 | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: 15-01 (3 min), 15-02 (3 min), 15-03 (2 min), 15-04 (5 min), 15-05 (15 min)
-- Trend: Phase 15 complete with efficient execution, checkpoint in 15-05 added time for user testing
+- Last 5 plans: 15-04 (5 min), 15-05 (15 min), 17-01 (10 min), 18-01 (45 min), 19-01 (1 min)
+- Trend: 19-01 was fast due to Stripe CLI being pre-authenticated
 
 ## Accumulated Context
 
@@ -66,6 +73,12 @@ Progress: [██████████] 100% (5/5 plans for Phase 15)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 19-01]: Stripe CLI already authenticated - skipped login checkpoint
+- [Phase 19-01]: Webhook secret already configured in .env.local - verified match
+- [Phase 18-01]: Use Playwright MCP browser automation for screenshot capture (agent-browser skill)
+- [Phase 18-01]: Capture 15 screenshots covering all major features (workspace, templates, macros, billing, etc.)
+- [Phase 18-01]: Use Sharp for PNG to WebP conversion at quality 85
+- [Phase 18-01]: Self-verify carousel with browser automation before user confirmation
 - [Phase 15-05]: Use window.location.href instead of router.push for clone pathway to ensure query parameters are preserved
 - [Phase 15-05]: Add explicit y: '0%' to dialog animation variants to prevent positioning flash during animation
 - [Phase 15-04]: Use Group/Panel/Separator from react-resizable-panels (correct API names)
@@ -106,6 +119,8 @@ Recent decisions affecting current work:
 - Phase 15 added: Template Creation UX Overhaul (2026-01-18)
 - Phase 17 added: Landing Page Integration (2026-01-18)
 - Phase 18 added: Landing Page Carousel Enhancement (2026-01-19)
+- Phase 19 added: Stripe Production Setup (2026-01-19) - comprehensive webhook/testing/go-live plan
+- Phase 20 added: Vercel Deployment Readiness (2026-01-19) - build checks, performance, security, monitoring
 
 ### Blockers/Concerns
 
@@ -114,7 +129,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 15-05-PLAN.md (AI Flow Wiring + Verification)
+Stopped at: Completed 19-01-PLAN.md (Stripe CLI Local Testing Setup)
 Resume file: None
 
-**Phase 15 Progress:** 4 of 6 plans complete (67%). All 4 template creation pathways now functional (manual, AI-assisted, clone, import). AI generation dialog allows describing templates in natural language. Fixed navigation and modal positioning issues. Next: Template validation flow (Plan 15-06).
+**Stripe CLI Ready:** Account authenticated to Ask Digital Consultancy Ltd sandbox (acct_1SYQ7v5pdloqz3iU). Test mode keys valid until 2026-02-27. Next: 19-02 (Subscription Flow Testing).
