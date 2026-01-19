@@ -4,6 +4,7 @@ import { AuthProvider } from '@/lib/auth/auth-context';
 import { PreferencesProvider } from '@/lib/preferences/preferences-context';
 import { ToastProvider } from '@/components/ui/toast';
 import { ErrorSuppressors } from '@/components/error-suppressors';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   title: 'AI Radiologist - AI-Powered Report Generation',
@@ -77,6 +78,7 @@ export default function RootLayout({
             <ToastProvider>{children}</ToastProvider>
           </PreferencesProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
