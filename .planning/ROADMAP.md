@@ -5,7 +5,7 @@
 - ✅ **v1.0 MVP** - Phases 1-11 (shipped 2026-01-16)
 - ✅ **v1.1 Production Readiness** - Phases 12-14 (shipped 2026-01-17)
 - 🚧 **v1.2 Template Experience** - Phases 15, 17, 18 (in progress)
-- 📋 **v1.3 Production Infrastructure** - Phase 16 (planned)
+- 📋 **v1.3 Production Infrastructure** - Phases 16, 19 (planned)
 
 ## Phases
 
@@ -148,10 +148,10 @@ Plans:
   5. Carousel demonstrates the complete workflow value proposition
   6. Images are optimized for web delivery (size/format)
 **Research**: None (browser automation with Playwright via agent-browser skill)
-**Plans**: TBD
+**Plans**: 1 plan (complete)
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 18 to break down)
+- [x] 18-01: Screenshot capture, WebP optimization, carousel update + verification (Wave 1)
 
 ## 📋 v1.3 Production Infrastructure (PLANNED)
 
@@ -307,6 +307,249 @@ Plans:
 - [ ] 16-04: Google OAuth Configuration
 - [ ] 16-05: Environment Strategy & Documentation
 
+### Phase 19: Stripe Production Setup
+**Goal**: Complete Stripe integration with webhook configuration, testing, and production readiness
+**Depends on**: Phase 16 (needs production domain for webhook URL)
+**Requirements**: STRIPE-PROD-01, STRIPE-PROD-02, STRIPE-PROD-03
+
+**Current State** (from browser inspection 2026-01-19):
+- ✅ Products configured: Pro Plan (£20/mo), Plus Plan (£10/mo)
+- ✅ Price IDs match environment variables
+- ✅ 3 active test subscriptions working
+- ✅ Checkout API functional (`/api/billing/checkout`)
+- ✅ Customer Portal API functional (`/api/billing/portal`)
+- ✅ Invoice History API functional (`/api/billing/invoices`)
+- ✅ Webhook handler code exists (`/api/stripe/webhook`)
+- ⚠️ **NO webhook endpoint configured in Stripe Dashboard**
+- ⚠️ Subscription status changes won't sync without webhooks
+
+**Success Criteria** (what must be TRUE):
+  1. Webhook endpoint registered in Stripe Dashboard (test + production)
+  2. All subscription lifecycle events handled:
+     - `checkout.session.completed` → activates subscription
+     - `customer.subscription.created` → syncs new subscription
+     - `customer.subscription.updated` → syncs plan changes
+     - `customer.subscription.deleted` → downgrades to free
+     - `invoice.payment_succeeded` → confirms payment
+     - `invoice.payment_failed` → marks subscription past_due
+  3. Webhook signature verification working (prevents spoofing)
+  4. Database `subscriptions` table updates correctly from webhooks
+  5. End-to-end test: signup → checkout → webhook → subscription active
+  6. Stripe CLI local testing documented and working
+  7. Production webhook URL configured with correct events
+  8. Error handling for webhook failures (logging, retry awareness)
+
+**Sub-phases:**
+
+#### 19.1: Local Webhook Testing Setup
+- Install Stripe CLI (`brew install stripe/stripe-cli/stripe`)
+- Authenticate CLI with test account
+- Document local testing workflow:
+  ```bash
+  # Terminal 1: Run app
+  npm run dev
+
+  # Terminal 2: Forward webhooks
+  stripe listen --forward-to localhost:3000/api/stripe/webhook
+  ```
+- Verify webhook secret from CLI matches `STRIPE_WEBHOOK_SECRET`
+- Test each event type with CLI triggers:
+  ```bash
+  stripe trigger checkout.session.completed
+  stripe trigger customer.subscription.updated
+  stripe trigger invoice.payment_failed
+  ```
+- Verify database updates for each event
+
+#### 19.2: Webhook Handler Verification
+- Review `/api/stripe/webhook` handler for all event types
+- Ensure proper error handling and logging
+- Verify signature validation using `STRIPE_WEBHOOK_SECRET`
+- Test idempotency (same event processed twice safely)
+- Add missing event handlers if needed:
+  - `customer.subscription.trial_will_end` (if using trials)
+  - `invoice.upcoming` (for usage-based billing notifications)
+- Verify RLS bypass for service role operations
+
+#### 19.3: Production Webhook Configuration
+- Navigate to Stripe Dashboard → Developers → Webhooks
+- Add endpoint: `https://{production-domain}/api/stripe/webhook`
+- Select events:
+  - `checkout.session.completed`
+  - `customer.subscription.created`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+  - `invoice.payment_succeeded`
+  - `invoice.payment_failed`
+- Copy webhook signing secret to production env vars
+- Test with Stripe Dashboard "Send test webhook" feature
+- Verify endpoint shows successful delivery
+
+#### 19.4: End-to-End Subscription Flow Test
+- Create new test user account
+- Navigate to billing page
+- Click "Upgrade to Plus"
+- Complete Stripe Checkout with test card `4242 4242 4242 4242`
+- Verify:
+  - Redirect back to app with success
+  - `subscriptions` table updated with correct plan
+  - User sees "Plus" plan on billing page
+  - Usage limits reflect Plus tier
+- Test upgrade flow: Plus → Pro
+- Test downgrade/cancellation via Customer Portal
+- Test failed payment with card `4000 0000 0000 0002`
+
+#### 19.5: Production Credentials & Go-Live
+- Switch from test to live mode in Stripe Dashboard
+- Create production products/prices (or copy from test)
+- Update production environment variables:
+  - `STRIPE_SECRET_KEY` → `sk_live_...`
+  - `STRIPE_WEBHOOK_SECRET` → live webhook secret
+  - `STRIPE_PRICE_ID_PLUS` → live price ID
+  - `STRIPE_PRICE_ID_PRO` → live price ID
+- Keep `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` → `pk_live_...`
+- Verify live webhook endpoint receiving events
+- Document rollback procedure if issues arise
+
+**Environment Variables Required:**
+```
+# Test Mode (development)
+STRIPE_SECRET_KEY=sk_test_51SYQ7v5pdloqz3iU...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51SYQ7v5pdloqz3iU...
+STRIPE_WEBHOOK_SECRET=whsec_... (from CLI or Dashboard)
+STRIPE_PRICE_ID_PLUS=price_1SYroR5pdloqz3iUt6OouMIa
+STRIPE_PRICE_ID_PRO=price_1SYroo5pdloqz3iUPISotOU2
+
+# Live Mode (production)
+STRIPE_SECRET_KEY=sk_live_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_... (from Dashboard live endpoint)
+STRIPE_PRICE_ID_PLUS=price_live_...
+STRIPE_PRICE_ID_PRO=price_live_...
+```
+
+**Stripe Dashboard URLs:**
+- Test Dashboard: https://dashboard.stripe.com/test
+- Webhooks: https://dashboard.stripe.com/test/webhooks
+- Products: https://dashboard.stripe.com/test/products
+- Subscriptions: https://dashboard.stripe.com/test/subscriptions
+
+**Research**: None (standard Stripe integration, well-documented)
+**Plans**: 3 plans (consolidated from original 5)
+
+Plans:
+- [x] 19-01: Local Webhook Testing Setup with Stripe CLI
+- [x] 19-02: Webhook Handler Verification & E2E Testing
+- [x] 19-03: Production Webhook Configuration & Go-Live Checklist
+
+### Phase 20: Vercel Deployment Readiness
+**Goal**: Production-ready Vercel deployment with all checks, optimizations, and best practices
+**Depends on**: Phase 16 (infrastructure setup)
+**Requirements**: DEPLOY-01, DEPLOY-02, DEPLOY-03
+
+**Success Criteria** (what must be TRUE):
+  1. Build succeeds with zero errors and zero warnings
+  2. All environment variables properly configured for preview and production
+  3. Edge runtime compatibility verified for all API routes
+  4. Bundle size analyzed and optimized (no unnecessary dependencies)
+  5. Image optimization configured (next/image, WebP, proper sizing)
+  6. Security headers configured (CSP, HSTS, X-Frame-Options)
+  7. Performance audit passes (Core Web Vitals: LCP < 2.5s, FID < 100ms, CLS < 0.1)
+  8. Error monitoring/logging configured (Vercel Analytics or Sentry)
+  9. Preview deployments working for PR branches
+  10. Production deployment checklist verified
+
+**Sub-phases:**
+
+#### 20.1: Build & Compatibility Audit
+- Run `next build` and fix all warnings/errors
+- Verify Edge runtime compatibility for API routes
+- Check for Node.js-only dependencies in Edge routes
+- Ensure all dynamic routes have proper generateStaticParams or dynamic config
+- Fix any "Dynamic server usage" warnings
+- Verify middleware works correctly
+
+#### 20.2: Environment & Configuration
+- Audit all environment variables needed for production
+- Configure Vercel environment variables:
+  - Development (local): from .env.local
+  - Preview (PR branches): from Vercel dashboard
+  - Production (main): from Vercel dashboard
+- Verify NEXT_PUBLIC_* variables are client-safe
+- Set up Vercel project settings:
+  - Node.js version: 20.x
+  - Build command: `pnpm build`
+  - Output directory: `.next`
+  - Install command: `pnpm install`
+
+#### 20.3: Performance Optimization
+- Analyze bundle size with `@next/bundle-analyzer`
+- Remove unused dependencies
+- Implement dynamic imports for heavy components
+- Configure image optimization:
+  - Use next/image for all images
+  - Set up remotePatterns for external images
+  - Ensure WebP format for screenshots
+- Enable ISR/static generation where applicable
+- Configure caching headers for static assets
+
+#### 20.4: Security & Headers
+- Configure security headers in next.config.js:
+  ```js
+  headers: [
+    { key: 'X-Frame-Options', value: 'DENY' },
+    { key: 'X-Content-Type-Options', value: 'nosniff' },
+    { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+    { key: 'Permissions-Policy', value: 'camera=(), microphone=(self)' },
+  ]
+  ```
+- Review and configure Content Security Policy
+- Ensure HTTPS-only cookies
+- Verify Supabase RLS policies are production-ready
+- Check for exposed secrets in client bundle
+
+#### 20.5: Monitoring & Deployment
+- Enable Vercel Analytics (free tier)
+- Configure error tracking (Vercel or Sentry)
+- Set up deployment notifications
+- Create production deployment checklist:
+  - [ ] All tests passing
+  - [ ] Environment variables set
+  - [ ] Domain configured
+  - [ ] SSL certificate active
+  - [ ] Webhook URLs updated
+  - [ ] Database migrations applied
+- Test preview deployment workflow
+- Verify rollback capability
+- Document deployment process in DEPLOYMENT.md
+
+**Vercel Configuration Reference:**
+
+```json
+// vercel.json (if needed)
+{
+  "buildCommand": "pnpm build",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}
+```
+
+**Research**: Minimal (standard Vercel/Next.js best practices)
+**Plans**: 5 plans (one per sub-phase)
+
+Plans:
+- [ ] 20-01: Build & Compatibility Audit
+- [ ] 20-02: Environment & Configuration Setup
+- [ ] 20-03: Performance Optimization & Bundle Analysis
+- [ ] 20-04: Security Headers & Production Hardening
+- [ ] 20-05: Monitoring, Analytics & Deployment Checklist
+
 ## Progress
 
 **Execution Order:**
@@ -319,7 +562,9 @@ Phases execute in numeric order: 15 → 16 → ...
 | 15. Template Creation UX | v1.2 | 5/5 | Complete | 2026-01-19 |
 | 16. Infrastructure Setup | v1.3 | 0/5 | Planned | - |
 | 17. Landing Page Integration | v1.2 | 2/2 | Complete | 2026-01-18 |
-| 18. Landing Page Carousel Enhancement | v1.2 | 0/? | Planned | - |
+| 18. Landing Page Carousel Enhancement | v1.2 | 1/1 | Complete | 2026-01-19 |
+| 19. Stripe Production Setup | v1.3 | 3/3 | Complete | 2026-01-19 |
+| 20. Vercel Deployment Readiness | v1.3 | 0/5 | Planned | - |
 
 ---
 *Roadmap created: 2026-01-16*
@@ -328,3 +573,5 @@ Phases execute in numeric order: 15 → 16 → ...
 *v1.3 added: 2026-01-18*
 *Phase 17 added: 2026-01-18*
 *Phase 18 added: 2026-01-19*
+*Phase 19 added: 2026-01-19 (Stripe Production Setup - from browser inspection findings)*
+*Phase 20 added: 2026-01-19 (Vercel Deployment Readiness - build checks, performance, security, monitoring)*
