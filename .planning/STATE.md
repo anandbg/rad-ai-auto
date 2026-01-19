@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v1.3 Production Infrastructure
 Phase: 20 (Vercel Deployment Readiness)
-Plan: 20-02 complete (1/4)
+Plan: 20-01, 20-02 complete (2/4)
 Status: In progress
-Last activity: 2026-01-19 — Completed 20-02-PLAN.md (Vercel Configuration & Environment Setup)
+Last activity: 2026-01-19 — Completed 20-01-PLAN.md (Build Error Fixes)
 
-Progress: [██▌-------] 25% (1/4 plans for Phase 20)
+Progress: [█████-----] 50% (2/4 plans for Phase 20)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 31
-- Average duration: 8.2 min
-- Total execution time: 4.24 hours
+- Total plans completed: 32
+- Average duration: 8.1 min
+- Total execution time: 4.28 hours
 
 **By Phase (v1.0):**
 
@@ -61,11 +61,11 @@ Progress: [██▌-------] 25% (1/4 plans for Phase 20)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 19-stripe-production-setup | 1 | 1 min | 1 min |
-| 20-vercel-deployment-readiness | 1 | 4 min | 4 min |
+| 20-vercel-deployment-readiness | 2 | 8 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 15-05 (15 min), 17-01 (10 min), 18-01 (45 min), 19-01 (1 min), 20-02 (4 min)
-- Trend: Infrastructure config plans execute quickly (config + documentation)
+- Last 5 plans: 17-01 (10 min), 18-01 (45 min), 19-01 (1 min), 20-02 (4 min), 20-01 (4 min)
+- Trend: Infrastructure plans execute quickly (config + fixes)
 
 ## Accumulated Context
 
@@ -74,6 +74,8 @@ Progress: [██▌-------] 25% (1/4 plans for Phase 20)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 20-01]: Use force-dynamic for all routes using createSupabaseServerClient (cookie access)
+- [Phase 20-01]: Wrap useSearchParams in Suspense with loading spinner fallback
 - [Phase 20-02]: Region iad1 (US East Virginia) for optimal Supabase latency
 - [Phase 20-02]: AI routes get 60s timeout, transcribe 120s, webhooks 30s
 - [Phase 20-02]: Environment scoping documented for dev/preview/prod
@@ -128,12 +130,12 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-1. **Static page generation fails** - Protected pages using auth context fail prerendering (expected for authenticated routes)
+None - build errors resolved, ready for deployment.
 
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 20-02-PLAN.md (Vercel Configuration & Environment Setup)
+Stopped at: Completed 20-01-PLAN.md (Build Error Fixes)
 Resume file: None
 
-**Vercel Config Ready:** vercel.json created with function timeouts. Environment variables documented in .env.example. Next: 20-03 (Build Validation) to verify successful Vercel build.
+**Build Passes:** All dynamic server usage and useSearchParams errors fixed. Build completes with zero errors. Ready for Plan 20-03 (Build Validation) or 20-04 (Security Review).
