@@ -1,11 +1,11 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { PageWrapper } from '@/components/motion/page-wrapper';
 import { ReportWorkspace } from '@/components/workspace/report-workspace';
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const searchParams = useSearchParams();
   const [showUnauthorizedError, setShowUnauthorizedError] = useState(false);
 
@@ -30,5 +30,13 @@ export default function DashboardPage() {
       )}
       <ReportWorkspace />
     </PageWrapper>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><span className="animate-pulse">Loading...</span></div>}>
+      <DashboardPageContent />
+    </Suspense>
   );
 }
