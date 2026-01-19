@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 // Database column to frontend key mapping
 interface DbPreferences {
   user_id: string;

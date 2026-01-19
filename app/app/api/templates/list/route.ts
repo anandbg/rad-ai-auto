@@ -1,70 +1,90 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { MOCK_AUTH_COOKIE, getMockUser } from '@/lib/auth/mock-auth';
-import { SESSION_TIMESTAMP_COOKIE, isSessionExpired, parseSessionTimestamp } from '@/lib/auth/session';
+import { NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-// Mock templates for API response
-const mockTemplates = [
-  {
-    id: 'tpl-001',
-    name: 'Chest X-Ray Standard',
-    modality: 'X-Ray',
-    bodyPart: 'Chest',
-    description: 'Standard chest X-ray report template with PA and lateral views',
-    isGlobal: true,
-    createdAt: '2024-01-10T10:00:00Z',
-    updatedAt: '2024-01-10T10:00:00Z',
-  },
-  {
-    id: 'tpl-002',
-    name: 'CT Abdomen',
-    modality: 'CT',
-    bodyPart: 'Abdomen',
-    description: 'CT scan of abdomen and pelvis with and without contrast',
-    isGlobal: true,
-    createdAt: '2024-01-12T14:30:00Z',
-    updatedAt: '2024-01-12T14:30:00Z',
-  },
-];
+export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
-  // Check authentication
-  const cookieStore = await cookies();
-  const authCookie = cookieStore.get(MOCK_AUTH_COOKIE);
-  const user = getMockUser(authCookie?.value);
+export async function GET() {
+  try {
+    // Check authentication using Supabase
+    const supabase = await createSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json(
-      {
-        error: 'Unauthorized',
-        message: 'Authentication required. Please sign in to access this resource.'
+    if (authError || !user) {
+      return NextResponse.json(
+        {
+          error: 'Unauthorized',
+          message: 'Authentication required. Please sign in to access this resource.'
+        },
+        { status: 401 }
+      );
+    }
+
+    // Fetch personal templates for this user
+    const { data: personalTemplates, error: personalError } = await supabase
+      .from('templates_personal')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (personalError) {
+      console.error('Error fetching personal templates:', personalError);
+    }
+
+    // Fetch published global templates
+    const { data: globalTemplates, error: globalError } = await supabase
+      .from('templates_global')
+      .select('*')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false });
+
+    if (globalError) {
+      console.error('Error fetching global templates:', globalError);
+    }
+
+    // Get user profile for role info
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    // Format templates for response
+    const formattedTemplates = [
+      ...(personalTemplates || []).map(t => ({
+        id: t.id,
+        name: t.name,
+        modality: t.modality,
+        bodyPart: t.body_part,
+        description: t.description,
+        isGlobal: false,
+        createdAt: t.created_at,
+        updatedAt: t.updated_at,
+      })),
+      ...(globalTemplates || []).map(t => ({
+        id: t.id,
+        name: t.name,
+        modality: t.modality,
+        bodyPart: t.body_part,
+        description: t.description,
+        isGlobal: true,
+        createdAt: t.created_at,
+        updatedAt: t.updated_at,
+      })),
+    ];
+
+    return NextResponse.json({
+      success: true,
+      data: formattedTemplates,
+      user: {
+        id: user.id,
+        role: profile?.role || 'radiologist',
       },
-      { status: 401 }
+    });
+  } catch (error) {
+    console.error('Error in templates list API:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
-
-  // Check session expiration
-  const sessionTimestampCookie = cookieStore.get(SESSION_TIMESTAMP_COOKIE);
-  const sessionTimestamp = parseSessionTimestamp(sessionTimestampCookie?.value);
-
-  if (isSessionExpired(sessionTimestamp)) {
-    return NextResponse.json(
-      {
-        error: 'Session Expired',
-        message: 'Your session has expired due to inactivity. Please sign in again.',
-        code: 'SESSION_EXPIRED'
-      },
-      { status: 401 }
-    );
-  }
-
-  // Return templates for authenticated users
-  return NextResponse.json({
-    success: true,
-    data: mockTemplates,
-    user: {
-      id: user.id,
-      role: user.role,
-    },
-  });
 }

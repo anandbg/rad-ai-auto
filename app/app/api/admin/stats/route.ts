@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 interface AdminStats {
   users: {
     total: number;

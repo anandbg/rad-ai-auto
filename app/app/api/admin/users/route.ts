@@ -1,59 +1,89 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { MOCK_AUTH_COOKIE, getMockUser } from '@/lib/auth/mock-auth';
+import { NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-// Mock users data for admin view
-const mockUsers = [
-  {
-    id: 'mock-user-radiologist-123',
-    email: 'radiologist@test.com',
-    name: 'Dr. Test Radiologist',
-    role: 'radiologist',
-    createdAt: '2024-01-01T10:00:00Z',
-    lastActive: '2024-01-15T14:30:00Z',
-  },
-  {
-    id: 'mock-user-admin-456',
-    email: 'admin@test.com',
-    name: 'Admin User',
-    role: 'admin',
-    createdAt: '2024-01-01T09:00:00Z',
-    lastActive: '2024-01-15T15:00:00Z',
-  },
-];
+export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
-  // Check authentication
-  const cookieStore = await cookies();
-  const authCookie = cookieStore.get(MOCK_AUTH_COOKIE);
-  const user = getMockUser(authCookie?.value);
+export async function GET() {
+  try {
+    // Check authentication using Supabase
+    const supabase = await createSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  // Return 401 if not authenticated
-  if (!user) {
+    // Return 401 if not authenticated
+    if (authError || !user) {
+      return NextResponse.json(
+        {
+          error: 'Unauthorized',
+          message: 'Authentication required. Please sign in to access this resource.'
+        },
+        { status: 401 }
+      );
+    }
+
+    // Get the current user's profile to check role
+    const { data: currentProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profileError || !currentProfile) {
+      return NextResponse.json(
+        {
+          error: 'Profile not found',
+          message: 'User profile could not be loaded.'
+        },
+        { status: 404 }
+      );
+    }
+
+    // Return 403 if user is not an admin
+    if (currentProfile.role !== 'admin') {
+      return NextResponse.json(
+        {
+          error: 'Forbidden',
+          message: 'Access denied. Admin role required to access this resource.'
+        },
+        { status: 403 }
+      );
+    }
+
+    // Fetch all users from profiles table
+    const { data: users, error: usersError } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (usersError) {
+      console.error('Error fetching users:', usersError);
+      return NextResponse.json(
+        { error: 'Failed to fetch users' },
+        { status: 500 }
+      );
+    }
+
+    // Format users for response
+    const formattedUsers = (users || []).map(u => ({
+      id: u.user_id,
+      email: u.email || '',
+      name: u.name || '',
+      role: u.role || 'radiologist',
+      specialty: u.specialty,
+      institution: u.institution,
+      createdAt: u.created_at,
+      lastActive: u.updated_at,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: formattedUsers,
+      totalUsers: formattedUsers.length,
+    });
+  } catch (error) {
+    console.error('Error in admin users API:', error);
     return NextResponse.json(
-      {
-        error: 'Unauthorized',
-        message: 'Authentication required. Please sign in to access this resource.'
-      },
-      { status: 401 }
+      { error: 'Internal server error' },
+      { status: 500 }
     );
   }
-
-  // Return 403 if user is not an admin
-  if (user.role !== 'admin') {
-    return NextResponse.json(
-      {
-        error: 'Forbidden',
-        message: 'Access denied. Admin role required to access this resource.'
-      },
-      { status: 403 }
-    );
-  }
-
-  // Return users list for admin users
-  return NextResponse.json({
-    success: true,
-    data: mockUsers,
-    totalUsers: mockUsers.length,
-  });
 }
