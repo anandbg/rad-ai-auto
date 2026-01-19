@@ -76,7 +76,7 @@ export function CreationPathwayModal({
         <DialogHeader>
           <DialogTitle>Create New Template</DialogTitle>
           <DialogDescription>
-            Choose how you'd like to create your template
+            Choose how you&apos;d like to create your template
           </DialogDescription>
         </DialogHeader>
 
