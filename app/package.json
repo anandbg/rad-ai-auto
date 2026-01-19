@@ -14,7 +14,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "capture-screenshots": "npx tsx scripts/capture-screenshots.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.12",
