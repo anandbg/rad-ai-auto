@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ interface Template {
   content?: string;
 }
 
-export default function TemplatesPage() {
+function TemplatesPageContent() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { preferences, updatePreference } = usePreferences();
@@ -854,5 +854,13 @@ export default function TemplatesPage() {
         </Dialog>
       </div>
     </PageWrapper>
+  );
+}
+
+export default function TemplatesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><span className="animate-pulse">Loading...</span></div>}>
+      <TemplatesPageContent />
+    </Suspense>
   );
 }

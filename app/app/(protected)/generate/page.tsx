@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from 'docx';
 import { saveAs } from 'file-saver';
@@ -70,7 +70,7 @@ function clearDraft(userId: string | undefined): void {
   localStorage.removeItem(getDraftKey(userId));
 }
 
-export default function GeneratePage() {
+function GeneratePageContent() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { preferences } = usePreferences();
@@ -1431,5 +1431,13 @@ export default function GeneratePage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function GeneratePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><span className="animate-pulse">Loading...</span></div>}>
+      <GeneratePageContent />
+    </Suspense>
   );
 }
