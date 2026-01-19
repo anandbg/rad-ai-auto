@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
+import { Panel, Group, Separator } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast';
 import { useCsrf } from '@/lib/hooks/use-csrf';
+import { TemplatePreview } from '@/components/template-builder/template-preview';
 
 // Zod schema for template validation
 const templateSectionSchema = z.object({
@@ -386,9 +388,9 @@ export default function NewTemplatePage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div className="flex h-[calc(100vh-64px)] flex-col">
       {/* Breadcrumb */}
-      <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
+      <div className="flex items-center gap-2 border-b border-border bg-surface px-6 py-3 text-sm text-text-secondary">
         <Link href="/templates" className="hover:text-text-primary">
           Templates
         </Link>
@@ -396,34 +398,39 @@ export default function NewTemplatePage() {
         <span className="text-text-primary">New Template</span>
       </div>
 
-      {/* Draft Restoration Notice */}
-      {draftRestored && (
-        <div
-          className="mb-4 flex items-center justify-between rounded-lg border border-info/30 bg-info/10 p-4"
-          data-testid="draft-restored-notice"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-info text-lg">📝</span>
-            <div>
-              <p className="text-sm font-medium text-text-primary">Draft Restored</p>
-              <p className="text-xs text-text-secondary">
-                Your previous work was saved {draftSavedAt ? new Date(draftSavedAt).toLocaleString() : 'recently'}
-              </p>
-            </div>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleClearDraft}
-            data-testid="clear-draft-button"
-          >
-            Clear Draft
-          </Button>
-        </div>
-      )}
+      {/* Split-pane layout */}
+      <Group id="template-builder-layout" orientation="horizontal" className="flex-1">
+        {/* Left panel: Editor form */}
+        <Panel defaultSize={60} minSize={40}>
+          <div className="h-full overflow-y-auto p-6">
+            {/* Draft Restoration Notice */}
+            {draftRestored && (
+              <div
+                className="mb-4 flex items-center justify-between rounded-lg border border-info/30 bg-info/10 p-4"
+                data-testid="draft-restored-notice"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-info text-lg">📝</span>
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">Draft Restored</p>
+                    <p className="text-xs text-text-secondary">
+                      Your previous work was saved {draftSavedAt ? new Date(draftSavedAt).toLocaleString() : 'recently'}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearDraft}
+                  data-testid="clear-draft-button"
+                >
+                  Clear Draft
+                </Button>
+              </div>
+            )}
 
-      <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
         {/* CSRF Token */}
         <CsrfInput />
         <Card>
@@ -706,6 +713,23 @@ export default function NewTemplatePage() {
           </CardFooter>
         </Card>
       </form>
+          </div>
+        </Panel>
+
+        {/* Resize handle */}
+        <Separator className="w-1.5 bg-border hover:bg-brand transition-colors cursor-col-resize" />
+
+        {/* Right panel: Preview */}
+        <Panel defaultSize={40} minSize={25}>
+          <div className="h-full overflow-y-auto bg-surface-muted">
+            <TemplatePreview
+              name={formData.name}
+              description={formData.description}
+              sections={sections}
+            />
+          </div>
+        </Panel>
+      </Group>
     </div>
   );
 }
