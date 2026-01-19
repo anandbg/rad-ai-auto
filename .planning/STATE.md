@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v1.2 Template Experience — IN PROGRESS
 Phase: 15 (Template Creation UX Overhaul) — IN PROGRESS
-Plan: 03 of 06
+Plan: 01 of 06
 Status: In progress
-Last activity: 2026-01-19 — Completed 15-03-PLAN.md (Template preview and creation pathways)
+Last activity: 2026-01-19 — Completed 15-01-PLAN.md (Drag-drop foundation with @dnd-kit)
 
-Progress: [█████░░░░░] 50% (3/6 plans for Phase 15)
+Progress: [██░░░░░░░░] 17% (1/6 plans for Phase 15)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
-- Average duration: 7.3 min
-- Total execution time: 3.0 hours
+- Total plans completed: 21
+- Average duration: 7.9 min
+- Total execution time: 2.76 hours
 
 **By Phase (v1.0):**
 
@@ -52,12 +52,12 @@ Progress: [█████░░░░░] 50% (3/6 plans for Phase 15)
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 15-template-creation-ux-overhaul | 3 | 6 min | 2 min |
+| 15-template-creation-ux-overhaul | 1 | 3 min | 3 min |
 | 17-landing-page-integration | 2 | 21 min | 10.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 14-01 (35 min), 17-01 (6 min), 17-02 (15 min), 15-01 (2 min), 15-02 (2 min), 15-03 (2 min)
-- Trend: Phase 15 progressing rapidly - foundational components very fast
+- Last 5 plans: 13-01 (8 min), 14-01 (35 min), 17-01 (6 min), 17-02 (15 min), 15-01 (3 min)
+- Trend: Phase 15 starting - foundational drag-drop components quick to implement
 
 ## Accumulated Context
 
@@ -66,6 +66,9 @@ Progress: [█████░░░░░] 50% (3/6 plans for Phase 15)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 15-01]: Used @dnd-kit over react-beautiful-dnd (deprecated)
+- [Phase 15-01]: Implemented accessible drag-drop with keyboard support and screen reader announcements
+- [Phase 15-01]: Applied CSS.Transform for smooth drag animations
 - [Phase 17-02]: Root page displays landing page for public, redirects authenticated users via middleware
 - [Phase 17-02]: Middleware handles /dashboard redirect for authenticated users
 - [Phase 17-01]: Use modern blue-purple brand colors for landing page (distinct from app burgundy)
@@ -102,7 +105,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 15-03-PLAN.md (Template preview and creation pathway modal components)
+Stopped at: Completed 15-01-PLAN.md (Drag-drop foundation with @dnd-kit)
 Resume file: None
 
-**Phase 15 Progress:** 3 of 6 plans complete. Foundational components created (sortable sections, template preview, creation pathways). Next: Split-pane layout integration.
+**Phase 15 Progress:** 1 of 6 plans complete. Drag-drop foundation established with @dnd-kit. SortableSection and SectionList components ready for integration. Next: Template builder page integration.
