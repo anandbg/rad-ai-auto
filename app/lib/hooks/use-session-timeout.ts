@@ -4,6 +4,10 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { SESSION_TIMEOUT_MS, SESSION_TIMESTAMP_COOKIE } from '@/lib/auth/session';
 
+// Only log in development
+const isDev = process.env.NODE_ENV === 'development';
+const log = isDev ? (...args: unknown[]) => console.log('[Session]', ...args) : () => {};
+
 // Activity events to track
 const ACTIVITY_EVENTS = [
   'mousedown',
@@ -47,7 +51,7 @@ export function useSessionTimeout() {
 
   // Handle session timeout
   const handleTimeout = useCallback(() => {
-    console.log('[Session] Session expired due to inactivity');
+    log('Session expired due to inactivity');
     // Clear the last activity timestamp
     localStorage.removeItem(LAST_ACTIVITY_KEY);
     // Sign out the user
@@ -76,7 +80,7 @@ export function useSessionTimeout() {
     const warningTime = SESSION_TIMEOUT_MS - 5 * 60 * 1000;
     if (warningTime > 0) {
       warningRef.current = setTimeout(() => {
-        console.log('[Session] Warning: Session will expire in 5 minutes');
+        log('Warning: Session will expire in 5 minutes');
         // Could dispatch a custom event for UI to show warning
         window.dispatchEvent(new CustomEvent('session-warning', {
           detail: { minutesRemaining: 5 }

@@ -109,8 +109,8 @@ export default function SettingsPage() {
       ];
 
       setTemplates(formattedTemplates);
-    } catch (error) {
-      console.error('Error loading templates:', error);
+    } catch {
+      // Template loading failed - continue with empty list
     } finally {
       setTemplatesLoading(false);
     }
@@ -243,8 +243,6 @@ export default function SettingsPage() {
       }
       keysToDelete.forEach(key => localStorage.removeItem(key));
 
-      console.log(`[CASCADE DELETE] Deleted data for user ${user.id}`);
-
       // Show success message
       showToast('Account and all data deleted successfully', 'success');
 
@@ -254,8 +252,7 @@ export default function SettingsPage() {
 
       // Sign out after deletion
       await signOut();
-    } catch (error) {
-      console.error('Error deleting account:', error);
+    } catch {
       showToast('Failed to delete account', 'error');
     } finally {
       setIsDeleting(false);

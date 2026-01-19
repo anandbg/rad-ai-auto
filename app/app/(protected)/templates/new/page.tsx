@@ -69,7 +69,6 @@ function getDraftKey(userId: string | undefined): string {
 function saveDraft(draft: FormDraft, userId: string | undefined): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(getDraftKey(userId), JSON.stringify(draft));
-  console.log('[Form Draft] Saved draft at', draft.savedAt);
 }
 
 // Load draft from localStorage
@@ -88,7 +87,6 @@ function loadDraft(userId: string | undefined): FormDraft | null {
 function clearDraft(userId: string | undefined): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(getDraftKey(userId));
-  console.log('[Form Draft] Draft cleared');
 }
 
 export default function NewTemplatePage() {
@@ -139,7 +137,6 @@ export default function NewTemplatePage() {
         setSections(draft.sections);
         setDraftRestored(true);
         setDraftSavedAt(draft.savedAt);
-        console.log('[Form Draft] Restored draft from', draft.savedAt);
       }
     }
   }, [user?.id]);
@@ -362,7 +359,6 @@ export default function NewTemplatePage() {
 
     if (!validateToken(csrfToken)) {
       showToast('Security validation failed. Please refresh and try again.', 'error');
-      console.error('[CSRF] Token validation failed on form submission');
       return;
     }
 
@@ -406,7 +402,6 @@ export default function NewTemplatePage() {
       // Redirect to templates list
       router.push('/templates');
     } catch (error) {
-      console.error('Error creating template:', error);
       showToast(error instanceof Error ? error.message : 'Failed to create template', 'error');
     } finally {
       setIsSubmitting(false);

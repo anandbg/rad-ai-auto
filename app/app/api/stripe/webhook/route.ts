@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
+// Conditional logging - only log in development
+const isDev = process.env.NODE_ENV === 'development';
+const log = isDev ? (...args: unknown[]) => console.log('[Stripe Webhook]', ...args) : () => {};
+const logError = (...args: unknown[]) => console.error('[Stripe Webhook]', ...args);
+
 // Helper function to determine plan from price ID
 function getPlanFromPriceId(priceId: string | undefined): 'free' | 'plus' | 'pro' {
   if (priceId === process.env.STRIPE_PRICE_ID_PLUS) return 'plus';
@@ -48,7 +53,7 @@ export async function POST(request: NextRequest) {
   // SECURITY: Always validate signature is present FIRST (before any other checks)
   // This prevents requests without signatures from being processed regardless of configuration
   if (!signature) {
-    console.error('[Stripe Webhook] Missing stripe-signature header');
+    logError('Missing stripe-signature header');
     return NextResponse.json(
       { error: 'Missing stripe-signature header' },
       { status: 400 }
@@ -57,7 +62,7 @@ export async function POST(request: NextRequest) {
 
   // Check if webhook secret is configured
   if (!webhookSecret || webhookSecret === 'your_stripe_webhook_secret') {
-    console.error('[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured');
+    logError('STRIPE_WEBHOOK_SECRET is not configured');
     return NextResponse.json(
       { error: 'Webhook secret not configured' },
       { status: 500 }
@@ -66,7 +71,7 @@ export async function POST(request: NextRequest) {
 
   // Check if Stripe is properly initialized
   if (!stripe) {
-    console.error('[Stripe Webhook] Stripe client not initialized');
+    logError('Stripe client not initialized');
     return NextResponse.json(
       { error: 'Stripe not configured' },
       { status: 500 }
@@ -78,7 +83,7 @@ export async function POST(request: NextRequest) {
   try {
     // Verify the webhook signature
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    console.log(`[Stripe Webhook] Verified event: ${event.type} (${event.id})`);
+    log(` Verified event: ${event.type} (${event.id})`);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     console.error(`[Stripe Webhook] Signature verification failed: ${errorMessage}`);
@@ -93,13 +98,13 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log(`[Stripe Webhook] Checkout completed: ${session.id}`);
+        log(` Checkout completed: ${session.id}`);
 
         const customerId = session.customer as string;
         const userId = session.metadata?.user_id;
 
         if (!userId) {
-          console.error('[Stripe Webhook] No user_id in checkout metadata');
+          logError('No user_id in checkout metadata');
           break;
         }
 
@@ -129,12 +134,12 @@ export async function POST(request: NextRequest) {
           });
 
           if (error) {
-            console.error('[Stripe Webhook] Error upserting subscription:', error);
+            logError('Error upserting subscription:', error);
           } else {
-            console.log(`[Stripe Webhook] Activated ${plan} subscription for user ${userId}`);
+            log(` Activated ${plan} subscription for user ${userId}`);
           }
         } catch (err) {
-          console.error('[Stripe Webhook] Error processing checkout.session.completed:', err);
+          logError('Error processing checkout.session.completed:', err);
         }
         break;
       }
@@ -142,7 +147,7 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-        console.log(`[Stripe Webhook] Subscription ${event.type}: ${subscription.id}`);
+        log(` Subscription ${event.type}: ${subscription.id}`);
 
         try {
           const customerId = subscription.customer as string;
@@ -166,19 +171,19 @@ export async function POST(request: NextRequest) {
             .eq('stripe_customer_id', customerId);
 
           if (error) {
-            console.error('[Stripe Webhook] Error updating subscription:', error);
+            logError('Error updating subscription:', error);
           } else {
-            console.log(`[Stripe Webhook] Updated subscription to ${plan}/${status} for customer ${customerId}`);
+            log(` Updated subscription to ${plan}/${status} for customer ${customerId}`);
           }
         } catch (err) {
-          console.error('[Stripe Webhook] Error processing subscription event:', err);
+          logError('Error processing subscription event:', err);
         }
         break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
-        console.log(`[Stripe Webhook] Subscription canceled: ${subscription.id}`);
+        log(` Subscription canceled: ${subscription.id}`);
 
         try {
           const customerId = subscription.customer as string;
@@ -192,26 +197,26 @@ export async function POST(request: NextRequest) {
             .eq('stripe_customer_id', customerId);
 
           if (error) {
-            console.error('[Stripe Webhook] Error downgrading subscription:', error);
+            logError('Error downgrading subscription:', error);
           } else {
-            console.log(`[Stripe Webhook] Downgraded to free plan for customer ${customerId}`);
+            log(` Downgraded to free plan for customer ${customerId}`);
           }
         } catch (err) {
-          console.error('[Stripe Webhook] Error processing subscription deletion:', err);
+          logError('Error processing subscription deletion:', err);
         }
         break;
       }
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
-        console.log(`[Stripe Webhook] Payment succeeded: ${invoice.id}`);
+        log(` Payment succeeded: ${invoice.id}`);
         // TODO: Record payment, reset monthly credits
         break;
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        console.log(`[Stripe Webhook] Payment failed: ${invoice.id}`);
+        log(` Payment failed: ${invoice.id}`);
 
         try {
           const customerId = invoice.customer as string;
@@ -222,18 +227,18 @@ export async function POST(request: NextRequest) {
             .eq('stripe_customer_id', customerId);
 
           if (error) {
-            console.error('[Stripe Webhook] Error marking subscription as past_due:', error);
+            logError('Error marking subscription as past_due:', error);
           } else {
-            console.log(`[Stripe Webhook] Marked subscription as past_due for customer ${customerId}`);
+            log(` Marked subscription as past_due for customer ${customerId}`);
           }
         } catch (err) {
-          console.error('[Stripe Webhook] Error processing payment failure:', err);
+          logError('Error processing payment failure:', err);
         }
         break;
       }
 
       default:
-        console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+        log(` Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true, event_type: event.type });

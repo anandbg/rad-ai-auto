@@ -169,10 +169,6 @@ export default function InstitutionDetailPage() {
     setInviteEmail('');
     setShowInviteDialog(false);
 
-    // Log the invite email to console (development mode)
-    console.log(`[Institution Invite] Email invite sent to: ${newInvite.email}`);
-    console.log(`[Institution Invite] Invite link: ${window.location.origin}/invite/${newInvite.id}`);
-
     showToast(`Invitation sent to ${newInvite.email}!`, 'success');
   };
 

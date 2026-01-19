@@ -10,6 +10,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
+// Only log in development
+const isDev = process.env.NODE_ENV === 'development';
+const log = isDev ? (...args: unknown[]) => console.log('[Institutions]', ...args) : () => {};
+const logError = (...args: unknown[]) => console.error('[Institutions]', ...args);
+
 // Institution interface
 interface Institution {
   id: string;
@@ -133,9 +138,9 @@ export default function InstitutionsPage() {
           (member: { institutionId: string }) => member.institutionId !== deleteTarget.id
         );
         localStorage.setItem(INSTITUTION_MEMBERS_KEY, JSON.stringify(remainingMembers));
-        console.log(`[CASCADE DELETE] Removed ${allMembers.length - remainingMembers.length} member(s) from institution ${deleteTarget.id}`);
+        log(`Cascade removed ${allMembers.length - remainingMembers.length} member(s) from institution ${deleteTarget.id}`);
       } catch {
-        console.error('Failed to cascade delete institution members');
+        logError('Failed to cascade delete institution members');
       }
     }
 
@@ -148,9 +153,9 @@ export default function InstitutionsPage() {
           (template: { institutionId: string }) => template.institutionId !== deleteTarget.id
         );
         localStorage.setItem(INSTITUTION_TEMPLATES_KEY, JSON.stringify(remainingTemplates));
-        console.log(`[CASCADE DELETE] Removed ${allTemplates.length - remainingTemplates.length} template(s) from institution ${deleteTarget.id}`);
+        log(`Cascade removed ${allTemplates.length - remainingTemplates.length} template(s) from institution ${deleteTarget.id}`);
       } catch {
-        console.error('Failed to cascade delete institution templates');
+        logError('Failed to cascade delete institution templates');
       }
     }
 

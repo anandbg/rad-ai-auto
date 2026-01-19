@@ -99,9 +99,6 @@ function saveTemplateVersion(template: Template, userId?: string): TemplateVersi
   allVersions.push(newVersion);
   localStorage.setItem(TEMPLATE_VERSIONS_KEY, JSON.stringify(allVersions));
 
-  // Log for verification
-  console.log(`[Template Versions API] Created version ${newVersion.version} for template ${template.id}`);
-
   return newVersion;
 }
 
@@ -259,8 +256,7 @@ export default function TemplateDetailPage() {
         // Load version history for this template (local-only for now)
         const templateVersions = getTemplateVersions(id);
         setVersions(templateVersions);
-      } catch (err) {
-        console.error('Error loading template:', err);
+      } catch {
         setError('Failed to load template');
       } finally {
         setIsLoading(false);
@@ -346,7 +342,6 @@ export default function TemplateDetailPage() {
     } catch (error) {
       // ROLLBACK: Revert to original state
       setTemplate(previousTemplate);
-      console.error('Error saving template:', error);
       showToast(error instanceof Error ? error.message : 'Failed to save template', 'error');
     } finally {
       setIsSaving(false);
@@ -487,7 +482,6 @@ export default function TemplateDetailPage() {
 
       showToast(`Template rolled back to Version ${rollbackVersion.version} successfully!`, 'success');
     } catch (error) {
-      console.error('Error rolling back template:', error);
       showToast(error instanceof Error ? error.message : 'Failed to rollback template', 'error');
       setShowRollbackConfirm(false);
       setRollbackVersion(null);
@@ -573,7 +567,6 @@ export default function TemplateDetailPage() {
       // Redirect to the cloned template
       router.push(`/templates/${clonedTemplate.id}`);
     } catch (error) {
-      console.error('Error cloning template:', error);
       showToast(error instanceof Error ? error.message : 'Failed to clone template', 'error');
     } finally {
       setIsCloning(false);

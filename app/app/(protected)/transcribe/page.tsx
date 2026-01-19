@@ -303,7 +303,6 @@ export default function TranscribePage() {
         );
         if (contextMatch) {
           replacement = contextMatch.text;
-          console.log(`[Smart Macro] "${macro.name}" expanded with ${currentBodyPart} context: "${replacement}"`);
         }
       }
 
@@ -361,9 +360,8 @@ export default function TranscribePage() {
       };
 
       mediaRecorder.start(100); // Collect data every 100ms
-    } catch (err) {
-      console.log('Microphone access not available, using simulated recording');
-      // Continue without actual recording - will generate sample audio on stop
+    } catch {
+      // Microphone access not available - will show error when stopping
     }
   }, [audioUrl]);
 
@@ -493,7 +491,6 @@ export default function TranscribePage() {
         throw new Error(result.message || 'Failed to transcribe audio');
       }
     } catch (error) {
-      console.error('Transcription error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Transcription service temporarily unavailable. Please try again.';
       setTranscriptionError(errorMsg);
       showToast(errorMsg, 'error');
@@ -570,7 +567,6 @@ export default function TranscribePage() {
         throw new Error(result.message || 'Failed to transcribe audio');
       }
     } catch (error) {
-      console.error('Transcription error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Transcription service temporarily unavailable. Please try again.';
       setTranscriptionError(errorMsg);
       showToast(errorMsg, 'error');
@@ -612,7 +608,6 @@ export default function TranscribePage() {
         throw new Error(result.message || 'Failed to transcribe audio');
       }
     } catch (error) {
-      console.error('Transcription retry error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Transcription service temporarily unavailable. Please try again.';
       setTranscriptionError(errorMsg);
       showToast(errorMsg, 'error');

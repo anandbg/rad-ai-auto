@@ -1,5 +1,10 @@
 // IndexedDB utility for offline draft storage
 
+// Only log in development
+const isDev = process.env.NODE_ENV === 'development';
+const log = isDev ? (...args: unknown[]) => console.log('[IndexedDB]', ...args) : () => {};
+const logError = (...args: unknown[]) => console.error('[IndexedDB]', ...args);
+
 const DB_NAME = 'ai-radiologist-drafts';
 const DB_VERSION = 1;
 const STORE_NAME = 'drafts';
@@ -23,7 +28,7 @@ export async function initDB(): Promise<IDBDatabase> {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
-      console.error('Failed to open IndexedDB:', request.error);
+      logError('Failed to open IndexedDB:', request.error);
       reject(request.error);
     };
 
@@ -63,12 +68,12 @@ export async function saveDraft(draft: Draft): Promise<void> {
     const request = store.put(draftToSave);
 
     request.onerror = () => {
-      console.error('Failed to save draft:', request.error);
+      logError('Failed to save draft:', request.error);
       reject(request.error);
     };
 
     request.onsuccess = () => {
-      console.log('[IndexedDB] Draft saved:', draft.id);
+      log('Draft saved:', draft.id);
       resolve();
     };
   });
@@ -84,7 +89,7 @@ export async function getDraft(id: string): Promise<Draft | null> {
     const request = store.get(id);
 
     request.onerror = () => {
-      console.error('Failed to get draft:', request.error);
+      logError('Failed to get draft:', request.error);
       reject(request.error);
     };
 
@@ -105,7 +110,7 @@ export async function getDraftsByUser(userId: string): Promise<Draft[]> {
     const request = index.getAll(userId);
 
     request.onerror = () => {
-      console.error('Failed to get drafts:', request.error);
+      logError('Failed to get drafts:', request.error);
       reject(request.error);
     };
 
@@ -131,12 +136,12 @@ export async function deleteDraft(id: string): Promise<void> {
     const request = store.delete(id);
 
     request.onerror = () => {
-      console.error('Failed to delete draft:', request.error);
+      logError('Failed to delete draft:', request.error);
       reject(request.error);
     };
 
     request.onsuccess = () => {
-      console.log('[IndexedDB] Draft deleted:', id);
+      log('Draft deleted:', id);
       resolve();
     };
   });
