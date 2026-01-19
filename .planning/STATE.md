@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-17)
 
 Milestone: v1.2 Template Experience — IN PROGRESS
 Phase: 15 (Template Creation UX Overhaul) — IN PROGRESS
-Plan: 04 of 06
+Plan: 05 of 06
 Status: In progress
-Last activity: 2026-01-19 — Completed 15-04-PLAN.md (Template builder page integration)
+Last activity: 2026-01-19 — Completed 15-05-PLAN.md (AI Flow Wiring + Verification)
 
-Progress: [████░░░░░░] 50% (3/6 plans for Phase 15)
+Progress: [██████░░░░] 67% (4/6 plans for Phase 15)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
-- Average duration: 7.3 min
-- Total execution time: 2.88 hours
+- Total plans completed: 24
+- Average duration: 7.6 min
+- Total execution time: 3.13 hours
 
 **By Phase (v1.0):**
 
@@ -52,12 +52,12 @@ Progress: [████░░░░░░] 50% (3/6 plans for Phase 15)
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 15-template-creation-ux-overhaul | 3 | 11 min | 3.7 min |
+| 15-template-creation-ux-overhaul | 4 | 26 min | 6.5 min |
 | 17-landing-page-integration | 2 | 21 min | 10.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 17-01 (6 min), 17-02 (15 min), 15-01 (3 min), 15-02 (3 min), 15-04 (5 min)
-- Trend: Phase 15 integration work efficient - component composition pattern working well
+- Last 5 plans: 17-02 (15 min), 15-01 (3 min), 15-02 (3 min), 15-04 (5 min), 15-05 (15 min)
+- Trend: Phase 15 average increased due to human verification checkpoint in 15-05, but overall efficient
 
 ## Accumulated Context
 
@@ -66,6 +66,8 @@ Progress: [████░░░░░░] 50% (3/6 plans for Phase 15)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 15-05]: Use window.location.href instead of router.push for clone pathway to ensure query parameters are preserved
+- [Phase 15-05]: Add explicit y: '0%' to dialog animation variants to prevent positioning flash during animation
 - [Phase 15-04]: Use Group/Panel/Separator from react-resizable-panels (correct API names)
 - [Phase 15-04]: Show pathway modal on mount for guided creation flow
 - [Phase 15-04]: Import shared schema from template-schema.ts (no duplication)
@@ -112,7 +114,7 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 15-04-PLAN.md (Template builder page integration)
+Stopped at: Completed 15-05-PLAN.md (AI Flow Wiring + Verification)
 Resume file: None
 
-**Phase 15 Progress:** 3 of 6 plans complete (50%). Template builder page now features split-pane layout with live preview, drag-drop sections, and pathway-based creation flow. Next: AI-assisted template generation flow (Plan 15-05).
+**Phase 15 Progress:** 4 of 6 plans complete (67%). All 4 template creation pathways now functional (manual, AI-assisted, clone, import). AI generation dialog allows describing templates in natural language. Fixed navigation and modal positioning issues. Next: Template validation flow (Plan 15-06).
