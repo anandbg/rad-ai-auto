@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Milestone: v1.4 Legal Compliance
-Phase: 22 of 26 (Sign-up Acknowledgment)
-Plan: 2 of 2 complete
+Phase: 23 of 26 (Disclaimer Banner)
+Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-20 — Completed 22-02-PLAN.md (First-Use Acknowledgment Modal)
+Last activity: 2026-01-20 — Completed 23-01-PLAN.md (Disclaimer Banner)
 
-Progress: [█████████████████████░░] 91% (v1.0-v1.3 complete, v1.4 in progress)
+Progress: [█████████████████████░░] 93% (v1.0-v1.3 complete, v1.4 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 40
-- Average duration: 7.5 min
-- Total execution time: 5.01 hours
+- Total plans completed: 41
+- Average duration: 7.4 min
+- Total execution time: 5.03 hours
 
 **By Phase (v1.0):**
 
@@ -69,10 +69,11 @@ Progress: [█████████████████████░░
 |-------|-------|-------|----------|
 | 21-legal-documents | 1 | 8 min | 8 min |
 | 22-sign-up-acknowledgment | 2 | 17 min | 8.5 min |
+| 23-disclaimer-banner | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 20-05 (8 min), 21-01 (8 min), 22-01 (2 min), 22-02 (15 min)
-- Trend: Modal with checkpoint verification took longer due to human interaction
+- Last 5 plans: 21-01 (8 min), 22-01 (2 min), 22-02 (15 min), 23-01 (2 min)
+- Trend: Banner implementation was straightforward with existing layout patterns
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Progress: [█████████████████████░░
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 23-01]: Use flex column layout with banner at top, AppShell in flex-1 container
+- [Phase 23-01]: Change AppShell from h-screen to h-full (parent controls height)
+- [Phase 23-01]: Use role=alert with aria-live=polite for accessibility
 - [Phase 22-02]: Build non-dismissible modal by intercepting Escape and outside clicks
 - [Phase 22-02]: Fail open on profile query errors (UX-friendly, not security gate)
 - [Phase 22-02]: Query profile in server component layout, pass to client modal
@@ -162,18 +166,18 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None - Phase 22 complete. Sign-up gate operational.
+None - Phase 23 complete. Disclaimer banner operational on all authenticated pages.
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 22-02-PLAN.md (First-Use Acknowledgment Modal)
+Stopped at: Completed 23-01-PLAN.md (Disclaimer Banner)
 Resume file: None
 
 **v1.4 Legal Compliance PROGRESS (2026-01-20):**
 - Phase 21 (Legal Documents): COMPLETE - Terms, Privacy, Footer
 - Phase 22 (Sign-up Acknowledgment): COMPLETE - Sign-up checkboxes (22-01) + First-use modal (22-02)
-- Phase 23 (AI Banner): Not started
+- Phase 23 (AI Banner): COMPLETE - Persistent disclaimer banner (23-01)
 - Phase 24 (Page Warnings): Not started
 - Phase 25 (Report Disclaimers): Not started
 - Phase 26 (Settings Privacy): Not started
@@ -184,4 +188,4 @@ Resume file: None
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** `/gsd:execute-plan` for Phase 23 (AI Banner)
+**Next action:** `/gsd:execute-plan` for Phase 24 (Page Warnings)
