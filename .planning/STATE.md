@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 25 Complete - Report Disclaimers
+**Current focus:** Phase 26 Complete - Settings Privacy
 
 ## Current Position
 
 Milestone: Post-v1.4 Enhancements
-Phase: 25 of 27 (Report Disclaimers)
+Phase: 26 of 27 (Settings Privacy)
 Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-20 — Completed 25-01-PLAN.md (Report disclaimers in display and exports)
+Last activity: 2026-01-20 — Completed 26-01-PLAN.md (Data & Privacy section in Settings)
 
-Progress: [████████████████████████] 100% (v1.0-v1.4 complete, phases 25 and 27 complete)
+Progress: [████████████████████████] 100% (v1.0-v1.4 complete, phases 25-27 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 45
-- Average duration: 7.3 min
+- Total plans completed: 46
+- Average duration: 7.2 min
 - Total execution time: 5.5 hours
 
 **By Phase (v1.0):**
@@ -77,11 +77,12 @@ Progress: [███████████████████████
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 25-report-disclaimers | 1 | 3 min | 3 min |
+| 26-settings-privacy | 1 | 1 min | 1 min |
 | 27-report-list-style-preferences | 2 | 20 min | 10 min |
 
 **Recent Trend:**
-- Last 5 plans: 24-01 (4 min), 27-01 (12 min), 27-02 (8 min), 25-01 (3 min)
-- Trend: Fast execution - report disclaimers completed in 3 minutes
+- Last 5 plans: 27-01 (12 min), 27-02 (8 min), 25-01 (3 min), 26-01 (1 min)
+- Trend: Fast execution - settings privacy completed in 1 minute
 
 ## Accumulated Context
 
@@ -90,6 +91,9 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 26-01]: Use same flex layout pattern as Security section for consistency
+- [Phase 26-01]: Position Data & Privacy section with delay 0.24 (between Report Formatting and Security)
+- [Phase 26-01]: Informational items without action buttons (read-only content)
 - [Phase 25-01]: Use amber colors for AI-generated draft header (visually distinct)
 - [Phase 25-01]: Keep footer disclaimer subtle with slate colors
 - [Phase 25-01]: Same disclaimer text across all outputs for consistency
@@ -188,22 +192,22 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None - Phase 25 complete. Report disclaimers fully implemented.
+None - Phase 26 complete. All post-v1.4 enhancements complete.
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 25-01-PLAN.md (Report disclaimers in display and exports)
+Stopped at: Completed 26-01-PLAN.md (Data & Privacy section in Settings)
 Resume file: None
 
-**Phase 25 PROGRESS (2026-01-20):**
-- Phase 25-01 (Report Disclaimers): COMPLETE - Display, PDF, and Word exports include disclaimers
+**Phase 26 PROGRESS (2026-01-20):**
+- Phase 26-01 (Settings Privacy): COMPLETE - Data & Privacy section added to Settings page
 
 **Previous milestones:**
-- v1.4: Shipped 2026-01-20 (21-24 complete; 25-26 deferred, now 25 complete)
+- v1.4: Shipped 2026-01-20 (21-24 complete; 25-27 post-v1.4 enhancements complete)
 - v1.3: Shipped 2026-01-20 (19, 20 complete; 16 deferred)
 - v1.2: Shipped 2026-01-20
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** Phase 26 (Notification Settings) remains deferred. Ready for new feature requests or production deployment.
+**Next action:** All phases 1-27 complete. Ready for new feature requests or production deployment.
