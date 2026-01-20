@@ -4,8 +4,8 @@
 
 - ✅ **v1.0 MVP** - Phases 1-11 (shipped 2026-01-16)
 - ✅ **v1.1 Production Readiness** - Phases 12-14 (shipped 2026-01-17)
-- 🚧 **v1.2 Template Experience** - Phases 15, 17, 18 (in progress)
-- 📋 **v1.3 Production Infrastructure** - Phases 16, 19 (planned)
+- ✅ **v1.2 Template Experience** - Phases 15, 17, 18 (shipped 2026-01-20)
+- 🚧 **v1.3 Production Infrastructure** - Phases 16, 19, 20 (in progress)
 
 ## Phases
 
@@ -92,70 +92,30 @@
 
 </details>
 
-## 🚧 v1.2 Template Experience (IN PROGRESS)
+<details>
+<summary>✅ v1.2 Template Experience (Phases 15, 17, 18) - SHIPPED 2026-01-20</summary>
 
 **Milestone Goal:** Overhaul the template creation and management experience with AI-assisted workflows, making it easy for radiologists to create, customize, and maintain templates.
 
 ### Phase 15: Template Creation UX Overhaul
 **Goal**: AI-assisted template builder with intuitive creation pathways
-**Depends on**: Phase 14
-**Requirements**: V1.2-TMPL-01
-**Success Criteria** (what must be TRUE):
-  1. Users can create templates via multiple pathways (manual, AI-assisted, clone, import)
-  2. AI can generate structured templates from freeform user descriptions
-  3. Section management UI allows add/edit/delete/reorder operations
-  4. Live preview shows rendered template as user edits
-  5. Validation ensures saved templates conform to schema (never fails on load)
-  6. Clone workflow allows starting from existing template
-**Research**: Likely (UX patterns for template builders, AI-assisted form generation)
-**Research topics**: Template builder UX patterns, drag-drop section editors, AI form generation
-**Plans**: 5 plans in 3 waves
-
-Plans:
-- [x] 15-01: Foundation - Dependencies + Drag-Drop Components (Wave 1)
-- [x] 15-02: AI Generation Endpoint with Structured Output (Wave 1)
-- [x] 15-03: Preview + Pathway Modal Components (Wave 1)
-- [x] 15-04: Editor Integration - Split Pane + Import (Wave 2)
-- [x] 15-05: AI Flow Wiring + Verification Checkpoint (Wave 3)
+**Plans**: 5 plans (complete)
 
 ### Phase 17: Landing Page Integration
 **Goal**: Marketing landing page as app entry point with auth routing
-**Depends on**: Phase 14
-**Requirements**: V1.2-LAND-01
-**Success Criteria** (what must be TRUE):
-  1. Landing page displays at root URL (/) as first page visitors see
-  2. "Sign In" and "Try Platform Free" buttons route to auth pages
-  3. Authenticated users redirect from landing to workspace
-  4. All landing page components render correctly (hero, features, pricing, demo carousel)
-  5. Demo carousel screenshots work (placeholder OK for now, replace later)
-  6. Responsive design works on mobile, tablet, desktop
-**Research**: None (landing page already exists in /landing folder)
-**Plans**: 2 plans
-
-Plans:
-- [x] 17-01: Foundation - Copy components, screenshots, update styles/Tailwind (Wave 1)
-- [x] 17-02: Integration - Wire to root URL with auth redirect + verify (Wave 2)
+**Plans**: 2 plans (complete)
 
 ### Phase 18: Landing Page Carousel Enhancement
-**Goal**: Replace placeholder carousel with real app screenshots showcasing key features
-**Depends on**: Phase 17
-**Requirements**: V1.2-LAND-02
-**Success Criteria** (what must be TRUE):
-  1. Browser automation captures screenshots of all key app features
-  2. Carousel displays real screenshots instead of placeholders
-  3. Supporting text explains selling points clearly and compellingly
-  4. Screenshots showcase: workspace, voice transcription, AI generation, templates, PDF export
-  5. Carousel demonstrates the complete workflow value proposition
-  6. Images are optimized for web delivery (size/format)
-**Research**: None (browser automation with Playwright via agent-browser skill)
+**Goal**: Replace placeholder carousel with real app screenshots
 **Plans**: 1 plan (complete)
 
-Plans:
-- [x] 18-01: Screenshot capture, WebP optimization, carousel update + verification (Wave 1)
+*See `.planning/milestones/v1.2-ROADMAP.md` for full details*
 
-## 📋 v1.3 Production Infrastructure (PLANNED)
+</details>
 
-**Milestone Goal:** Set up production-grade infrastructure with separate development and production environments, all under UK company identity. Start with free tiers for validation, upgrade to paid when launching commercially.
+## 🚧 v1.3 Production Infrastructure (IN PROGRESS)
+
+**Milestone Goal:** Set up production-grade infrastructure with Stripe webhooks, Vercel deployment, and proper environment separation. Start with free tiers for validation, upgrade to paid when launching commercially.
 
 ### Phase 16: Infrastructure & Environment Setup
 **Goal**: Production-ready infrastructure with dev/prod separation under company identity
@@ -544,11 +504,11 @@ Plans:
 **Plans**: 5 plans (one per sub-phase)
 
 Plans:
-- [ ] 20-01: Build & Compatibility Audit
-- [ ] 20-02: Environment & Configuration Setup
-- [ ] 20-03: Performance Optimization & Bundle Analysis
-- [ ] 20-04: Security Headers & Production Hardening
-- [ ] 20-05: Monitoring, Analytics & Deployment Checklist
+- [x] 20-01: Build & Compatibility Audit
+- [x] 20-02: Environment & Configuration Setup
+- [x] 20-03: Performance Optimization & Bundle Analysis
+- [x] 20-04: Security Headers & Production Hardening
+- [x] 20-05: Monitoring, Analytics & Deployment Checklist
 
 ## Progress
 
@@ -570,8 +530,5 @@ Phases execute in numeric order: 15 → 16 → ...
 *Roadmap created: 2026-01-16*
 *v1.1 added: 2026-01-17*
 *v1.2 added: 2026-01-18*
+*v1.2 shipped: 2026-01-20 (archived to milestones/v1.2-ROADMAP.md)*
 *v1.3 added: 2026-01-18*
-*Phase 17 added: 2026-01-18*
-*Phase 18 added: 2026-01-19*
-*Phase 19 added: 2026-01-19 (Stripe Production Setup - from browser inspection findings)*
-*Phase 20 added: 2026-01-19 (Vercel Deployment Readiness - build checks, performance, security, monitoring)*

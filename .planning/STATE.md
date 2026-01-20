@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** v1.3 Production Infrastructure — COMPLETE (Phases 19, 20 complete)
+**Current focus:** v1.3 Production Infrastructure — Phase 16 remaining
 
 ## Current Position
 
 Milestone: v1.3 Production Infrastructure
-Phase: 19 (Stripe Production Setup) COMPLETE + 20 (Vercel Deployment Readiness) COMPLETE
-Plan: 19-03 complete (3/3), 20-05 complete (5/5)
-Status: COMPLETE
-Last activity: 2026-01-20 — Completed 20-05-PLAN.md (Monitoring & Documentation)
+Phase: 16 (Infrastructure & Environment Setup) — NOT STARTED
+Plan: None started
+Status: Phase 16 remaining (19, 20 complete)
+Last activity: 2026-01-20 — Archived v1.2 milestone, completed Phase 20
 
-Progress: [██████████] 100% (8/8 plans for Phase 19+20)
+Progress: [████████░░] 80% (8/10 plans for v1.3 - Phase 16 has 5 remaining)
 
 ## Performance Metrics
 
@@ -149,21 +149,18 @@ None - all Phase 19 and 20 plans complete. Ready for production deployment.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 20-05-PLAN.md (Monitoring & Documentation)
+Stopped at: Archived v1.2 milestone, Phase 20 complete
 Resume file: None
 
-**v1.3 Production Infrastructure COMPLETE:**
+**v1.2 Template Experience SHIPPED (2026-01-20):**
+- Phase 15: Template Creation UX (5 plans)
+- Phase 17: Landing Page Integration (2 plans)
+- Phase 18: Carousel Enhancement (1 plan)
+- Archived to `.planning/milestones/v1.2-ROADMAP.md`
 
-**Phase 19 - Stripe Production Setup (3/3):**
-- 19-01: CLI local testing workflow
-- 19-02: Subscription flow verified with E2E tests
-- 19-03: Production environment docs and go-live checklist
+**v1.3 Progress:**
+- Phase 19: Stripe Production Setup (3/3) COMPLETE
+- Phase 20: Vercel Deployment Readiness (5/5) COMPLETE
+- Phase 16: Infrastructure Setup (0/5) NOT STARTED
 
-**Phase 20 - Vercel Deployment Readiness (5/5):**
-- 20-01: Build error fixes (force-dynamic, Suspense)
-- 20-02: Vercel configuration (region iad1, timeouts, env vars)
-- 20-03: Bundle analysis & image optimization (AVIF/WebP, 87.7kB shared)
-- 20-04: Security review (headers, console cleanup, cookie verification)
-- 20-05: Vercel Analytics integration and DEPLOYMENT.md documentation
-
-**Ready for production deployment.** All infrastructure plans complete.
+**Next action:** `/gsd:plan-phase 16` to plan Infrastructure & Environment Setup

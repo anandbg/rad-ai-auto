@@ -1,5 +1,41 @@
 # Milestones
 
+## v1.2 — Template Experience (2026-01-20)
+
+**Goal:** Overhaul template creation with AI-assisted workflows and add marketing landing page.
+
+**Shipped:**
+- Phase 15: Template Creation UX — AI-assisted builder with 4 creation pathways
+- Phase 17: Landing Page Integration — Marketing entry point with auth routing
+- Phase 18: Carousel Enhancement — Real app screenshots with WebP optimization
+
+**Metrics:**
+- 8 plans executed
+- 1.6 hours total execution time
+- Average 12 min per plan
+
+**Outcome:** Complete template creation experience with AI generation, drag-drop sections, live preview. Landing page showcases product with 14 real screenshots.
+
+---
+
+## v1.1 — Production Readiness (2026-01-17)
+
+**Goal:** Polish workspace UX, wire APIs, align AI prompts with reference docs.
+
+**Shipped:**
+- Phase 12: Workspace Consolidation — 2-panel layout, all buttons wired
+- Phase 13: AI Prompt Alignment — Production-quality outputs
+- Phase 14: Export Enhancement — Professional PDF export
+
+**Metrics:**
+- 4 plans executed
+- 62 min total execution time
+- Average 15.5 min per plan
+
+**Outcome:** Workspace streamlined, AI outputs match reference documentation, PDF export professional.
+
+---
+
 ## v1.0 — MVP Production Integration (2026-01-16)
 
 **Goal:** Transform a functional UI prototype into a production-ready AI radiology application.
