@@ -2,34 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { z } from 'zod';
 import { useCsrf } from '@/lib/hooks/use-csrf';
 import { PageWrapper } from '@/components/motion/page-wrapper';
 import { FadeIn } from '@/components/motion/fade-in';
 import { StaggerContainer } from '@/components/motion/stagger-container';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GoogleAuthButton } from '@/components/auth/google-auth-button';
-
-// Zod schema for signup form validation
-const signupSchema = z.object({
-  name: z.string()
-    .min(1, 'Name is required')
-    .min(2, 'Name must be at least 2 characters'),
-  email: z.string()
-    .min(1, 'Email is required')
-    .email('Please enter a valid email address'),
-  password: z.string()
-    .min(1, 'Password is required')
-    .min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string()
-    .min(1, 'Please confirm your password'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passwords must match',
-  path: ['confirmPassword'],
-});
-
-type SignupFormData = z.infer<typeof signupSchema>;
+import { signupSchema, type SignupFormData } from '@/lib/validation/signup-schema';
 
 export default function SignupPage() {
   const { CsrfInput, validateToken } = useCsrf();
@@ -39,15 +20,17 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    acceptTerms: false as unknown as true,
+    acceptNoPhiPolicy: false as unknown as true,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof SignupFormData, string>>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleChange = (field: keyof SignupFormData, value: string) => {
+  const handleChange = (field: keyof SignupFormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
+    // Clear error when user starts typing/interacting
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
@@ -341,6 +324,44 @@ export default function SignupPage() {
                       {errors.confirmPassword}
                     </p>
                   )}
+                </div>
+              </FadeIn>
+
+              {/* Legal Consent Checkboxes */}
+              <FadeIn>
+                <div className="space-y-4 pt-2">
+                  <Checkbox
+                    id="acceptTerms"
+                    checked={formData.acceptTerms === true}
+                    onCheckedChange={(checked) => handleChange('acceptTerms', checked === true)}
+                    disabled={loading}
+                    error={errors.acceptTerms}
+                    data-testid="signup-accept-terms-checkbox"
+                    label={
+                      <>
+                        I accept the{' '}
+                        <a
+                          href="/terms"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand hover:underline"
+                        >
+                          Terms of Service
+                        </a>{' '}
+                        and understand this tool is provided as-is with no warranties
+                      </>
+                    }
+                  />
+
+                  <Checkbox
+                    id="acceptNoPhiPolicy"
+                    checked={formData.acceptNoPhiPolicy === true}
+                    onCheckedChange={(checked) => handleChange('acceptNoPhiPolicy', checked === true)}
+                    disabled={loading}
+                    error={errors.acceptNoPhiPolicy}
+                    data-testid="signup-accept-no-phi-checkbox"
+                    label="I understand I must NOT upload patient-identifiable or personal information"
+                  />
                 </div>
               </FadeIn>
 
