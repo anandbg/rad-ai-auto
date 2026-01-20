@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { PageWrapper } from '@/components/motion/page-wrapper';
 import { ReportWorkspace } from '@/components/workspace/report-workspace';
+import { PageWarning } from '@/components/legal/page-warning';
 
 function DashboardPageContent() {
   const searchParams = useSearchParams();
@@ -28,6 +29,9 @@ function DashboardPageContent() {
           <p className="text-sm">You don&apos;t have permission to access that page.</p>
         </div>
       )}
+      <div className="p-4 pt-2 pb-0">
+        <PageWarning variant="dashboard" />
+      </div>
       <ReportWorkspace />
     </PageWrapper>
   );
