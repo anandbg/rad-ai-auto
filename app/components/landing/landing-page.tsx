@@ -68,142 +68,142 @@ export function LandingPage() {
       <DemoAnimation
         screenshots={[
           {
-            id: "transcribe-home",
-            imageSrc: "/demo-screenshots/1-transcribe home.webp",
-            title: "Transcribe",
-            marketingTitle: "Start by Transcribing Your Findings",
-            marketingDescription: "The Transcribe page shows step 1 with clear instructions. Click the purple 'Start Recording' button to begin real-time transcription, or use the 'Upload' button to select audio files. The large empty transcript area below will display your transcribed text as you dictate.",
-            marketingBenefit: "Begin dictating immediately—no setup or configuration needed",
-            duration: 4500,
-            zoomFocus: { x: 50, y: 45 },
-          },
-          {
-            id: "file-upload",
-            imageSrc: "/demo-screenshots/2-file upload.webp",
-            title: "Transcribe",
-            marketingTitle: "Upload Audio Files",
-            marketingDescription: "Click 'Upload' to select audio files from your computer. Browse folders, search for files, and select formats like M4A, MP3, or WAV. The file selection dialog makes it easy to find and upload your existing recordings.",
-            marketingBenefit: "Upload existing recordings from any location on your device",
+            id: "workspace-dashboard",
+            imageSrc: "/demo-screenshots/01-workspace-dashboard.webp",
+            title: "Workspace",
+            marketingTitle: "Your Complete AI Reporting Hub",
+            marketingDescription: "The streamlined workspace features Voice Input and Report panels side-by-side. Click 'Start Recording' to dictate or 'Upload Audio' to process existing files. The transcription panel shows your text in real-time with character count.",
+            marketingBenefit: "Everything you need in one elegant interface—no learning curve",
             duration: 4500,
             zoomFocus: { x: 50, y: 50 },
           },
           {
-            id: "recording-in-progress",
-            imageSrc: "/demo-screenshots/3-recording in progress.webp",
+            id: "voice-input-text",
+            imageSrc: "/demo-screenshots/12-voice-input-with-text.webp",
             title: "Transcribe",
-            marketingTitle: "Recording in Progress",
-            marketingDescription: "While recording, the 'Start Recording' button changes to a red 'Stop Recording' button. The step 1 indicator shows 'Start by transcribing your findings' with instructions. The transcript area displays your real-time transcription as you speak.",
-            marketingBenefit: "Real-time audio capture with clear visual feedback",
+            marketingTitle: "Dictate or Type Your Findings",
+            marketingDescription: "Your transcription appears instantly in the panel. The interface shows 'CT scan of the chest with contrast was performed...' as you dictate. Edit directly in the text area or continue recording. Your observations are ready for AI report generation.",
+            marketingBenefit: "Seamless voice-to-text with real-time editing capabilities",
             duration: 4500,
             zoomFocus: { x: 50, y: 50 },
           },
           {
-            id: "transcribing",
-            imageSrc: "/demo-screenshots/4-transribing.webp",
-            title: "Transcribe",
-            marketingTitle: "AI Processing Your Audio",
-            marketingDescription: "After stopping recording or uploading, a purple circular loading spinner appears in the center of the transcript area with 'Transcribing...' text below it. The step 1 indicator and instructions remain visible. Our AI is converting your audio to text with medical terminology recognition.",
-            marketingBenefit: "Professional-grade transcription that understands medical context",
-            duration: 4500,
-            zoomFocus: { x: 50, y: 50 },
-          },
-          {
-            id: "select-template",
-            imageSrc: "/demo-screenshots/5-select template.webp",
+            id: "template-selection",
+            imageSrc: "/demo-screenshots/14-template-selection-dropdown.webp",
             title: "Report",
-            marketingTitle: "Select a Template to Begin",
-            marketingDescription: "The Report page shows step 2 with a purple circle badge displaying '2'. A light grey box displays 'Select a template' with instructions: 'Choose a template that matches your exam type to generate the report.' The empty report area shows 'No report generated yet' with a document icon. Click the purple 'Select Template' button in the top right to proceed.",
-            marketingBenefit: "Guided workflow ensures you never miss a step",
-            duration: 4500,
-            zoomFocus: { x: 50, y: 30 },
-          },
-          {
-            id: "choose-template",
-            imageSrc: "/demo-screenshots/6-choose template.webp",
-            title: "Templates",
-            marketingTitle: "Search and Select Templates",
-            marketingDescription: "The 'Select template' modal appears with a search bar. Below is a 'NOTE TEMPLATES' section listing matching templates. Each entry shows the template name, a Global/Personal tag, modality and body part info, and a lightning bolt icon. Click any template to select it.",
-            marketingBenefit: "Find the perfect template in seconds with instant search",
+            marketingTitle: "Choose Your Report Template",
+            marketingDescription: "Select from organized template categories: CT (Chest, Abdomen/Pelvis), MRI (Brain, Spine), X-Ray (Chest, Skeletal). Templates are grouped by modality for quick access. Click any template to use it for your report generation.",
+            marketingBenefit: "Find the right template instantly with organized categories",
             duration: 4500,
             zoomFocus: { x: 50, y: 40 },
-          },
-          {
-            id: "ready-to-generate",
-            imageSrc: "/demo-screenshots/7-ready to generate.webp",
-            title: "Report",
-            marketingTitle: "Ready to Generate Your Report",
-            marketingDescription: "A light green banner appears with a star icon showing 'Ready to generate' and instructions. Below it is a large purple 'Generate Report' button with a star icon. The report area shows 'No report generated yet' with a document icon. Your selected template is displayed in the top right.",
-            marketingBenefit: "One click to transform transcript into professional report",
-            duration: 4500,
-            zoomFocus: { x: 50, y: 40 },
-          },
-          {
-            id: "generating-report",
-            imageSrc: "/demo-screenshots/8-generating report.webp",
-            title: "Report",
-            marketingTitle: "AI Generating Your Report",
-            marketingDescription: "The green banner still shows 'Ready to generate'. The purple button now displays 'Generating...' with a circular loading spinner inside it. In the center of the empty report area, a larger purple circular spinner appears with 'Generating report...' text below it, showing the AI is actively processing.",
-            marketingBenefit: "Real-time feedback shows your report is being created",
-            duration: 4500,
-            zoomFocus: { x: 50, y: 50 },
           },
           {
             id: "generated-report",
-            imageSrc: "/demo-screenshots/9-generated report.webp",
+            imageSrc: "/demo-screenshots/15-generated-report.webp",
             title: "Report",
-            marketingTitle: "Your Report is Complete",
-            marketingDescription: "The report panel displays the full radiology report. At the top left is 'Report generated' text. The title shows the exam type and patient information. Structured sections include Clinical Information, Technique, Comparison, and Findings. Export buttons (Copy, MD, HTML, PDF, Regenerate) appear at the top right.",
-            marketingBenefit: "Publication-ready reports that follow best practices",
+            marketingTitle: "AI-Generated Professional Report",
+            marketingDescription: "Your complete radiology report with structured sections: Clinical Indication, Technique, Findings, and Impression. The AI transforms your dictation into a properly formatted report with numbered impression points. Export to PDF or Word with one click.",
+            marketingBenefit: "Publication-ready reports in seconds, not minutes",
             duration: 4500,
             zoomFocus: { x: 50, y: 50 },
           },
           {
             id: "templates-library",
-            imageSrc: "/demo-screenshots/10-templates library.webp",
+            imageSrc: "/demo-screenshots/02-templates-library.webp",
             title: "Templates",
-            marketingTitle: "Browse Your Template Library",
-            marketingDescription: "The Templates page shows a grid of template cards. Use the 'Global' and 'Personal' tabs to filter templates. Each card displays the template name, modality and body part tags, description, version label (v1), and a 'Clone' button. Use the search bar to find specific templates.",
-            marketingBenefit: "Quickly find templates by browsing visual cards",
+            marketingTitle: "Manage Your Report Templates",
+            marketingDescription: "The Templates page organizes Personal and Global templates separately. Search, sort by name or date, and filter by type. Click '+ Create Template' to build your own. Empty state guides you to create or clone templates.",
+            marketingBenefit: "Full control over your template library with easy organization",
             duration: 4500,
             zoomFocus: { x: 50, y: 50 },
           },
           {
-            id: "create-template",
-            imageSrc: "/demo-screenshots/11-create template.webp",
+            id: "template-pathways",
+            imageSrc: "/demo-screenshots/03-template-creation-pathways.webp",
             title: "Templates",
-            marketingTitle: "Clone from Existing Templates",
-            marketingDescription: "The 'Create template' modal shows 'Clone from existing' selected (purple background). Below is a search bar and Global/Personal tabs showing template counts. The main area lists templates with their names, tags (MRI, Chest, Global, etc.), and descriptions. Click 'Save' after selecting a template to clone.",
-            marketingBenefit: "Build on proven templates instead of starting from scratch",
+            marketingTitle: "Four Ways to Create Templates",
+            marketingDescription: "Choose your creation path: 'Start from scratch' to build manually, 'Describe your template' for AI generation, 'Start from existing' to clone, or 'Import JSON' for bulk import. Each pathway optimizes for different workflows.",
+            marketingBenefit: "Create templates your way—manual, AI-assisted, clone, or import",
             duration: 4500,
             zoomFocus: { x: 50, y: 50 },
           },
           {
-            id: "create-template-blank-ai",
-            imageSrc: "/demo-screenshots/12-create template from blank using AI.webp",
+            id: "ai-template-gen",
+            imageSrc: "/demo-screenshots/04-ai-template-generation.webp",
             title: "Templates",
-            marketingTitle: "Create Templates from Scratch with AI",
-            marketingDescription: "The 'Create template' modal shows 'Blank template' selected (purple background). The left section has fields for Template Name, Modality, Body Part, Description, and a 'Set as default' checkbox. The right section shows the template content editor with a 'Structure with AI' button that helps you create template syntax automatically.",
-            marketingBenefit: "Create templates that match your exact workflow with AI assistance",
+            marketingTitle: "Generate Templates with AI",
+            marketingDescription: "Describe the template you need in plain language: 'CT chest with contrast for pulmonary embolism workup.' Select optional modality and body part. Click 'Generate Template' and AI creates a complete, structured template.",
+            marketingBenefit: "Describe what you need—AI builds the template for you",
             duration: 4500,
             zoomFocus: { x: 50, y: 50 },
           },
           {
-            id: "macro-library",
-            imageSrc: "/demo-screenshots/13-macro library.webp",
+            id: "template-editor",
+            imageSrc: "/demo-screenshots/05-template-editor.webp",
+            title: "Templates",
+            marketingTitle: "Full-Featured Template Editor",
+            marketingDescription: "Split-pane editor shows form controls on left, live preview on right. Add template name, select modality and body part, write description. Add sections like Findings and Impression. AI suggestions help structure your template.",
+            marketingBenefit: "See your template preview in real-time as you build",
+            duration: 4500,
+            zoomFocus: { x: 50, y: 50 },
+          },
+          {
+            id: "branding",
+            imageSrc: "/demo-screenshots/06-branding-templates.webp",
+            title: "Branding",
+            marketingTitle: "Professional Report Branding",
+            marketingDescription: "Customize your report appearance with brand templates. Choose Default Letterhead, Minimalist, or Corporate Blue styles. Each shows a color swatch preview. Create new brand templates or edit existing ones to match your institution.",
+            marketingBenefit: "Make every report reflect your professional identity",
+            duration: 4500,
+            zoomFocus: { x: 50, y: 50 },
+          },
+          {
+            id: "macros",
+            imageSrc: "/demo-screenshots/07-macros-library.webp",
             title: "Macros",
-            marketingTitle: "Manage Your Transcription Macros",
-            marketingDescription: "The Macros page shows a search bar at the top and a grid of macro cards below. Each card displays the trigger phrase (e.g., 'normal chest', 'BMI') in bold, a match mode tag (like 'WORD BOUNDARY'), and the expanded text description. A purple '+ New macro' button appears in the top right navigation.",
-            marketingBenefit: "See all your shortcuts at a glance for faster dictation",
+            marketingTitle: "Speed Up with Transcription Macros",
+            marketingDescription: "Create shortcuts that expand during transcription. Type 'neg' and it becomes 'negative for acute findings.' Import/Export macros, create categories, and manage your shortcut library. The Active Macros list shows all your configured shortcuts.",
+            marketingBenefit: "Type less, report more with intelligent text expansion",
             duration: 4500,
             zoomFocus: { x: 50, y: 50 },
           },
           {
-            id: "create-macro",
-            imageSrc: "/demo-screenshots/14-create marco.webp",
+            id: "macro-creation",
+            imageSrc: "/demo-screenshots/08-macro-creation.webp",
             title: "Macros",
             marketingTitle: "Create Custom Macros",
-            marketingDescription: "The 'Create Macro' modal shows fields for 'TRIGGER PHRASE' (with placeholder 'e.g., normal chest'), 'EXPANDED TEXT' (large textarea with placeholder), 'MATCH MODE' dropdown (showing 'Exact Match'), and a 'CASE SENSITIVE' toggle switch. Helper text explains each field. 'Cancel' and 'Save' buttons appear at the bottom.",
-            marketingBenefit: "Customize macros to match your exact dictation patterns",
+            marketingDescription: "Define your shortcut and expansion text. Enable 'Smart Macro' for context-aware expansion that changes based on body part. The clean dialog makes macro creation simple—just fill in the fields and click Create.",
+            marketingBenefit: "Build macros that adapt to your reporting context",
+            duration: 4500,
+            zoomFocus: { x: 50, y: 50 },
+          },
+          {
+            id: "productivity",
+            imageSrc: "/demo-screenshots/09-productivity-insights.webp",
+            title: "Analytics",
+            marketingTitle: "Track Your Productivity",
+            marketingDescription: "View key metrics: Total Reports, Average Report Time (45s), Productivity Score, and Time Saved. Charts show Reports Per Day/Week trends. See Most Used Templates and Transcription Usage. Tips help you work even faster.",
+            marketingBenefit: "Data-driven insights to continuously improve your workflow",
+            duration: 4500,
+            zoomFocus: { x: 50, y: 50 },
+          },
+          {
+            id: "billing",
+            imageSrc: "/demo-screenshots/10-billing-subscription.webp",
+            title: "Billing",
+            marketingTitle: "Simple, Transparent Billing",
+            marketingDescription: "View your Current Plan and Usage This Month at a glance. See reports generated, transcription minutes, and personal templates used. Upgrade easily from Free to Plus ($15/mo) or Pro ($35/mo) for more capacity.",
+            marketingBenefit: "Always know your usage—no surprise charges",
+            duration: 4500,
+            zoomFocus: { x: 50, y: 50 },
+          },
+          {
+            id: "settings",
+            imageSrc: "/demo-screenshots/11-settings.webp",
+            title: "Settings",
+            marketingTitle: "Personalize Your Experience",
+            marketingDescription: "Customize appearance with Light/Dark/System themes. Enable Compact Mode for denser layout. Toggle Auto-save, set a Default Template. Security features and Profile management round out the settings.",
+            marketingBenefit: "Make AI Radiologist work exactly how you prefer",
             duration: 4500,
             zoomFocus: { x: 50, y: 50 },
           },
@@ -359,7 +359,7 @@ export function LandingPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-3">
           {/* Free Tier */}
           <div className="relative rounded-xl border-2 border-surface-border bg-surface p-6">
             <h3 className="text-2xl font-bold text-foreground mb-2">Free</h3>
@@ -371,15 +371,19 @@ export function LandingPage() {
             <div className="space-y-3 mb-6">
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">10 transcriptions/month</span>
+                <span className="text-foreground-secondary">10 reports/month</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">20 reports/month</span>
+                <span className="text-foreground-secondary">15 min transcription</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">All templates</span>
+                <span className="text-foreground-secondary">3 templates</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
+                <span className="text-foreground-secondary">Basic PDF export</span>
               </div>
             </div>
             <Link
@@ -390,55 +394,37 @@ export function LandingPage() {
             </Link>
           </div>
 
-          {/* Starter Tier */}
-          <div className="relative rounded-xl border-2 border-surface-border bg-surface p-6">
-            <h3 className="text-2xl font-bold text-foreground mb-2">Starter</h3>
-            <div className="mb-2">
-              <span className="text-3xl font-bold text-foreground">$0</span>
-              <span className="text-foreground-secondary">/month</span>
-            </div>
-            <p className="text-sm text-foreground-muted mb-4">Card verified</p>
-            <div className="space-y-3 mb-6">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">10 transcriptions/month</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">20 reports/month</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">All templates</span>
-              </div>
-            </div>
-            <Link
-              href="/signup"
-              className="block w-full rounded-lg bg-surface-muted px-4 py-2 text-center font-semibold text-foreground transition-all hover:bg-surface-border"
-            >
-              Activate Free
-            </Link>
-          </div>
-
-          {/* Plus Tier - Most Popular */}
+          {/* Plus Tier - Recommended */}
           <div className="relative rounded-xl border-2 border-brand bg-gradient-to-br from-brand-muted/20 to-surface p-6">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-white px-4 py-1 rounded-full text-sm font-semibold">
-              Most Popular
+              Recommended
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-2">Plus</h3>
             <div className="mb-2">
-              <span className="text-3xl font-bold text-foreground">$10</span>
+              <span className="text-3xl font-bold text-foreground">$15</span>
               <span className="text-foreground-secondary">/month</span>
             </div>
-            <p className="text-sm text-foreground-muted mb-4">Best value</p>
+            <p className="text-sm text-foreground-muted mb-4">Best for professionals</p>
             <div className="space-y-3 mb-6">
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">100 transcriptions/month</span>
+                <span className="text-foreground-secondary">100 reports/month</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">200 reports/month</span>
+                <span className="text-foreground-secondary">150 min transcription</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
+                <span className="text-foreground-secondary">20 templates</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
+                <span className="text-foreground-secondary">Template versioning</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
+                <span className="text-foreground-secondary">Word/DOCX export</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
@@ -453,34 +439,45 @@ export function LandingPage() {
             </Link>
           </div>
 
-          {/* Pro Tier */}
+          {/* Enterprise Tier */}
           <div className="relative rounded-xl border-2 border-surface-border bg-surface p-6">
-            <h3 className="text-2xl font-bold text-foreground mb-2">Pro</h3>
+            <h3 className="text-2xl font-bold text-foreground mb-2">Enterprise</h3>
             <div className="mb-2">
-              <span className="text-3xl font-bold text-foreground">$25</span>
-              <span className="text-foreground-secondary">/month</span>
+              <span className="text-3xl font-bold text-foreground">Custom</span>
             </div>
-            <p className="text-sm text-foreground-muted mb-4">Power users</p>
+            <p className="text-sm text-foreground-muted mb-4">For institutions</p>
             <div className="space-y-3 mb-6">
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">500 transcriptions/month</span>
+                <span className="text-foreground-secondary">Unlimited reports</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">1,000 reports/month</span>
+                <span className="text-foreground-secondary">Unlimited transcription</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
-                <span className="text-foreground-secondary">Priority support</span>
+                <span className="text-foreground-secondary">Custom templates</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
+                <span className="text-foreground-secondary">Institution features</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
+                <span className="text-foreground-secondary">Dedicated support</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 text-brand mt-0.5 flex-shrink-0" />
+                <span className="text-foreground-secondary">Custom integrations</span>
               </div>
             </div>
-            <Link
-              href="/billing"
-              className="block w-full rounded-lg bg-brand px-4 py-2 text-center font-semibold text-white transition-all hover:bg-brand-strong"
+            <a
+              href="mailto:contact@askdigitalconsultancy.com?subject=Enterprise%20Plan%20Inquiry"
+              className="block w-full rounded-lg bg-surface-muted px-4 py-2 text-center font-semibold text-foreground transition-all hover:bg-surface-border"
             >
-              Subscribe
-            </Link>
+              Contact Us
+            </a>
           </div>
         </div>
       </section>
@@ -555,6 +552,42 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-surface-muted">
+        <div className="mx-auto max-w-7xl px-6 py-8 sm:px-8">
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+            <div className="text-center sm:text-left">
+              <p className="text-sm text-foreground-muted">
+                &copy; 2026 AI Radiologist. All rights reserved.
+              </p>
+              <p className="mt-1 text-xs text-foreground-muted">
+                For licensed healthcare professionals only.
+              </p>
+            </div>
+            <div className="flex items-center gap-6">
+              <Link
+                href="/terms"
+                className="text-sm text-foreground-secondary hover:text-foreground transition-colors"
+              >
+                Terms of Service
+              </Link>
+              <Link
+                href="/privacy"
+                className="text-sm text-foreground-secondary hover:text-foreground transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <a
+                href="mailto:contact@askdigitalconsultancy.com"
+                className="text-sm text-foreground-secondary hover:text-foreground transition-colors"
+              >
+                Contact
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
