@@ -581,7 +581,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 24-01: Add page-specific warning components
+- [x] 24-01: Add page-specific warning components
 
 ### Phase 25: Report Output Disclaimers
 **Goal**: All generated reports have prominent disclaimers in display and exports
@@ -597,7 +597,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 25-01: Add disclaimers to reports and exports
+- [x] 25-01: Add disclaimers to reports and exports
 
 ### Phase 26: Settings Privacy Section
 **Goal**: Settings page clearly explains data handling and user responsibility
@@ -659,8 +659,8 @@ Phases execute in numeric order: 15 → 16 → ...
 | 21. Legal Documents | v1.4 | 1/1 | Complete | 2026-01-20 |
 | 22. Sign-Up Acknowledgment | v1.4 | 2/2 | Complete | 2026-01-20 |
 | 23. Disclaimer Banner | v1.4 | 1/1 | Complete | 2026-01-20 |
-| 24. Page Warnings | v1.4 | 0/1 | Not started | - |
-| 25. Report Disclaimers | v1.4 | 0/1 | Not started | - |
+| 24. Page Warnings | v1.4 | 1/1 | Complete | 2026-01-20 |
+| 25. Report Disclaimers | v1.4 | 1/1 | Complete | 2026-01-20 |
 | 26. Settings Privacy | v1.4 | 0/1 | Not started | - |
 | 27. List Style Preferences | v1.5 | 2/2 | Complete | 2026-01-20 |
 

@@ -111,9 +111,9 @@ Legal compliance through disclaimer-first approach. Maximum liability protection
 
 ### Report Output Disclaimers
 
-- [ ] **OUTPUT-01**: Every generated report displays header: "AI-GENERATED DRAFT — NOT REVIEWED"
-- [ ] **OUTPUT-02**: Every generated report displays footer: "Generated with AI assistance. User is solely responsible for accuracy. Not medical advice."
-- [ ] **OUTPUT-03**: PDF/DOCX exports include the same header and footer disclaimers
+- [x] **OUTPUT-01**: Every generated report displays header: "AI-GENERATED DRAFT — NOT REVIEWED"
+- [x] **OUTPUT-02**: Every generated report displays footer: "Generated with AI assistance. User is solely responsible for accuracy. Not medical advice."
+- [x] **OUTPUT-03**: PDF/DOCX exports include the same header and footer disclaimers
 
 ### Settings Reminder
 
@@ -232,9 +232,9 @@ Which phases cover which requirements. Updated by create-roadmap.
 | WARN-02 | Phase 24 | Complete |
 | WARN-03 | Phase 24 | Complete |
 | WARN-04 | Phase 24 | Complete |
-| OUTPUT-01 | Phase 25 | Pending |
-| OUTPUT-02 | Phase 25 | Pending |
-| OUTPUT-03 | Phase 25 | Pending |
+| OUTPUT-01 | Phase 25 | Complete |
+| OUTPUT-02 | Phase 25 | Complete |
+| OUTPUT-03 | Phase 25 | Complete |
 | SETT-01 (v1.4) | Phase 26 | Pending |
 | FMT-01 | Phase 27 | Complete |
 | FMT-02 | Phase 27 | Complete |
@@ -248,8 +248,8 @@ Which phases cover which requirements. Updated by create-roadmap.
 **Coverage:**
 - v1 requirements: 30 total (all complete)
 - v1.1 requirements: 5 total (3 complete, 2 pending)
-- v1.4 requirements: 15 total (11 complete, 4 pending)
-- v1.5 requirements: 8 total (0 complete, 8 pending)
+- v1.4 requirements: 15 total (14 complete, 1 pending)
+- v1.5 requirements: 8 total (8 complete)
 - Mapped to phases: 58 ✓
 - Unmapped: 0
 
