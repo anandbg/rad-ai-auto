@@ -12,7 +12,7 @@ export function AppShell({ children }: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-full bg-background">
       {/* Sidebar - always visible on desktop, collapsible */}
       <Sidebar
         collapsed={sidebarCollapsed}

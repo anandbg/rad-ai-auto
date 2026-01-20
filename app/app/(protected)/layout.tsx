@@ -5,6 +5,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { CommandPalette, useKeyboardShortcuts } from '@/components/ui/command-palette';
 import { useSessionTimeout } from '@/lib/hooks/use-session-timeout';
 import { FirstUseAcknowledgmentModal } from '@/components/legal/first-use-acknowledgment-modal';
+import { DisclaimerBanner } from '@/components/legal/disclaimer-banner';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export default function ProtectedLayout({
@@ -67,9 +68,18 @@ export default function ProtectedLayout({
 
   return (
     <>
-      <AppShell>
-        {children}
-      </AppShell>
+      <div className="flex flex-col h-screen">
+        {/* Persistent disclaimer banner - non-dismissible */}
+        <DisclaimerBanner />
+
+        {/* Main app content */}
+        <div className="flex-1 overflow-hidden">
+          <AppShell>
+            {children}
+          </AppShell>
+        </div>
+      </div>
+
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={closeCommandPalette} />
 
       {/* First-use acknowledgment modal - non-dismissible */}
