@@ -104,10 +104,10 @@ Legal compliance through disclaimer-first approach. Maximum liability protection
 
 ### Page-Specific Warnings
 
-- [ ] **WARN-01**: Dashboard shows reminder card: "This is a drafting tool. Do not enter patient-identifiable or personal information."
-- [ ] **WARN-02**: Voice transcription interface shows warning before recording: "Audio is processed by AI and not stored. Do not dictate personal identifiers."
-- [ ] **WARN-03**: Report generation page shows warning: "AI-generated draft. Review and verify all content before use."
-- [ ] **WARN-04**: Template creation shows note: "Templates should not contain personal information."
+- [x] **WARN-01**: Dashboard shows reminder card: "This is a drafting tool. Do not enter patient-identifiable or personal information."
+- [x] **WARN-02**: Voice transcription interface shows warning before recording: "Audio is processed by AI and not stored. Do not dictate personal identifiers."
+- [x] **WARN-03**: Report generation page shows warning: "AI-generated draft. Review and verify all content before use."
+- [x] **WARN-04**: Template creation shows note: "Templates should not contain personal information."
 
 ### Report Output Disclaimers
 
@@ -228,10 +228,10 @@ Which phases cover which requirements. Updated by create-roadmap.
 | ACK-01 | Phase 22 | Complete |
 | BANNER-01 | Phase 23 | Complete |
 | BANNER-02 | Phase 23 | Complete |
-| WARN-01 | Phase 24 | Pending |
-| WARN-02 | Phase 24 | Pending |
-| WARN-03 | Phase 24 | Pending |
-| WARN-04 | Phase 24 | Pending |
+| WARN-01 | Phase 24 | Complete |
+| WARN-02 | Phase 24 | Complete |
+| WARN-03 | Phase 24 | Complete |
+| WARN-04 | Phase 24 | Complete |
 | OUTPUT-01 | Phase 25 | Pending |
 | OUTPUT-02 | Phase 25 | Pending |
 | OUTPUT-03 | Phase 25 | Pending |
@@ -248,7 +248,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 **Coverage:**
 - v1 requirements: 30 total (all complete)
 - v1.1 requirements: 5 total (3 complete, 2 pending)
-- v1.4 requirements: 15 total (7 complete, 8 pending)
+- v1.4 requirements: 15 total (11 complete, 4 pending)
 - v1.5 requirements: 8 total (0 complete, 8 pending)
 - Mapped to phases: 58 ✓
 - Unmapped: 0
