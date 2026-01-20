@@ -177,4 +177,4 @@ Resume file: None
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** `/gsd:execute-plan .planning/phases/22-sign-up-acknowledgment/22-01-PLAN.md`
+**Next action:** `/gsd:plan-phase 22` to plan Sign-Up Gate phase

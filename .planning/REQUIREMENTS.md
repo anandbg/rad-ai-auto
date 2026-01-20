@@ -85,8 +85,8 @@ Legal compliance through disclaimer-first approach. Maximum liability protection
 
 ### Core Legal Documents
 
-- [ ] **LEGAL-01**: Terms of Service with maximum liability protection (use at own risk, user responsibility, indemnification, no warranties, owners not responsible)
-- [ ] **LEGAL-02**: Simple Privacy Policy stating data is ephemeral and not stored
+- [x] **LEGAL-01**: Terms of Service with maximum liability protection (use at own risk, user responsibility, indemnification, no warranties, owners not responsible)
+- [x] **LEGAL-02**: Simple Privacy Policy stating data is ephemeral and not stored
 
 ### Sign-Up Gate
 
@@ -206,8 +206,8 @@ Which phases cover which requirements. Updated by create-roadmap.
 | V1.1-EX-01 | Phase 14 | Pending |
 | V1.1-EX-02 | Phase 14 | Pending |
 
-| LEGAL-01 | Phase 21 | Pending |
-| LEGAL-02 | Phase 21 | Pending |
+| LEGAL-01 | Phase 21 | Complete |
+| LEGAL-02 | Phase 21 | Complete |
 | GATE-01 | Phase 22 | Pending |
 | GATE-02 | Phase 22 | Pending |
 | ACK-01 | Phase 22 | Pending |
@@ -225,7 +225,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 **Coverage:**
 - v1 requirements: 30 total (all complete)
 - v1.1 requirements: 5 total (3 complete, 2 pending)
-- v1.4 requirements: 15 total (0 complete, 15 pending)
+- v1.4 requirements: 15 total (2 complete, 13 pending)
 - Mapped to phases: 50 ✓
 - Unmapped: 0
 

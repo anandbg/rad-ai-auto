@@ -531,7 +531,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 21-01: Create Terms of Service and Privacy Policy pages
+- [x] 21-01: Create Terms of Service and Privacy Policy pages
 
 ### Phase 22: Sign-Up Gate & First-Use Acknowledgment
 **Goal**: Users cannot proceed without accepting terms and acknowledging responsibilities
@@ -628,7 +628,7 @@ Phases execute in numeric order: 15 → 16 → ...
 | 18. Landing Page Carousel Enhancement | v1.2 | 1/1 | Complete | 2026-01-19 |
 | 19. Stripe Production Setup | v1.3 | 3/3 | Complete | 2026-01-19 |
 | 20. Vercel Deployment Readiness | v1.3 | 5/5 | Complete | 2026-01-20 |
-| 21. Legal Documents | v1.4 | 0/1 | Not started | - |
+| 21. Legal Documents | v1.4 | 1/1 | Complete | 2026-01-20 |
 | 22. Sign-Up Acknowledgment | v1.4 | 0/2 | Not started | - |
 | 23. Disclaimer Banner | v1.4 | 0/1 | Not started | - |
 | 24. Page Warnings | v1.4 | 0/1 | Not started | - |
