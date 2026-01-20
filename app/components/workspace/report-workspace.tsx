@@ -480,7 +480,7 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
 
     const institutionName = brandTemplate?.institutionName || 'Medical Center';
     const institutionAddress = brandTemplate?.institutionAddress || '';
-    const footerText = brandTemplate?.footerText || 'This report is AI-generated and should be reviewed by a qualified radiologist.';
+    const footerText = brandTemplate?.footerText || 'Generated with AI assistance. User is solely responsible for accuracy. Not medical advice.';
 
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', {
@@ -716,6 +716,22 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
               },
             },
             spacing: { after: 200 },
+          }),
+          // Disclaimer banner
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: 'AI-GENERATED DRAFT — NOT REVIEWED',
+                bold: true,
+                size: 24, // 12pt
+                color: 'B45309', // amber-700
+              }),
+            ],
+            alignment: AlignmentType.CENTER,
+            shading: {
+              fill: 'FEF3C7', // amber-100
+            },
+            spacing: { before: 200, after: 200 },
           }),
           // Report content
           ...contentParagraphs,
