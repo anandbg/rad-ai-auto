@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
 // Conditional logging - only log in development
 const isDev = process.env.NODE_ENV === 'development';
@@ -8,6 +8,7 @@ const log = isDev ? (...args: unknown[]) => console.log('[Stripe Webhook]', ...a
 const logError = (...args: unknown[]) => console.error('[Stripe Webhook]', ...args);
 
 // Helper function to determine plan from price ID
+// Note: 'pro' in database maps to 'Enterprise' in UI (for backwards compatibility)
 function getPlanFromPriceId(priceId: string | undefined): 'free' | 'plus' | 'pro' {
   if (priceId === process.env.STRIPE_PRICE_ID_PLUS) return 'plus';
   if (priceId === process.env.STRIPE_PRICE_ID_PRO) return 'pro';
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
           const periodEnd = subscriptionItem?.current_period_end ?? Math.floor(Date.now() / 1000);
 
           // Update subscriptions table
-          const supabase = await createSupabaseServerClient();
+          const supabase = createSupabaseServiceClient();
           const { error } = await supabase.from('subscriptions').upsert({
             user_id: userId,
             stripe_customer_id: customerId,
@@ -160,7 +161,7 @@ export async function POST(request: NextRequest) {
           const periodStart = subscriptionItem?.current_period_start ?? Math.floor(Date.now() / 1000);
           const periodEnd = subscriptionItem?.current_period_end ?? Math.floor(Date.now() / 1000);
 
-          const supabase = await createSupabaseServerClient();
+          const supabase = createSupabaseServiceClient();
           const { error } = await supabase.from('subscriptions')
             .update({
               plan: plan,
@@ -188,7 +189,7 @@ export async function POST(request: NextRequest) {
         try {
           const customerId = subscription.customer as string;
 
-          const supabase = await createSupabaseServerClient();
+          const supabase = createSupabaseServiceClient();
           const { error } = await supabase.from('subscriptions')
             .update({
               plan: 'free',
@@ -221,7 +222,7 @@ export async function POST(request: NextRequest) {
         try {
           const customerId = invoice.customer as string;
 
-          const supabase = await createSupabaseServerClient();
+          const supabase = createSupabaseServiceClient();
           const { error } = await supabase.from('subscriptions')
             .update({ status: 'past_due' })
             .eq('stripe_customer_id', customerId);

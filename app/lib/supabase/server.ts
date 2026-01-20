@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 function getRequiredEnv(name: string): string {
@@ -7,6 +8,23 @@ function getRequiredEnv(name: string): string {
     throw new Error(`Environment variable ${name} is not set`);
   }
   return value;
+}
+
+/**
+ * Create a Supabase client with service role privileges.
+ * ONLY use this for server-side admin operations like webhooks.
+ * This bypasses RLS - use with caution!
+ */
+export function createSupabaseServiceClient() {
+  const supabaseUrl = getRequiredEnv('NEXT_PUBLIC_SUPABASE_URL');
+  const serviceRoleKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }
 
 const baseCookieOptions: CookieOptions = {

@@ -35,23 +35,26 @@ const plans = [
       '20 templates',
       'Template versioning',
       'Word/DOCX export',
+      'Priority support',
     ],
     stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PLUS_PRICE_ID,
     recommended: true,
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    price: '$35',
-    period: 'month',
+    id: 'pro', // Keep 'pro' for database compatibility, display as 'Enterprise'
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
     features: [
       'Unlimited reports',
       'Unlimited transcription',
-      'Unlimited templates',
+      'Custom templates',
       'Institution features',
-      'Priority support',
+      'Dedicated support',
+      'Custom integrations',
     ],
-    stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
+    stripePriceId: null,
+    isEnterprise: true,
   },
 ];
 
@@ -190,6 +193,7 @@ export default function BillingPage() {
   const currentPlan = plans.find(p => p.id === currentPlanId) ?? plans[0]!;
 
   // Plan limits based on subscription
+  // Note: 'pro' in database maps to 'Enterprise' in UI
   const planLimits = {
     free: { reports: 10, transcription: 15, templates: 3 },
     plus: { reports: 100, transcription: 150, templates: 20 },
@@ -360,6 +364,7 @@ export default function BillingPage() {
             <StaggerContainer className="grid gap-4 md:grid-cols-3">
               {plans.map((plan) => {
                 const isCurrent = plan.id === currentPlanId;
+                const isEnterprise = 'isEnterprise' in plan && plan.isEnterprise;
                 return (
                   <FadeIn key={plan.id}>
                     <Card
@@ -376,7 +381,9 @@ export default function BillingPage() {
                         </div>
                         <div className="flex items-baseline gap-1">
                           <span className="text-2xl font-bold text-text-primary">{plan.price}</span>
-                          <span className="text-sm text-text-secondary">/{plan.period}</span>
+                          {plan.period && (
+                            <span className="text-sm text-text-secondary">/{plan.period}</span>
+                          )}
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -390,14 +397,24 @@ export default function BillingPage() {
                         </ul>
                       </CardContent>
                       <CardFooter>
-                        <Button
-                          variant={isCurrent ? 'outline' : plan.recommended ? 'primary' : 'secondary'}
-                          className="w-full"
-                          disabled={isCurrent}
-                          onClick={() => !isCurrent && handleUpgrade(plan.stripePriceId)}
-                        >
-                          {isCurrent ? 'Current Plan' : 'Upgrade'}
-                        </Button>
+                        {isEnterprise ? (
+                          <Button
+                            variant="secondary"
+                            className="w-full"
+                            onClick={() => window.location.href = 'mailto:contact@askdigitalconsultancy.com?subject=Enterprise%20Plan%20Inquiry'}
+                          >
+                            Contact Us
+                          </Button>
+                        ) : (
+                          <Button
+                            variant={isCurrent ? 'outline' : plan.recommended ? 'primary' : 'secondary'}
+                            className="w-full"
+                            disabled={isCurrent}
+                            onClick={() => !isCurrent && handleUpgrade(plan.stripePriceId)}
+                          >
+                            {isCurrent ? 'Current Plan' : 'Upgrade'}
+                          </Button>
+                        )}
                       </CardFooter>
                     </Card>
                   </FadeIn>
