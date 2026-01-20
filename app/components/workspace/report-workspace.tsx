@@ -204,7 +204,7 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
     const primaryColor = brandTemplate?.primaryColor || '#7C3AED';
     const institutionName = brandTemplate?.institutionName || 'Medical Center';
     const institutionAddress = brandTemplate?.institutionAddress || '';
-    const footerText = brandTemplate?.footerText || 'This report is AI-generated and should be reviewed by a qualified radiologist.';
+    const footerText = brandTemplate?.footerText || 'Generated with AI assistance. User is solely responsible for accuracy. Not medical advice.';
 
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', {
@@ -310,6 +310,15 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
     pdf.text(dateStr, margin + contentWidth / 2 + 14, y + 3);
 
     y += 15;
+
+    // --- DISCLAIMER BANNER ---
+    pdf.setFillColor(254, 243, 199); // amber-100
+    pdf.roundedRect(margin, y, contentWidth, 12, 2, 2, 'F');
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(180, 83, 9); // amber-700
+    pdf.text('AI-GENERATED DRAFT — NOT REVIEWED', pageWidth / 2, y + 8, { align: 'center' });
+    y += 18;
 
     // --- CONTENT ---
     const lines = reportContent.split('\n');
