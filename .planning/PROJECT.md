@@ -1,13 +1,16 @@
 # AI Radiologist - Production Integration
 
-## Current Milestone: v1.1 Production Readiness
+## Current Milestone: v1.4 Legal Compliance
 
-**Goal:** Polish the workspace UX, wire all buttons to working APIs, align AI prompts with reference documentation, and improve export functionality.
+**Goal:** Research and implement all legal requirements for global commercial launch of an AI radiology decision-support tool, including disclaimers, terms of service, and privacy-preserving architecture.
 
 **Target features:**
-- Consolidate workspace to single hub (remove reports panel, wire APIs)
-- Align AI system prompts with proven reference implementation
-- Fix PDF export (direct download) and add Word download option
+- Research global compliance requirements for AI decision-support tools (US, EU, major markets)
+- Implement Terms of Service, Privacy Policy, and AI usage disclaimers
+- Add in-app consent flows and acknowledgment mechanisms
+- Ensure data architecture enforces no-PHI-storage policy (reports/transcriptions ephemeral)
+- Add appropriate liability disclaimers and "not medical advice" guardrails
+- Document compliance posture for commercial launch
 
 ## What This Is
 
@@ -47,10 +50,13 @@ A radiologist can sign up, generate a real AI report from voice/text input, and 
 
 ### Active
 
-- [ ] Remove reports panel from dashboard (simplify to 2-panel layout)
-- [ ] Consolidate workflow to workspace hub (wire APIs, add file upload)
-- [ ] Review and align AI system prompts with reference documentation
-- [ ] Fix PDF export (direct download) and add Word download option
+- [ ] Research global AI decision-support compliance (HIPAA exemptions, GDPR, MDR, FDA guidance)
+- [ ] Draft Terms of Service with appropriate liability limitations
+- [ ] Draft Privacy Policy documenting no-PHI-storage architecture
+- [ ] Implement AI disclaimer banners and consent acknowledgments
+- [ ] Add "Decision Support Only" disclaimers throughout the app
+- [ ] Verify ephemeral data handling (transcriptions auto-delete, reports not persisted)
+- [ ] Document compliance posture for investors/partners
 
 ### Out of Scope
 
@@ -99,4 +105,4 @@ A radiologist can sign up, generate a real AI report from voice/text input, and 
 | Full user journey priority | End-to-end flow proves architecture works | — Pending |
 
 ---
-*Last updated: 2026-01-17 after milestone v1.1 started*
+*Last updated: 2026-01-20 after milestone v1.4 started*
