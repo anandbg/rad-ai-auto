@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 
 Milestone: v1.4 Legal Compliance
 Phase: 21 of 26 (Legal Documents & Website Pages)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-20 — Roadmap created (6 phases, 7 plans)
+Plan: 1 of 1 complete
+Status: Phase complete
+Last activity: 2026-01-20 — Completed 21-01-PLAN.md (Legal Documents)
 
-Progress: [████████████████████░░] 86% (v1.0-v1.3 complete, v1.4 starting)
+Progress: [████████████████████░░] 88% (v1.0-v1.3 complete, v1.4 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 37
+- Total plans completed: 38
 - Average duration: 7.6 min
-- Total execution time: 4.68 hours
+- Total execution time: 4.82 hours
 
 **By Phase (v1.0):**
 
@@ -63,9 +63,15 @@ Progress: [████████████████████░░] 8
 | 19-stripe-production-setup | 3 | 7 min | 2.3 min |
 | 20-vercel-deployment-readiness | 5 | 27 min | 5.4 min |
 
+**By Phase (v1.4):**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 21-legal-documents | 1 | 8 min | 8 min |
+
 **Recent Trend:**
-- Last 5 plans: 19-02 (4 min), 19-03 (2 min), 20-04 (5 min), 20-03 (6 min), 20-05 (8 min)
-- Trend: Infrastructure and optimization plans execute quickly
+- Last 5 plans: 19-03 (2 min), 20-04 (5 min), 20-03 (6 min), 20-05 (8 min), 21-01 (8 min)
+- Trend: Legal compliance plans execute at standard pace
 
 ## Accumulated Context
 
@@ -74,6 +80,10 @@ Progress: [████████████████████░░] 8
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 21-01]: Use placeholder [Company Legal Name] where formal legal entity required
+- [Phase 21-01]: Use legal@airad.io and privacy@airad.io as contact emails
+- [Phase 21-01]: Legal pages styled consistently with app design tokens
+- [Phase 21-01]: Footer includes "For licensed healthcare professionals only" note
 - [Phase 20-05]: Use @vercel/analytics for free-tier production monitoring (Web Vitals, page views)
 - [Phase 20-05]: Analytics component placed at root layout body level for global coverage
 - [Phase 20-05]: DEPLOYMENT.md consolidates all deployment steps in one document
@@ -145,20 +155,21 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None - all Phase 19 and 20 plans complete. Ready for production deployment.
+None - Phase 21 complete. Legal foundation in place.
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Created v1.4 roadmap (6 phases, 7 plans)
+Stopped at: Completed 21-01-PLAN.md (Legal Documents)
 Resume file: None
 
-**v1.4 Legal Compliance ROADMAP CREATED (2026-01-20):**
-- Goal: Implement disclaimer-based compliance for global commercial launch
-- Approach: Light-touch compliance via ubiquitous disclaimers (from research)
-- 6 phases: Legal docs, Sign-up gate, Banner, Page warnings, Report disclaimers, Settings privacy
-- 7 total plans
-- All requirements mapped (15 v1.4 requirements)
+**v1.4 Legal Compliance PROGRESS (2026-01-20):**
+- Phase 21 (Legal Documents): COMPLETE - Terms, Privacy, Footer
+- Phase 22 (Sign-up Acknowledgment): Not started
+- Phase 23 (AI Banner): Not started
+- Phase 24 (Page Warnings): Not started
+- Phase 25 (Report Disclaimers): Not started
+- Phase 26 (Settings Privacy): Not started
 
 **Previous milestones:**
 - v1.3: Shipped 2026-01-20 (19, 20 complete; 16 deferred)
@@ -166,4 +177,4 @@ Resume file: None
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** `/gsd:plan-phase 21` to plan Legal Documents phase
+**Next action:** `/gsd:execute-plan .planning/phases/22-sign-up-acknowledgment/22-01-PLAN.md`
