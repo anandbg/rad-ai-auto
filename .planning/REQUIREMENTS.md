@@ -236,14 +236,22 @@ Which phases cover which requirements. Updated by create-roadmap.
 | OUTPUT-02 | Phase 25 | Pending |
 | OUTPUT-03 | Phase 25 | Pending |
 | SETT-01 (v1.4) | Phase 26 | Pending |
+| FMT-01 | Phase 27 | Pending |
+| FMT-02 | Phase 27 | Pending |
+| FMT-03 | Phase 27 | Pending |
+| FMT-04 | Phase 27 | Pending |
+| FMT-05 | Phase 27 | Pending |
+| FMT-06 | Phase 27 | Pending |
+| FMT-07 | Phase 27 | Pending |
+| FMT-08 | Phase 27 | Pending |
 
 **Coverage:**
 - v1 requirements: 30 total (all complete)
 - v1.1 requirements: 5 total (3 complete, 2 pending)
 - v1.4 requirements: 15 total (7 complete, 8 pending)
-- v1.5 requirements: 8 total (0 complete, 8 pending - awaiting roadmap)
-- Mapped to phases: 50 ✓
-- Unmapped: 8 (v1.5 FMT-01 to FMT-08)
+- v1.5 requirements: 8 total (0 complete, 8 pending)
+- Mapped to phases: 58 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-16*
