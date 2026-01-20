@@ -16,6 +16,7 @@ import {
   Header,
   Footer,
   BorderStyle,
+  LevelFormat,
 } from 'docx';
 import { saveAs } from 'file-saver';
 import {
@@ -36,6 +37,8 @@ import { WorkspaceTabs, WorkspaceTab } from './workspace-tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/shared/cn';
 import { PageWarning } from '@/components/legal/page-warning';
+import { usePreferences, type SectionListStyle } from '@/lib/preferences/preferences-context';
+import { getListPrefix, detectSection, getStyleForSection } from '@/lib/report/list-styles';
 
 // Brand template interface for PDF/Word export styling
 interface BrandTemplate {
@@ -97,6 +100,9 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
   const [templateOpen, setTemplateOpen] = useState(false);
   const [localTemplateId, setLocalTemplateId] = useState(selectedTemplateId);
   const shouldReduceMotion = useReducedMotion();
+
+  // Get user preferences for list styles
+  const { preferences } = usePreferences();
 
   // Template loading state
   const [templates, setTemplates] = useState<Template[]>(fallbackTemplates);
@@ -307,6 +313,10 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
     // --- CONTENT ---
     const lines = reportContent.split('\n');
 
+    // Track current section for list style preferences
+    let currentSection: keyof SectionListStyle | null = null;
+    let listItemIndex = 0;
+
     for (const line of lines) {
       const trimmed = line.trim();
 
@@ -315,26 +325,35 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
         continue;
       }
 
-      // H2 heading
+      // H2 heading - detect section
       if (trimmed.startsWith('## ')) {
+        const headingText = trimmed.replace(/^## /, '');
+        currentSection = detectSection(headingText);
+        listItemIndex = 0; // Reset index for new section
         checkPageBreak(12);
         y += 4;
         pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(30, 41, 59); // slate-800
-        pdf.text(trimmed.replace(/^## /, ''), margin, y);
+        pdf.text(headingText, margin, y);
         y += 8;
         continue;
       }
 
-      // H3 heading
+      // H3 heading - also detect section
       if (trimmed.startsWith('### ')) {
+        const headingText = trimmed.replace(/^### /, '');
+        const detected = detectSection(headingText);
+        if (detected) {
+          currentSection = detected;
+          listItemIndex = 0;
+        }
         checkPageBreak(10);
         y += 2;
         pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(51, 65, 85); // slate-700
-        pdf.text(trimmed.replace(/^### /, ''), margin, y);
+        pdf.text(headingText, margin, y);
         y += 7;
         continue;
       }
@@ -342,7 +361,11 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
       // Bullet point or numbered list
       if (trimmed.startsWith('- ') || /^\d+\.\s/.test(trimmed)) {
         const bulletText = trimmed.replace(/^-\s*/, '').replace(/^\d+\.\s*/, '');
-        const prefix = trimmed.startsWith('- ') ? '•' : trimmed.match(/^\d+\./)?.[0] || '•';
+
+        // Get style from user preferences for current section
+        const style = getStyleForSection(currentSection, preferences.listStylePreferences);
+        const prefix = getListPrefix(style, listItemIndex);
+        listItemIndex++;
 
         // Parse bold sections within the line
         const parts = bulletText.split(/(\*\*[^*]+\*\*)/g);
@@ -354,10 +377,15 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
 
         pdf.setTextColor(71, 85, 105); // slate-600
         pdf.setFont('helvetica', 'normal');
-        pdf.text(prefix, margin + 2, y);
+
+        // Adjust indentation based on whether we have a prefix
+        const textIndent = prefix ? margin + 8 : margin + 2;
+        if (prefix) {
+          pdf.text(prefix, margin + 2, y);
+        }
 
         // Render with bold support
-        let xPos = margin + 8;
+        let xPos = textIndent;
         for (const part of parts) {
           if (part.startsWith('**') && part.endsWith('**')) {
             pdf.setFont('helvetica', 'bold');
@@ -375,9 +403,9 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
               for (let i = 1; i < partLines.length; i++) {
                 y += 5;
                 checkPageBreak(5);
-                pdf.text(partLines[i], margin + 8, y);
+                pdf.text(partLines[i], textIndent, y);
               }
-              xPos = margin + 8 + pdf.getTextWidth(partLines[partLines.length - 1]);
+              xPos = textIndent + pdf.getTextWidth(partLines[partLines.length - 1]);
             } else {
               pdf.text(part, xPos, y);
               xPos += pdf.getTextWidth(part);
@@ -451,66 +479,6 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
       day: 'numeric'
     });
 
-    // Parse markdown content into docx paragraphs
-    const contentParagraphs: Paragraph[] = [];
-    const lines = reportContent.split('\n');
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) {
-        contentParagraphs.push(new Paragraph({ text: '' }));
-        continue;
-      }
-
-      // H2 heading
-      if (trimmed.startsWith('## ')) {
-        contentParagraphs.push(
-          new Paragraph({
-            text: trimmed.replace(/^## /, ''),
-            heading: HeadingLevel.HEADING_2,
-            spacing: { before: 300, after: 120 },
-          })
-        );
-        continue;
-      }
-
-      // H3 heading
-      if (trimmed.startsWith('### ')) {
-        contentParagraphs.push(
-          new Paragraph({
-            text: trimmed.replace(/^### /, ''),
-            heading: HeadingLevel.HEADING_3,
-            spacing: { before: 200, after: 80 },
-          })
-        );
-        continue;
-      }
-
-      // Bullet point
-      if (trimmed.startsWith('- ')) {
-        const bulletText = trimmed.replace(/^- /, '');
-        // Parse bold text within bullets
-        const runs = parseBoldText(bulletText);
-        contentParagraphs.push(
-          new Paragraph({
-            children: runs,
-            bullet: { level: 0 },
-            spacing: { before: 40, after: 40 },
-          })
-        );
-        continue;
-      }
-
-      // Regular paragraph with bold text support
-      const runs = parseBoldText(trimmed);
-      contentParagraphs.push(
-        new Paragraph({
-          children: runs,
-          spacing: { before: 80, after: 80 },
-        })
-      );
-    }
-
     // Helper function to parse bold text
     function parseBoldText(text: string): TextRun[] {
       const runs: TextRun[] = [];
@@ -530,8 +498,122 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
       return runs.length > 0 ? runs : [new TextRun({ text: '' })];
     }
 
-    // Create the document
+    // Parse markdown content into docx paragraphs
+    const contentParagraphs: Paragraph[] = [];
+    const lines = reportContent.split('\n');
+
+    // Track current section for list style preferences
+    let currentSection: keyof SectionListStyle | null = null;
+    let listItemIndex = 0;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        contentParagraphs.push(new Paragraph({ text: '' }));
+        continue;
+      }
+
+      // H2 heading - detect section
+      if (trimmed.startsWith('## ')) {
+        const headingText = trimmed.replace(/^## /, '');
+        currentSection = detectSection(headingText);
+        listItemIndex = 0; // Reset index for new section
+        contentParagraphs.push(
+          new Paragraph({
+            text: headingText,
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 300, after: 120 },
+          })
+        );
+        continue;
+      }
+
+      // H3 heading - also detect section
+      if (trimmed.startsWith('### ')) {
+        const headingText = trimmed.replace(/^### /, '');
+        const detected = detectSection(headingText);
+        if (detected) {
+          currentSection = detected;
+          listItemIndex = 0;
+        }
+        contentParagraphs.push(
+          new Paragraph({
+            text: headingText,
+            heading: HeadingLevel.HEADING_3,
+            spacing: { before: 200, after: 80 },
+          })
+        );
+        continue;
+      }
+
+      // Bullet point or numbered list in markdown
+      if (trimmed.startsWith('- ') || /^\d+\.\s/.test(trimmed)) {
+        const bulletText = trimmed.replace(/^-\s*/, '').replace(/^\d+\.\s*/, '');
+        const runs = parseBoldText(bulletText);
+
+        // Get style from user preferences for current section
+        const style = getStyleForSection(currentSection, preferences.listStylePreferences);
+
+        if (style === 'none') {
+          // Plain paragraph, no bullet - just slight indent
+          contentParagraphs.push(
+            new Paragraph({
+              children: runs,
+              spacing: { before: 40, after: 40 },
+              indent: { left: 360 },
+            })
+          );
+        } else if (style === 'numbered') {
+          // Use Word's native numbering
+          contentParagraphs.push(
+            new Paragraph({
+              children: runs,
+              numbering: { reference: 'numberedList', level: 0 },
+              spacing: { before: 40, after: 40 },
+            })
+          );
+        } else {
+          // Custom bullet character (bullet, dash, or arrow)
+          const prefix = getListPrefix(style, listItemIndex);
+          contentParagraphs.push(
+            new Paragraph({
+              children: [
+                new TextRun({ text: prefix + ' ' }),
+                ...runs,
+              ],
+              spacing: { before: 40, after: 40 },
+              indent: { left: 360, hanging: 180 },
+            })
+          );
+        }
+        listItemIndex++;
+        continue;
+      }
+
+      // Regular paragraph with bold text support
+      const runs = parseBoldText(trimmed);
+      contentParagraphs.push(
+        new Paragraph({
+          children: runs,
+          spacing: { before: 80, after: 80 },
+        })
+      );
+    }
+
+    // Create the document with numbering config for numbered lists
     const doc = new Document({
+      numbering: {
+        config: [{
+          reference: 'numberedList',
+          levels: [{
+            level: 0,
+            format: LevelFormat.DECIMAL,
+            text: '%1.',
+            alignment: AlignmentType.START,
+            style: { paragraph: { indent: { left: 360, hanging: 180 } } },
+          }],
+        }],
+      },
       sections: [{
         properties: {},
         headers: {
