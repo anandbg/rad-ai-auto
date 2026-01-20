@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { PageWrapper } from '@/components/motion/page-wrapper';
 import { FadeIn } from '@/components/motion/fade-in';
+import Link from 'next/link';
 
 // Section labels for report formatting
 const SECTION_LABELS: Record<keyof SectionListStyle, string> = {
@@ -524,6 +525,47 @@ export default function SettingsPage() {
                       </select>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+
+          {/* Data & Privacy Section */}
+          <FadeIn delay={0.24}>
+            <Card id="data-privacy">
+              <CardHeader>
+                <CardTitle>Data & Privacy</CardTitle>
+                <CardDescription>How your data is handled</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="label">Ephemeral Processing</label>
+                      <p className="text-sm text-text-muted">
+                        Your voice recordings, text input, and generated reports are processed in real-time and NOT stored on our servers. Data exists only during your active session.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between border-t pt-4">
+                    <div>
+                      <label className="label">Your Responsibility</label>
+                      <p className="text-sm text-text-muted">
+                        You are solely responsible for the accuracy of all content. Do not input patient-identifiable or personal health information. This tool is for drafting assistance only.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between border-t pt-4">
+                    <div>
+                      <label className="label">Full Privacy Policy</label>
+                      <p className="text-sm text-text-muted">
+                        Review our complete privacy policy for detailed information about data handling practices.
+                      </p>
+                    </div>
+                    <Link href="/privacy">
+                      <Button variant="outline">View Policy</Button>
+                    </Link>
+                  </div>
                 </div>
               </CardContent>
             </Card>
