@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 
 Milestone: v1.4 Legal Compliance
 Phase: 22 of 26 (Sign-up Acknowledgment)
-Plan: 1 of 1 complete
+Plan: 2 of 2 complete
 Status: Phase complete
-Last activity: 2026-01-20 — Completed 22-01-PLAN.md (Sign-up Legal Checkboxes)
+Last activity: 2026-01-20 — Completed 22-02-PLAN.md (First-Use Acknowledgment Modal)
 
-Progress: [█████████████████████░░] 90% (v1.0-v1.3 complete, v1.4 in progress)
+Progress: [█████████████████████░░] 91% (v1.0-v1.3 complete, v1.4 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 39
-- Average duration: 7.4 min
-- Total execution time: 4.86 hours
+- Total plans completed: 40
+- Average duration: 7.5 min
+- Total execution time: 5.01 hours
 
 **By Phase (v1.0):**
 
@@ -68,11 +68,11 @@ Progress: [█████████████████████░░
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 21-legal-documents | 1 | 8 min | 8 min |
-| 22-sign-up-acknowledgment | 1 | 2 min | 2 min |
+| 22-sign-up-acknowledgment | 2 | 17 min | 8.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 20-04 (5 min), 20-03 (6 min), 20-05 (8 min), 21-01 (8 min), 22-01 (2 min)
-- Trend: Simple checkbox plan executed quickly
+- Last 5 plans: 20-05 (8 min), 21-01 (8 min), 22-01 (2 min), 22-02 (15 min)
+- Trend: Modal with checkpoint verification took longer due to human interaction
 
 ## Accumulated Context
 
@@ -81,6 +81,9 @@ Progress: [█████████████████████░░
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 22-02]: Build non-dismissible modal by intercepting Escape and outside clicks
+- [Phase 22-02]: Fail open on profile query errors (UX-friendly, not security gate)
+- [Phase 22-02]: Query profile in server component layout, pass to client modal
 - [Phase 22-01]: Use z.literal(true) for checkbox validation (strict boolean enforcement)
 - [Phase 22-01]: Create reusable Checkbox component with Radix UI
 - [Phase 22-01]: Open Terms link in new tab to preserve form state
@@ -164,12 +167,12 @@ None - Phase 22 complete. Sign-up gate operational.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 22-01-PLAN.md (Sign-up Legal Checkboxes)
+Stopped at: Completed 22-02-PLAN.md (First-Use Acknowledgment Modal)
 Resume file: None
 
 **v1.4 Legal Compliance PROGRESS (2026-01-20):**
 - Phase 21 (Legal Documents): COMPLETE - Terms, Privacy, Footer
-- Phase 22 (Sign-up Acknowledgment): COMPLETE - ToS checkbox, no-PHI checkbox
+- Phase 22 (Sign-up Acknowledgment): COMPLETE - Sign-up checkboxes (22-01) + First-use modal (22-02)
 - Phase 23 (AI Banner): Not started
 - Phase 24 (Page Warnings): Not started
 - Phase 25 (Report Disclaimers): Not started
