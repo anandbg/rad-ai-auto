@@ -35,6 +35,7 @@ import {
 import { WorkspaceTabs, WorkspaceTab } from './workspace-tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/shared/cn';
+import { PageWarning } from '@/components/legal/page-warning';
 
 // Brand template interface for PDF/Word export styling
 interface BrandTemplate {
@@ -900,7 +901,9 @@ function TranscribeTab({
   };
 
   return (
-    <div className="h-full flex flex-col lg:flex-row gap-6">
+    <div className="h-full flex flex-col gap-4">
+      <PageWarning variant="transcription" />
+      <div className="flex-1 flex flex-col lg:flex-row gap-6">
       {/* Left: Recording controls */}
       <div className={cn(
         "flex flex-col items-center justify-center p-8 rounded-2xl",
@@ -1056,6 +1059,7 @@ function TranscribeTab({
           />
         </div>
       </div>
+      </div>
     </div>
   );
 }
@@ -1085,7 +1089,9 @@ function ReportTab({
   const categories = [...new Set(templates.map(t => t.category))];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col gap-4">
+      <PageWarning variant="report" />
+      <div className="flex-1 flex flex-col">
       {/* Template selector bar at top of report */}
       <div className={cn(
         "flex items-center justify-between px-5 py-3 rounded-t-2xl",
@@ -1236,6 +1242,7 @@ function ReportTab({
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
