@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
-import { usePreferences, type Theme } from '@/lib/preferences/preferences-context';
+import { usePreferences, type Theme, type ListStyle, type SectionListStyle, DEFAULT_LIST_STYLES } from '@/lib/preferences/preferences-context';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,24 @@ import { Input } from '@/components/ui/input';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { PageWrapper } from '@/components/motion/page-wrapper';
 import { FadeIn } from '@/components/motion/fade-in';
+
+// Section labels for report formatting
+const SECTION_LABELS: Record<keyof SectionListStyle, string> = {
+  clinicalInfo: 'Clinical Information',
+  technique: 'Technique',
+  comparison: 'Comparison',
+  findings: 'Findings',
+  impression: 'Impression',
+};
+
+// List style options for dropdowns
+const LIST_STYLE_OPTIONS: { value: ListStyle; label: string; preview: string }[] = [
+  { value: 'bullet', label: 'Bullet', preview: '\u2022' },
+  { value: 'dash', label: 'Dash', preview: '-' },
+  { value: 'arrow', label: 'Arrow', preview: '\u2192' },
+  { value: 'numbered', label: 'Numbered', preview: '1.' },
+  { value: 'none', label: 'None', preview: '' },
+];
 
 // Scroll to hash on page load
 function useHashScroll(isReady: boolean) {
@@ -165,6 +183,41 @@ export default function SettingsPage() {
       showToast(`Default template set to ${templateName}`, 'success');
     } catch {
       showToast('Failed to save default template', 'error');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleListStyleChange = async (section: keyof SectionListStyle, style: ListStyle) => {
+    setSaving('listStyle');
+    try {
+      const newStyles = {
+        ...(preferences.listStylePreferences || DEFAULT_LIST_STYLES),
+        [section]: style,
+      };
+      await updatePreference('listStylePreferences', newStyles);
+      showToast(`Updated ${SECTION_LABELS[section]} list style`, 'success');
+    } catch {
+      showToast('Failed to save list style', 'error');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleApplyToAll = async (style: ListStyle) => {
+    setSaving('listStyle');
+    try {
+      const newStyles: SectionListStyle = {
+        clinicalInfo: style,
+        technique: style,
+        comparison: style,
+        findings: style,
+        impression: style,
+      };
+      await updatePreference('listStylePreferences', newStyles);
+      showToast(`Applied ${LIST_STYLE_OPTIONS.find(o => o.value === style)?.label} style to all sections`, 'success');
+    } catch {
+      showToast('Failed to apply style to all sections', 'error');
     } finally {
       setSaving(null);
     }
@@ -419,8 +472,65 @@ export default function SettingsPage() {
             </Card>
           </FadeIn>
 
+          {/* Report Formatting Section */}
+          <FadeIn delay={0.22}>
+            <Card id="formatting">
+              <CardHeader>
+                <CardTitle>Report Formatting</CardTitle>
+                <CardDescription>Customize list styles in generated reports</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Apply to All dropdown */}
+                  <div className="flex items-center justify-between pb-4 border-b">
+                    <div>
+                      <label className="label">Apply to All Sections</label>
+                      <p className="text-sm text-text-muted">Set the same style for all report sections</p>
+                    </div>
+                    <select
+                      onChange={(e) => handleApplyToAll(e.target.value as ListStyle)}
+                      disabled={saving === 'listStyle'}
+                      className="rounded-md border border-border bg-surface px-3 py-2 text-text-primary"
+                      defaultValue=""
+                      data-testid="apply-to-all-select"
+                    >
+                      <option value="" disabled>Select style...</option>
+                      {LIST_STYLE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.preview} {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Per-section dropdowns */}
+                  {(Object.keys(SECTION_LABELS) as Array<keyof SectionListStyle>).map((section) => (
+                    <div key={section} className="flex items-center justify-between">
+                      <div>
+                        <label className="label">{SECTION_LABELS[section]}</label>
+                      </div>
+                      <select
+                        value={preferences.listStylePreferences?.[section] || 'bullet'}
+                        onChange={(e) => handleListStyleChange(section, e.target.value as ListStyle)}
+                        disabled={saving === 'listStyle'}
+                        className="rounded-md border border-border bg-surface px-3 py-2 text-text-primary min-w-[140px]"
+                        data-testid={`list-style-${section}`}
+                      >
+                        {LIST_STYLE_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.preview} {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+
           {/* Security Section */}
-          <FadeIn delay={0.25}>
+          <FadeIn delay={0.27}>
             <Card id="security">
               <CardHeader>
                 <CardTitle>Security</CardTitle>
@@ -461,7 +571,7 @@ export default function SettingsPage() {
           </FadeIn>
 
           {/* Profile Section */}
-          <FadeIn delay={0.3}>
+          <FadeIn delay={0.32}>
             <Card id="profile">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
@@ -575,7 +685,7 @@ export default function SettingsPage() {
           </FadeIn>
 
           {/* Debug Info */}
-          <FadeIn delay={0.35}>
+          <FadeIn delay={0.37}>
             <Card>
               <CardHeader>
                 <CardTitle>Preferences Debug</CardTitle>
@@ -593,7 +703,7 @@ export default function SettingsPage() {
           </FadeIn>
 
           {/* Danger Zone */}
-          <FadeIn delay={0.4}>
+          <FadeIn delay={0.42}>
             <Card id="danger" className="border-danger/50">
               <CardHeader>
                 <CardTitle className="text-danger">Danger Zone</CardTitle>
