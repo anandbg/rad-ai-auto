@@ -99,8 +99,8 @@ Legal compliance through disclaimer-first approach. Maximum liability protection
 
 ### Persistent App-Wide Disclaimer Banner
 
-- [ ] **BANNER-01**: Every authenticated page displays a persistent disclaimer banner (not dismissible) with text like: "⚠️ Do not upload personal data. AI-generated content requires review. Use at your own risk."
-- [ ] **BANNER-02**: Banner is visually prominent but not obstructive (e.g., slim top bar, contrasting color)
+- [x] **BANNER-01**: Every authenticated page displays a persistent disclaimer banner (not dismissible) with text like: "⚠️ Do not upload personal data. AI-generated content requires review. Use at your own risk."
+- [x] **BANNER-02**: Banner is visually prominent but not obstructive (e.g., slim top bar, contrasting color)
 
 ### Page-Specific Warnings
 
@@ -211,8 +211,8 @@ Which phases cover which requirements. Updated by create-roadmap.
 | GATE-01 | Phase 22 | Complete |
 | GATE-02 | Phase 22 | Complete |
 | ACK-01 | Phase 22 | Complete |
-| BANNER-01 | Phase 23 | Pending |
-| BANNER-02 | Phase 23 | Pending |
+| BANNER-01 | Phase 23 | Complete |
+| BANNER-02 | Phase 23 | Complete |
 | WARN-01 | Phase 24 | Pending |
 | WARN-02 | Phase 24 | Pending |
 | WARN-03 | Phase 24 | Pending |
@@ -225,7 +225,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 **Coverage:**
 - v1 requirements: 30 total (all complete)
 - v1.1 requirements: 5 total (3 complete, 2 pending)
-- v1.4 requirements: 15 total (2 complete, 13 pending)
+- v1.4 requirements: 15 total (7 complete, 8 pending)
 - Mapped to phases: 50 ✓
 - Unmapped: 0
 
