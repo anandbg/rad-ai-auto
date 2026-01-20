@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 27 Complete - Report List Style Preferences
+**Current focus:** Phase 25 Complete - Report Disclaimers
 
 ## Current Position
 
 Milestone: Post-v1.4 Enhancements
-Phase: 27 of 27 (Report List Style Preferences)
-Plan: 2 of 2 complete
+Phase: 25 of 27 (Report Disclaimers)
+Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-20 — Completed 27-02-PLAN.md (Apply list styles to report exports)
+Last activity: 2026-01-20 — Completed 25-01-PLAN.md (Report disclaimers in display and exports)
 
-Progress: [████████████████████████] 100% (v1.0-v1.4 complete, phase 27 complete)
+Progress: [████████████████████████] 100% (v1.0-v1.4 complete, phases 25 and 27 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 44
-- Average duration: 7.4 min
-- Total execution time: 5.4 hours
+- Total plans completed: 45
+- Average duration: 7.3 min
+- Total execution time: 5.5 hours
 
 **By Phase (v1.0):**
 
@@ -76,11 +76,12 @@ Progress: [███████████████████████
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
+| 25-report-disclaimers | 1 | 3 min | 3 min |
 | 27-report-list-style-preferences | 2 | 20 min | 10 min |
 
 **Recent Trend:**
-- Last 5 plans: 23-01 (2 min), 24-01 (4 min), 27-01 (12 min), 27-02 (8 min)
-- Trend: Phase 27 complete - list style preferences feature fully implemented
+- Last 5 plans: 24-01 (4 min), 27-01 (12 min), 27-02 (8 min), 25-01 (3 min)
+- Trend: Fast execution - report disclaimers completed in 3 minutes
 
 ## Accumulated Context
 
@@ -89,6 +90,9 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 25-01]: Use amber colors for AI-generated draft header (visually distinct)
+- [Phase 25-01]: Keep footer disclaimer subtle with slate colors
+- [Phase 25-01]: Same disclaimer text across all outputs for consistency
 - [Phase 27-02]: Use heading text detection to identify current report section
 - [Phase 27-02]: Reset list item index on section change for proper numbering
 - [Phase 27-02]: Use LevelFormat.DECIMAL for Word native numbering
@@ -184,23 +188,22 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None - Phase 27 complete. All planned phases delivered.
+None - Phase 25 complete. Report disclaimers fully implemented.
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 27-02-PLAN.md (Apply list styles to report exports)
+Stopped at: Completed 25-01-PLAN.md (Report disclaimers in display and exports)
 Resume file: None
 
-**Phase 27 PROGRESS (2026-01-20):**
-- Phase 27-01 (Settings UI): COMPLETE - List style preferences in Settings page
-- Phase 27-02 (Apply to Report Generation): COMPLETE - PDF and Word exports use preferences
+**Phase 25 PROGRESS (2026-01-20):**
+- Phase 25-01 (Report Disclaimers): COMPLETE - Display, PDF, and Word exports include disclaimers
 
 **Previous milestones:**
-- v1.4: Shipped 2026-01-20 (21-24 complete; 25-26 deferred)
+- v1.4: Shipped 2026-01-20 (21-24 complete; 25-26 deferred, now 25 complete)
 - v1.3: Shipped 2026-01-20 (19, 20 complete; 16 deferred)
 - v1.2: Shipped 2026-01-20
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** All planned phases complete. Ready for new feature requests or production deployment.
+**Next action:** Phase 26 (Notification Settings) remains deferred. Ready for new feature requests or production deployment.
