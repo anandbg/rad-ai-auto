@@ -16,6 +16,7 @@ import { SectionList } from '@/components/template-builder/section-list';
 import { CreationPathwayModal, PathwayType } from '@/components/template-builder/creation-pathway-modal';
 import { AIGenerationDialog } from '@/components/template-builder/ai-generation-dialog';
 import { templateFormSchema, formatZodErrors, type TemplateSection, type AIGeneratedTemplate } from '@/lib/validation/template-schema';
+import { PageWarning } from '@/components/legal/page-warning';
 
 // Form draft storage key
 const FORM_DRAFT_KEY = 'ai-rad-template-draft';
@@ -467,6 +468,9 @@ export default function NewTemplatePage() {
               onChange={handleImportFile}
               className="hidden"
             />
+
+            {/* Privacy warning */}
+            <PageWarning variant="template" className="mb-4" />
 
             <form onSubmit={handleSubmit}>
         {/* CSRF Token */}
