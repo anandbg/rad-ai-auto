@@ -3,6 +3,15 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
+// List style types for report sections
+interface SectionListStyle {
+  clinicalInfo: string;
+  technique: string;
+  comparison: string;
+  findings: string;
+  impression: string;
+}
+
 // Database column to frontend key mapping
 interface DbPreferences {
   user_id: string;
@@ -12,6 +21,7 @@ interface DbPreferences {
   yolo_mode_enabled: boolean;
   keyboard_shortcuts_enabled: boolean;
   onboarding_completed: boolean;
+  list_style_preferences: SectionListStyle | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,7 +32,17 @@ interface ApiPreferences {
   autoSave: boolean; // Maps to keyboard_shortcuts_enabled
   yoloMode: boolean;
   onboardingCompleted: boolean;
+  listStylePreferences: SectionListStyle;
 }
+
+// Default list style preferences for all sections
+const DEFAULT_LIST_STYLES: SectionListStyle = {
+  clinicalInfo: 'bullet',
+  technique: 'bullet',
+  comparison: 'bullet',
+  findings: 'bullet',
+  impression: 'bullet',
+};
 
 // Default preferences (returned when no DB row exists)
 const DEFAULT_PREFERENCES: ApiPreferences = {
@@ -31,6 +51,7 @@ const DEFAULT_PREFERENCES: ApiPreferences = {
   autoSave: true,
   yoloMode: false,
   onboardingCompleted: false,
+  listStylePreferences: DEFAULT_LIST_STYLES,
 };
 
 // Convert DB row to API format
@@ -41,6 +62,7 @@ function dbToApi(row: DbPreferences): ApiPreferences {
     autoSave: row.keyboard_shortcuts_enabled,
     yoloMode: row.yolo_mode_enabled,
     onboardingCompleted: row.onboarding_completed,
+    listStylePreferences: row.list_style_preferences || DEFAULT_LIST_STYLES,
   };
 }
 
@@ -147,6 +169,10 @@ export async function PUT(request: NextRequest) {
 
     if (body.onboardingCompleted !== undefined) {
       updateData.onboarding_completed = body.onboardingCompleted;
+    }
+
+    if (body.listStylePreferences !== undefined) {
+      updateData.list_style_preferences = body.listStylePreferences;
     }
 
     // UPSERT: insert if not exists, update if exists
