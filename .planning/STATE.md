@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** v1.4 Legal Compliance — preparing for commercial launch
+**Current focus:** Phase 27 - Report List Style Preferences
 
 ## Current Position
 
-Milestone: v1.4 Legal Compliance
-Phase: 24 of 26 (Page Warnings)
-Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-20 — Completed 24-01-PLAN.md (Page Warnings)
+Milestone: Post-v1.4 Enhancements
+Phase: 27 of 27 (Report List Style Preferences)
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-01-20 — Completed 27-01-PLAN.md (Settings UI for list style preferences)
 
-Progress: [█████████████████████░░] 95% (v1.0-v1.3 complete, v1.4 in progress)
+Progress: [██████████████████████░] 96% (v1.0-v1.4 complete, phase 27 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 42
-- Average duration: 7.3 min
-- Total execution time: 5.1 hours
+- Total plans completed: 43
+- Average duration: 7.4 min
+- Total execution time: 5.3 hours
 
 **By Phase (v1.0):**
 
@@ -72,9 +72,15 @@ Progress: [█████████████████████░░
 | 23-disclaimer-banner | 1 | 2 min | 2 min |
 | 24-page-warnings | 1 | 4 min | 4 min |
 
+**By Phase (Post-v1.4):**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 27-report-list-style-preferences | 1 | 12 min | 12 min |
+
 **Recent Trend:**
-- Last 5 plans: 22-01 (2 min), 22-02 (15 min), 23-01 (2 min), 24-01 (4 min)
-- Trend: Legal compliance phases executing quickly with established patterns
+- Last 5 plans: 22-02 (15 min), 23-01 (2 min), 24-01 (4 min), 27-01 (12 min)
+- Trend: New feature development with preferences system extension
 
 ## Accumulated Context
 
@@ -83,6 +89,9 @@ Progress: [█████████████████████░░
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 27-01]: Store list_style_preferences as JSONB in user_preferences table
+- [Phase 27-01]: Default all sections to 'bullet' style for new users
+- [Phase 27-01]: Use preference extension pattern: type, interface, defaults, context state, API handling
 - [Phase 24-01]: Use blue/info styling for page warnings to distinguish from amber app-wide banner
 - [Phase 24-01]: Use role=note for informational content (not role=alert for non-urgent guidance)
 - [Phase 24-01]: Non-dismissible warnings ensure users always see context-specific guidance
@@ -170,26 +179,23 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None - Phase 24 complete. Page-specific warnings operational across all key touchpoints.
+None - Phase 27-01 complete. List style preferences UI operational.
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 24-01-PLAN.md (Page Warnings)
+Stopped at: Completed 27-01-PLAN.md (Settings UI for list style preferences)
 Resume file: None
 
-**v1.4 Legal Compliance PROGRESS (2026-01-20):**
-- Phase 21 (Legal Documents): COMPLETE - Terms, Privacy, Footer
-- Phase 22 (Sign-up Acknowledgment): COMPLETE - Sign-up checkboxes (22-01) + First-use modal (22-02)
-- Phase 23 (AI Banner): COMPLETE - Persistent disclaimer banner (23-01)
-- Phase 24 (Page Warnings): COMPLETE - PageWarning component with 4 variants (24-01)
-- Phase 25 (Report Disclaimers): Not started
-- Phase 26 (Settings Privacy): Not started
+**Phase 27 PROGRESS (2026-01-20):**
+- Phase 27-01 (Settings UI): COMPLETE - List style preferences in Settings page
+- Phase 27-02 (Apply to Report Generation): Not started
 
 **Previous milestones:**
+- v1.4: Shipped 2026-01-20 (21-24 complete; 25-26 deferred)
 - v1.3: Shipped 2026-01-20 (19, 20 complete; 16 deferred)
 - v1.2: Shipped 2026-01-20
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** `/gsd:execute-plan` for Phase 25 (Report Disclaimers)
+**Next action:** `/gsd:execute-plan` for Phase 27-02 (Apply list styles to report generation)
