@@ -4,6 +4,23 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef, ty
 import { useAuth } from '@/lib/auth/auth-context';
 
 export type Theme = 'light' | 'dark' | 'system';
+export type ListStyle = 'bullet' | 'dash' | 'arrow' | 'numbered' | 'none';
+
+export interface SectionListStyle {
+  clinicalInfo: ListStyle;
+  technique: ListStyle;
+  comparison: ListStyle;
+  findings: ListStyle;
+  impression: ListStyle;
+}
+
+export const DEFAULT_LIST_STYLES: SectionListStyle = {
+  clinicalInfo: 'bullet',
+  technique: 'bullet',
+  comparison: 'bullet',
+  findings: 'bullet',
+  impression: 'bullet',
+};
 
 interface UserPreferences {
   theme: Theme;
@@ -12,6 +29,7 @@ interface UserPreferences {
   compactMode: boolean;
   yoloMode: boolean;
   onboardingCompleted: boolean;
+  listStylePreferences: SectionListStyle;
 }
 
 // API response format
@@ -21,6 +39,7 @@ interface ApiPreferences {
   autoSave: boolean;
   yoloMode: boolean;
   onboardingCompleted: boolean;
+  listStylePreferences: SectionListStyle;
 }
 
 interface PreferencesContextType {
@@ -37,6 +56,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   compactMode: false,
   yoloMode: false,
   onboardingCompleted: false,
+  listStylePreferences: DEFAULT_LIST_STYLES,
 };
 
 const PreferencesContext = createContext<PreferencesContextType>({
@@ -64,6 +84,7 @@ function apiToFullPreferences(api: ApiPreferences): UserPreferences {
   return {
     ...api,
     compactMode: false, // Local-only preference, not stored in DB
+    listStylePreferences: api.listStylePreferences || DEFAULT_LIST_STYLES,
   };
 }
 
