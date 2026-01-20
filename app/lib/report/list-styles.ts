@@ -62,3 +62,78 @@ export function getStyleForSection(
   }
   return preferences[section] || 'bullet';
 }
+
+/**
+ * Get markdown list prefix for a given style
+ * Returns markdown-compatible prefix (- for bullets, 1. for numbered)
+ */
+function getMarkdownPrefix(style: ListStyle, index: number): string {
+  switch (style) {
+    case 'bullet':
+    case 'dash':
+    case 'arrow':
+      // All use markdown bullet syntax, visual style handled by CSS/custom rendering
+      return '- ';
+    case 'numbered':
+      return `${index + 1}. `;
+    case 'none':
+      // For 'none', we use a special marker that we'll handle in rendering
+      return '- ';
+    default:
+      return '- ';
+  }
+}
+
+/**
+ * Transform markdown content to apply list style preferences
+ * Converts list items based on section and user preferences
+ */
+export function transformMarkdownListStyles(
+  markdown: string,
+  preferences: SectionListStyle | undefined
+): string {
+  if (!markdown || !preferences) {
+    return markdown;
+  }
+
+  const lines = markdown.split('\n');
+  const result: string[] = [];
+  let currentSection: ReportSection | null = null;
+  let listItemIndex = 0;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Detect section from headings (## or ###)
+    if (trimmed.startsWith('## ') || trimmed.startsWith('### ')) {
+      const headingText = trimmed.replace(/^##+\s*/, '');
+      currentSection = detectSection(headingText);
+      listItemIndex = 0; // Reset index for new section
+      result.push(line);
+      continue;
+    }
+
+    // Check if this is a list item (bullet or numbered)
+    const bulletMatch = trimmed.match(/^[-*]\s+(.*)$/);
+    const numberedMatch = trimmed.match(/^\d+\.\s+(.*)$/);
+
+    if (bulletMatch || numberedMatch) {
+      const itemText = bulletMatch ? bulletMatch[1] : numberedMatch![1];
+      const style = getStyleForSection(currentSection, preferences);
+      const prefix = getMarkdownPrefix(style, listItemIndex);
+
+      // Preserve original indentation
+      const indent = line.match(/^(\s*)/)?.[1] || '';
+      result.push(`${indent}${prefix}${itemText}`);
+      listItemIndex++;
+    } else {
+      // Not a list item, check if we should reset index (blank line or new paragraph)
+      if (trimmed === '') {
+        listItemIndex = 0;
+      }
+      result.push(line);
+    }
+  }
+
+  return result.join('\n');
+}

@@ -150,7 +150,7 @@ export async function POST(request: Request) {
 Template: ${templateName}
 Modality: ${modality}
 Body Part: ${bodyPart}
-${templateContent ? `\nTemplate Structure Reference:\n${templateContent}` : ''}
+${templateContent ? `\nTEMPLATE STRUCTURE (FOLLOW THIS EXACTLY):\n${templateContent}\n\nIMPORTANT: The template above defines the subsection structure for Findings. You MUST use the same **bold subsection headings** (e.g., **Localizer images:**, **Spinal cord:**, **Bones and joints:**) as shown in the template. Match the template's organization exactly.` : ''}
 
 CRITICAL ANTI-HALLUCINATION RULES (MUST FOLLOW):
 - ONLY report findings that are EXPLICITLY mentioned in the USER FINDINGS / DICTATION section
@@ -183,8 +183,9 @@ REPORTING STANDARDS:
 - Include detailed anatomical descriptions ONLY for findings explicitly mentioned
 - Use standard radiological terminology consistently
 - Describe anatomical relationships clearly ONLY for findings that were mentioned
-- Use proper Markdown formatting (## for headers, **bold** for emphasis, - or 1. for lists)
-- Structure findings logically with sub-sections if needed (### for sub-headers)
+- Use proper Markdown formatting: ## for main sections, **bold:** for subsections within Findings
+- In Findings: use plain text statements (one per line), bullets ONLY for nested sub-items
+- If a template structure is provided, FOLLOW its subsection organization exactly
 
 CLINICAL REASONING:
 - Consider clinical context, patient history, and imaging protocol
@@ -205,9 +206,9 @@ NORMAL FINDINGS INTEGRATION:
 - Add template normal findings ONLY for structures NOT mentioned in user findings
 - If user findings mention a structure, report ONLY what was stated - do not add normal findings for that structure
 - Modify template language to avoid contradictions
-- Write as experienced radiologist would dictate - flowing narrative, not separate lists
-- Example: Template "No fracture" + User "C7 fracture" = "Fracture at C7 vertebra. No fracture at other levels."
-- Example: User "L1-L2 normal" + Template "No disc herniation" = "L1-L2 disc space demonstrates normal height and signal. No disc herniation."
+- Write as plain text statements within each **bold subsection:**
+- Example: Under **Bones and joints:** write "Fracture at C7 vertebra." then "No fracture at other cervical levels."
+- Example: Under **Lumbar discs:** write disc findings as plain text, with bullet sub-items for each level's specific details
 
 FORBIDDEN OUTPUT PATTERNS:
 - Do NOT create sections or headings called "Pertinent Negatives" or any variation
@@ -218,17 +219,51 @@ FORBIDDEN OUTPUT PATTERNS:
 OUTPUT FORMAT:
 Generate a professional radiology report using Markdown formatting with these sections:
 
-## Clinical Indication
-Summarize the provided clinical findings.
+## Clinical Information
+Brief statement of the clinical indication and relevant history.
 
 ## Technique
-Describe the standard technique for ${modality} examination of ${bodyPart}.
+Single sentence or short paragraph describing the imaging protocol (e.g., "MRI of the lumbar spine was performed using sagittal T1, T2, STIR, and axial T2 sequences.")
+
+## Comparison
+Single statement about comparison studies (e.g., "Comparison is made with MRI from 2021." or "No prior studies available for comparison.")
 
 ## Findings
-Provide detailed findings based on the clinical indication. Be thorough and use standard radiological terminology.
+IMPORTANT: Structure the Findings section with **bold subheadings** for each anatomical region/structure evaluated. Format as:
+
+**Localizer images:**
+Plain text findings for this subsection (one statement per line, NOT bullet points).
+
+**Spinal cord:**
+The spinal cord terminates normally with no abnormal signal within.
+No evidence of demyelination or cord expansion.
+No intra or extradural abnormality.
+
+**Bones and joints:**
+Curvature and alignment appear normal.
+No pars defect.
+Small anterior osteophytes are noted, in keeping with degenerative changes.
+
+**Visualized thoracic discs and disc levels:**
+Appear unremarkable with normal canal and exit foramina.
+
+**Lumbar discs and disc levels:**
+L3-4 and L5-S1 discs appear dehydrated with mild bulges.
+- At L3-4, there is flattening of the anterior margin of the thecal sac with mild impingement on the traversing L4 nerves.
+- At L4-5, there is mild impingement on the exiting left L5 nerve.
+- At L5-S1, there is moderate impingement on both traversing S1 nerves.
+
+KEY FORMATTING RULES FOR FINDINGS:
+1. Use **bold text with colon:** for each anatomical subsection heading
+2. Use plain text (one statement per line) for findings - NOT bullet points
+3. ONLY use bullet points (- ) for nested sub-items under a finding (e.g., disc level details)
+4. If the template provides section structure, FOLLOW IT exactly
+5. Match the template's subsection organization
 
 ## Impression
-Provide a concise summary with key findings and any recommendations. Use a numbered list for multiple impressions.`;
+- Concise summary with one bullet point per key finding
+- Keep each bullet to ONE sentence maximum
+- No nested sub-bullets in Impression`;
 
     // Build user prompt with anti-hallucination reminder
     const userPrompt = `USER FINDINGS / DICTATION:

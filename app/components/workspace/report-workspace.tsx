@@ -32,13 +32,14 @@ import {
   Stethoscope,
   CheckCircle2,
   Upload,
+  AlertTriangle,
 } from 'lucide-react';
 import { WorkspaceTabs, WorkspaceTab } from './workspace-tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/shared/cn';
 import { PageWarning } from '@/components/legal/page-warning';
 import { usePreferences, type SectionListStyle } from '@/lib/preferences/preferences-context';
-import { getListPrefix, detectSection, getStyleForSection } from '@/lib/report/list-styles';
+import { getListPrefix, detectSection, getStyleForSection, transformMarkdownListStyles } from '@/lib/report/list-styles';
 
 // Brand template interface for PDF/Word export styling
 interface BrandTemplate {
@@ -1165,10 +1166,16 @@ function ReportTab({
   templates,
   isLoadingTemplates,
 }: ReportTabProps) {
+  const { preferences } = usePreferences();
   const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
   // Get unique categories from templates (dynamic grouping)
   const categories = [...new Set(templates.map(t => t.category))];
+
+  // Transform markdown content to apply list style preferences
+  const transformedContent = content
+    ? transformMarkdownListStyles(content, preferences.listStylePreferences)
+    : null;
 
   return (
     <div className="h-full flex flex-col gap-4">
@@ -1318,7 +1325,7 @@ function ReportTab({
             <div className="p-6 bg-white dark:bg-slate-900">
               <article className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-semibold prose-headings:text-slate-900 dark:prose-headings:text-slate-100 prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-p:leading-relaxed prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-li:text-slate-700 dark:prose-li:text-slate-300 prose-ul:my-2 prose-ol:my-2">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {content}
+                  {transformedContent || ''}
                 </ReactMarkdown>
               </article>
             </div>
