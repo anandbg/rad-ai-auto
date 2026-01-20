@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-17)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** v1.3 Production Infrastructure — IN PROGRESS (Phases 19, 20 active)
+**Current focus:** v1.3 Production Infrastructure — COMPLETE (Phases 19, 20 complete)
 
 ## Current Position
 
 Milestone: v1.3 Production Infrastructure
-Phase: 19 (Stripe Production Setup) COMPLETE + 20 (Vercel Deployment Readiness)
-Plan: 19-03 complete (3/3), 20-04 complete (4/4)
+Phase: 19 (Stripe Production Setup) COMPLETE + 20 (Vercel Deployment Readiness) COMPLETE
+Plan: 19-03 complete (3/3), 20-05 complete (5/5)
 Status: COMPLETE
-Last activity: 2026-01-19 — Completed 20-03-PLAN.md (Bundle Analysis & Image Optimization)
+Last activity: 2026-01-20 — Completed 20-05-PLAN.md (Monitoring & Documentation)
 
-Progress: [██████████] 100% (7/7 plans for Phase 19+20)
+Progress: [██████████] 100% (8/8 plans for Phase 19+20)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 36
-- Average duration: 7.7 min
-- Total execution time: 4.55 hours
+- Total plans completed: 37
+- Average duration: 7.6 min
+- Total execution time: 4.68 hours
 
 **By Phase (v1.0):**
 
@@ -61,10 +61,10 @@ Progress: [██████████] 100% (7/7 plans for Phase 19+20)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 19-stripe-production-setup | 3 | 7 min | 2.3 min |
-| 20-vercel-deployment-readiness | 4 | 19 min | 4.8 min |
+| 20-vercel-deployment-readiness | 5 | 27 min | 5.4 min |
 
 **Recent Trend:**
-- Last 5 plans: 20-01 (4 min), 19-02 (4 min), 19-03 (2 min), 20-04 (5 min), 20-03 (6 min)
+- Last 5 plans: 19-02 (4 min), 19-03 (2 min), 20-04 (5 min), 20-03 (6 min), 20-05 (8 min)
 - Trend: Infrastructure and optimization plans execute quickly
 
 ## Accumulated Context
@@ -74,6 +74,9 @@ Progress: [██████████] 100% (7/7 plans for Phase 19+20)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 20-05]: Use @vercel/analytics for free-tier production monitoring (Web Vitals, page views)
+- [Phase 20-05]: Analytics component placed at root layout body level for global coverage
+- [Phase 20-05]: DEPLOYMENT.md consolidates all deployment steps in one document
 - [Phase 20-03]: Use ANALYZE=true env var for conditional bundle analyzer (zero production overhead)
 - [Phase 20-03]: Enable AVIF/WebP image formats for optimal compression
 - [Phase 20-04]: Use conditional logging (isDev pattern) instead of removing all console statements
@@ -145,8 +148,8 @@ None - all Phase 19 and 20 plans complete. Ready for production deployment.
 
 ## Session Continuity
 
-Last session: 2026-01-19
-Stopped at: Completed 20-03-PLAN.md (Bundle Analysis & Image Optimization)
+Last session: 2026-01-20
+Stopped at: Completed 20-05-PLAN.md (Monitoring & Documentation)
 Resume file: None
 
 **v1.3 Production Infrastructure COMPLETE:**
@@ -156,10 +159,11 @@ Resume file: None
 - 19-02: Subscription flow verified with E2E tests
 - 19-03: Production environment docs and go-live checklist
 
-**Phase 20 - Vercel Deployment Readiness (4/4):**
+**Phase 20 - Vercel Deployment Readiness (5/5):**
 - 20-01: Build error fixes (force-dynamic, Suspense)
 - 20-02: Vercel configuration (region iad1, timeouts, env vars)
 - 20-03: Bundle analysis & image optimization (AVIF/WebP, 87.7kB shared)
 - 20-04: Security review (headers, console cleanup, cookie verification)
+- 20-05: Vercel Analytics integration and DEPLOYMENT.md documentation
 
 **Ready for production deployment.** All infrastructure plans complete.
