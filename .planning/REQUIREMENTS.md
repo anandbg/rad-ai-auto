@@ -119,6 +119,21 @@ Legal compliance through disclaimer-first approach. Maximum liability protection
 
 - [ ] **SETT-01**: Settings page includes "Data & Privacy" section explaining ephemeral processing and user responsibility
 
+## v1.5 Requirements
+
+Report formatting customization. Users can personalize how list items appear in generated reports.
+
+### Report Formatting
+
+- [ ] **FMT-01**: User can access list style preferences in Settings page
+- [ ] **FMT-02**: User can choose from 5 list styles: Bullet (•), Dash (-), Arrow (→), Numbered (1.), None
+- [ ] **FMT-03**: User can set list style per report section (Clinical Info, Technique, Findings, Impression, etc.)
+- [ ] **FMT-04**: User can apply a style to all sections at once ("Apply to All" action)
+- [ ] **FMT-05**: Default style is Bullet (•) for new users
+- [ ] **FMT-06**: List style preference applies only to newly generated reports
+- [ ] **FMT-07**: List style renders correctly in PDF export
+- [ ] **FMT-08**: List style renders correctly in Word export
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -226,9 +241,10 @@ Which phases cover which requirements. Updated by create-roadmap.
 - v1 requirements: 30 total (all complete)
 - v1.1 requirements: 5 total (3 complete, 2 pending)
 - v1.4 requirements: 15 total (7 complete, 8 pending)
+- v1.5 requirements: 8 total (0 complete, 8 pending - awaiting roadmap)
 - Mapped to phases: 50 ✓
-- Unmapped: 0
+- Unmapped: 8 (v1.5 FMT-01 to FMT-08)
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-20 after v1.4 roadmap created (phases 21-26)*
+*Last updated: 2026-01-20 after v1.5 list style requirements defined*
