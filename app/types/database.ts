@@ -38,6 +38,7 @@ export interface Profile {
   institution_id: string | null;
   role: UserRole;
   style_preferences: Record<string, unknown> | null;
+  terms_acknowledged_at: string | null;  // ISO timestamp or null
   created_at: string;
 }
 
