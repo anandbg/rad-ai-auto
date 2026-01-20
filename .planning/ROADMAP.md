@@ -612,7 +612,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 26-01: Add Data & Privacy section to Settings
+- [x] 26-01: Add Data & Privacy section to Settings
 
 <details>
 <summary>✅ v1.5 Report Formatting (Phase 27) - SHIPPED 2026-01-20</summary>
@@ -661,7 +661,7 @@ Phases execute in numeric order: 15 → 16 → ...
 | 23. Disclaimer Banner | v1.4 | 1/1 | Complete | 2026-01-20 |
 | 24. Page Warnings | v1.4 | 1/1 | Complete | 2026-01-20 |
 | 25. Report Disclaimers | v1.4 | 1/1 | Complete | 2026-01-20 |
-| 26. Settings Privacy | v1.4 | 0/1 | Not started | - |
+| 26. Settings Privacy | v1.4 | 1/1 | Complete | 2026-01-20 |
 | 27. List Style Preferences | v1.5 | 2/2 | Complete | 2026-01-20 |
 
 ---

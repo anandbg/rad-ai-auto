@@ -117,7 +117,7 @@ Legal compliance through disclaimer-first approach. Maximum liability protection
 
 ### Settings Reminder
 
-- [ ] **SETT-01**: Settings page includes "Data & Privacy" section explaining ephemeral processing and user responsibility
+- [x] **SETT-01**: Settings page includes "Data & Privacy" section explaining ephemeral processing and user responsibility
 
 ## v1.5 Requirements
 
