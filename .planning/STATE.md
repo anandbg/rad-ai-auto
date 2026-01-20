@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Milestone: v1.4 Legal Compliance
-Phase: Not started (run /gsd:create-roadmap)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-01-20 — Milestone v1.4 started
+Phase: 21 of 26 (Legal Documents & Website Pages)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-20 — Roadmap created (6 phases, 7 plans)
 
-Progress: [░░░░░░░░░░] 0% (roadmap not yet created)
+Progress: [████████████████████░░] 86% (v1.0-v1.3 complete, v1.4 starting)
 
 ## Performance Metrics
 
@@ -141,6 +141,7 @@ Recent decisions affecting current work:
 - Phase 18 added: Landing Page Carousel Enhancement (2026-01-19)
 - Phase 19 added: Stripe Production Setup (2026-01-19) - comprehensive webhook/testing/go-live plan
 - Phase 20 added: Vercel Deployment Readiness (2026-01-19) - build checks, performance, security, monitoring
+- Phases 21-26 added: v1.4 Legal Compliance (2026-01-20) - disclaimers, ToS, privacy, acknowledgments
 
 ### Blockers/Concerns
 
@@ -149,19 +150,20 @@ None - all Phase 19 and 20 plans complete. Ready for production deployment.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Started milestone v1.4 Legal Compliance
+Stopped at: Created v1.4 roadmap (6 phases, 7 plans)
 Resume file: None
 
-**v1.4 Legal Compliance STARTED (2026-01-20):**
-- Goal: Research and implement legal requirements for global commercial launch
-- Data strategy: No PHI storage (reports/transcriptions ephemeral), only account info + templates persisted
-- Compliance positioning: AI decision-support tool (not medical device)
-- Markets: Global launch
+**v1.4 Legal Compliance ROADMAP CREATED (2026-01-20):**
+- Goal: Implement disclaimer-based compliance for global commercial launch
+- Approach: Light-touch compliance via ubiquitous disclaimers (from research)
+- 6 phases: Legal docs, Sign-up gate, Banner, Page warnings, Report disclaimers, Settings privacy
+- 7 total plans
+- All requirements mapped (15 v1.4 requirements)
 
 **Previous milestones:**
-- v1.3: Phase 19, 20 complete; Phase 16 remaining
-- v1.2: Shipped (archived)
-- v1.1: Shipped (archived)
-- v1.0: Shipped (archived)
+- v1.3: Shipped 2026-01-20 (19, 20 complete; 16 deferred)
+- v1.2: Shipped 2026-01-20
+- v1.1: Shipped 2026-01-17
+- v1.0: Shipped 2026-01-16
 
-**Next action:** `/gsd:research-project` to research global compliance requirements
+**Next action:** `/gsd:plan-phase 21` to plan Legal Documents phase

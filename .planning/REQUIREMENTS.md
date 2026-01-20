@@ -206,13 +206,29 @@ Which phases cover which requirements. Updated by create-roadmap.
 | V1.1-EX-01 | Phase 14 | Pending |
 | V1.1-EX-02 | Phase 14 | Pending |
 
+| LEGAL-01 | Phase 21 | Pending |
+| LEGAL-02 | Phase 21 | Pending |
+| GATE-01 | Phase 22 | Pending |
+| GATE-02 | Phase 22 | Pending |
+| ACK-01 | Phase 22 | Pending |
+| BANNER-01 | Phase 23 | Pending |
+| BANNER-02 | Phase 23 | Pending |
+| WARN-01 | Phase 24 | Pending |
+| WARN-02 | Phase 24 | Pending |
+| WARN-03 | Phase 24 | Pending |
+| WARN-04 | Phase 24 | Pending |
+| OUTPUT-01 | Phase 25 | Pending |
+| OUTPUT-02 | Phase 25 | Pending |
+| OUTPUT-03 | Phase 25 | Pending |
+| SETT-01 (v1.4) | Phase 26 | Pending |
+
 **Coverage:**
 - v1 requirements: 30 total (all complete)
 - v1.1 requirements: 5 total (3 complete, 2 pending)
 - v1.4 requirements: 15 total (0 complete, 15 pending)
-- Mapped to phases: 35 ✓
-- Unmapped: 15 (v1.4 — awaiting roadmap)
+- Mapped to phases: 50 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-20 after v1.4 legal compliance requirements added*
+*Last updated: 2026-01-20 after v1.4 roadmap created (phases 21-26)*

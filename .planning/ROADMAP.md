@@ -5,7 +5,8 @@
 - ✅ **v1.0 MVP** - Phases 1-11 (shipped 2026-01-16)
 - ✅ **v1.1 Production Readiness** - Phases 12-14 (shipped 2026-01-17)
 - ✅ **v1.2 Template Experience** - Phases 15, 17, 18 (shipped 2026-01-20)
-- 🚧 **v1.3 Production Infrastructure** - Phases 16, 19, 20 (in progress)
+- ✅ **v1.3 Production Infrastructure** - Phases 16, 19, 20 (shipped 2026-01-20)
+- 🚧 **v1.4 Legal Compliance** - Phases 21-26 (in progress)
 
 ## Phases
 
@@ -113,7 +114,8 @@
 
 </details>
 
-## 🚧 v1.3 Production Infrastructure (IN PROGRESS)
+<details>
+<summary>✅ v1.3 Production Infrastructure (Phases 16, 19, 20) - SHIPPED 2026-01-20</summary>
 
 **Milestone Goal:** Set up production-grade infrastructure with Stripe webhooks, Vercel deployment, and proper environment separation. Start with free tiers for validation, upgrade to paid when launching commercially.
 
@@ -510,6 +512,107 @@ Plans:
 - [x] 20-04: Security Headers & Production Hardening
 - [x] 20-05: Monitoring, Analytics & Deployment Checklist
 
+</details>
+
+## 🚧 v1.4 Legal Compliance (IN PROGRESS)
+
+**Milestone Goal:** Research and implement all legal requirements for global commercial launch of an AI radiology decision-support tool, including disclaimers, terms of service, and privacy-preserving architecture. Uses a light-touch, disclaimer-based compliance approach.
+
+### Phase 21: Legal Documents & Website Pages
+**Goal**: Create and publish Terms of Service and Privacy Policy with all required liability protections
+**Depends on**: None (can start immediately)
+**Requirements**: LEGAL-01, LEGAL-02
+**Success Criteria** (what must be TRUE):
+  1. Terms of Service page accessible at /terms with all 7 key clauses (not medical device, user responsibility, no PHI input, no data storage, use at own risk, indemnification, limitation of liability)
+  2. Privacy Policy page accessible at /privacy explaining ephemeral data model
+  3. Footer links to legal pages visible on all public pages
+  4. Legal documents styled consistently with app design
+**Research**: Unlikely (research already complete in .planning/research/SUMMARY.md)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 21-01: Create Terms of Service and Privacy Policy pages
+
+### Phase 22: Sign-Up Gate & First-Use Acknowledgment
+**Goal**: Users cannot proceed without accepting terms and acknowledging responsibilities
+**Depends on**: Phase 21 (terms must exist to link to)
+**Requirements**: GATE-01, GATE-02, ACK-01
+**Success Criteria** (what must be TRUE):
+  1. Sign-up form has mandatory checkbox: "I accept the Terms of Service and understand this tool is provided as-is with no warranties"
+  2. Sign-up form has mandatory checkbox: "I understand I must NOT upload patient-identifiable or personal information"
+  3. User cannot submit registration without checking both boxes
+  4. First login triggers mandatory acknowledgment modal with full responsibility disclaimer
+  5. Modal cannot be dismissed without clicking acknowledgment button
+  6. Acknowledgment state persisted in database (shows once per user)
+**Research**: Unlikely (standard UI patterns)
+**Plans**: 2 plans
+
+Plans:
+- [ ] 22-01: Sign-up form mandatory checkboxes
+- [ ] 22-02: First-use acknowledgment modal
+
+### Phase 23: Persistent App-Wide Disclaimer Banner
+**Goal**: Every authenticated page shows persistent warning that cannot be dismissed
+**Depends on**: Phase 22
+**Requirements**: BANNER-01, BANNER-02
+**Success Criteria** (what must be TRUE):
+  1. Banner displays on all authenticated pages with text: "Do not upload personal data. AI-generated content requires review. Use at your own risk."
+  2. Banner is NOT dismissible (no close button)
+  3. Banner is visually prominent (contrasting color like amber/yellow)
+  4. Banner is slim (not obstructive to main content)
+  5. Banner persists through navigation between pages
+**Research**: Unlikely (standard UI component)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 23-01: Implement persistent disclaimer banner
+
+### Phase 24: Page-Specific Warnings
+**Goal**: Context-specific warnings appear at relevant touchpoints throughout the app
+**Depends on**: Phase 23
+**Requirements**: WARN-01, WARN-02, WARN-03, WARN-04
+**Success Criteria** (what must be TRUE):
+  1. Dashboard shows reminder card: "This is a drafting tool. Do not enter patient-identifiable or personal information."
+  2. Voice transcription interface shows warning before recording: "Audio is processed by AI and not stored. Do not dictate personal identifiers."
+  3. Report generation page shows warning: "AI-generated draft. Review and verify all content before use."
+  4. Template creation shows note: "Templates should not contain personal information."
+**Research**: Unlikely (standard UI components)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 24-01: Add page-specific warning components
+
+### Phase 25: Report Output Disclaimers
+**Goal**: All generated reports have prominent disclaimers in display and exports
+**Depends on**: Phase 24
+**Requirements**: OUTPUT-01, OUTPUT-02, OUTPUT-03
+**Success Criteria** (what must be TRUE):
+  1. Generated reports display header: "AI-GENERATED DRAFT — NOT REVIEWED"
+  2. Generated reports display footer: "Generated with AI assistance. User is solely responsible for accuracy. Not medical advice."
+  3. PDF exports include the same header and footer disclaimers
+  4. DOCX exports include the same header and footer disclaimers
+  5. Disclaimers are visually distinct (different styling from report content)
+**Research**: Unlikely (extending existing export functionality)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 25-01: Add disclaimers to reports and exports
+
+### Phase 26: Settings Privacy Section
+**Goal**: Settings page clearly explains data handling and user responsibility
+**Depends on**: Phase 25
+**Requirements**: SETT-01 (v1.4)
+**Success Criteria** (what must be TRUE):
+  1. Settings page has "Data & Privacy" section
+  2. Section explains ephemeral processing (data not stored)
+  3. Section states user responsibility for content and compliance
+  4. Section links to full Privacy Policy
+**Research**: Unlikely (standard content addition)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 26-01: Add Data & Privacy section to Settings
+
 ## Progress
 
 **Execution Order:**
@@ -520,11 +623,17 @@ Phases execute in numeric order: 15 → 16 → ...
 | 1-11 | v1.0 | 18/18 | Complete | 2026-01-16 |
 | 12-14 | v1.1 | 4/4 | Complete | 2026-01-17 |
 | 15. Template Creation UX | v1.2 | 5/5 | Complete | 2026-01-19 |
-| 16. Infrastructure Setup | v1.3 | 0/5 | Planned | - |
+| 16. Infrastructure Setup | v1.3 | 5/5 | Complete | 2026-01-20 |
 | 17. Landing Page Integration | v1.2 | 2/2 | Complete | 2026-01-18 |
 | 18. Landing Page Carousel Enhancement | v1.2 | 1/1 | Complete | 2026-01-19 |
 | 19. Stripe Production Setup | v1.3 | 3/3 | Complete | 2026-01-19 |
 | 20. Vercel Deployment Readiness | v1.3 | 5/5 | Complete | 2026-01-20 |
+| 21. Legal Documents | v1.4 | 0/1 | Not started | - |
+| 22. Sign-Up Acknowledgment | v1.4 | 0/2 | Not started | - |
+| 23. Disclaimer Banner | v1.4 | 0/1 | Not started | - |
+| 24. Page Warnings | v1.4 | 0/1 | Not started | - |
+| 25. Report Disclaimers | v1.4 | 0/1 | Not started | - |
+| 26. Settings Privacy | v1.4 | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-16*
@@ -532,3 +641,5 @@ Phases execute in numeric order: 15 → 16 → ...
 *v1.2 added: 2026-01-18*
 *v1.2 shipped: 2026-01-20 (archived to milestones/v1.2-ROADMAP.md)*
 *v1.3 added: 2026-01-18*
+*v1.3 shipped: 2026-01-20*
+*v1.4 added: 2026-01-20*
