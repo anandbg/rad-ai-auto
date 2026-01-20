@@ -1321,6 +1321,16 @@ function ReportTab({
               </div>
             </div>
 
+            {/* Disclaimer Header */}
+            <div className="mx-6 mt-6 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3">
+              <div className="flex items-center justify-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="text-sm font-bold text-amber-700 dark:text-amber-300 text-center">
+                  AI-GENERATED DRAFT — NOT REVIEWED
+                </span>
+              </div>
+            </div>
+
             {/* Report Body - Markdown rendered with typography styles */}
             <div className="p-6 bg-white dark:bg-slate-900">
               <article className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-semibold prose-headings:text-slate-900 dark:prose-headings:text-slate-100 prose-h2:text-lg prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-p:leading-relaxed prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-li:text-slate-700 dark:prose-li:text-slate-300 prose-ul:my-2 prose-ol:my-2">
@@ -1328,6 +1338,13 @@ function ReportTab({
                   {transformedContent || ''}
                 </ReactMarkdown>
               </article>
+            </div>
+
+            {/* Disclaimer Footer */}
+            <div className="mx-6 mb-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                Generated with AI assistance. User is solely responsible for accuracy. Not medical advice.
+              </p>
             </div>
           </div>
         )}
