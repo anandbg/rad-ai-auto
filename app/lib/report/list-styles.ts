@@ -1,0 +1,64 @@
+import { ListStyle, SectionListStyle } from '@/lib/preferences/preferences-context';
+
+/**
+ * Get the list prefix character(s) for a given style
+ * @param style - The list style type
+ * @param index - Optional index for numbered lists (0-based)
+ * @returns The prefix string
+ */
+export function getListPrefix(style: ListStyle, index?: number): string {
+  switch (style) {
+    case 'bullet':
+      return '\u2022'; // •
+    case 'dash':
+      return '-';
+    case 'arrow':
+      return '\u2192'; // →
+    case 'numbered':
+      return `${(index ?? 0) + 1}.`;
+    case 'none':
+      return '';
+    default:
+      return '\u2022'; // • default
+  }
+}
+
+type ReportSection = keyof SectionListStyle;
+
+const SECTION_HEADING_MAP: Record<string, ReportSection> = {
+  'clinical information': 'clinicalInfo',
+  'clinical info': 'clinicalInfo',
+  'history': 'clinicalInfo',
+  'indication': 'clinicalInfo',
+  'technique': 'technique',
+  'comparison': 'comparison',
+  'findings': 'findings',
+  'impression': 'impression',
+  'conclusion': 'impression',
+};
+
+/**
+ * Detect report section from a heading text
+ */
+export function detectSection(headingText: string): ReportSection | null {
+  const normalized = headingText.toLowerCase().trim();
+  for (const [key, section] of Object.entries(SECTION_HEADING_MAP)) {
+    if (normalized.includes(key)) {
+      return section;
+    }
+  }
+  return null;
+}
+
+/**
+ * Get the list style for a specific section
+ */
+export function getStyleForSection(
+  section: ReportSection | null,
+  preferences: SectionListStyle | undefined
+): ListStyle {
+  if (!section || !preferences) {
+    return 'bullet'; // Default
+  }
+  return preferences[section] || 'bullet';
+}
