@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 27 - Report List Style Preferences
+**Current focus:** Phase 27 Complete - Report List Style Preferences
 
 ## Current Position
 
 Milestone: Post-v1.4 Enhancements
 Phase: 27 of 27 (Report List Style Preferences)
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-01-20 — Completed 27-01-PLAN.md (Settings UI for list style preferences)
+Plan: 2 of 2 complete
+Status: Phase complete
+Last activity: 2026-01-20 — Completed 27-02-PLAN.md (Apply list styles to report exports)
 
-Progress: [██████████████████████░] 96% (v1.0-v1.4 complete, phase 27 in progress)
+Progress: [████████████████████████] 100% (v1.0-v1.4 complete, phase 27 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 43
+- Total plans completed: 44
 - Average duration: 7.4 min
-- Total execution time: 5.3 hours
+- Total execution time: 5.4 hours
 
 **By Phase (v1.0):**
 
@@ -76,11 +76,11 @@ Progress: [██████████████████████░
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 27-report-list-style-preferences | 1 | 12 min | 12 min |
+| 27-report-list-style-preferences | 2 | 20 min | 10 min |
 
 **Recent Trend:**
-- Last 5 plans: 22-02 (15 min), 23-01 (2 min), 24-01 (4 min), 27-01 (12 min)
-- Trend: New feature development with preferences system extension
+- Last 5 plans: 23-01 (2 min), 24-01 (4 min), 27-01 (12 min), 27-02 (8 min)
+- Trend: Phase 27 complete - list style preferences feature fully implemented
 
 ## Accumulated Context
 
@@ -89,6 +89,10 @@ Progress: [██████████████████████░
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 27-02]: Use heading text detection to identify current report section
+- [Phase 27-02]: Reset list item index on section change for proper numbering
+- [Phase 27-02]: Use LevelFormat.DECIMAL for Word native numbering
+- [Phase 27-02]: 'none' style renders indented text without prefix
 - [Phase 27-01]: Store list_style_preferences as JSONB in user_preferences table
 - [Phase 27-01]: Default all sections to 'bullet' style for new users
 - [Phase 27-01]: Use preference extension pattern: type, interface, defaults, context state, API handling
@@ -176,20 +180,21 @@ Recent decisions affecting current work:
 - Phase 19 added: Stripe Production Setup (2026-01-19) - comprehensive webhook/testing/go-live plan
 - Phase 20 added: Vercel Deployment Readiness (2026-01-19) - build checks, performance, security, monitoring
 - Phases 21-26 added: v1.4 Legal Compliance (2026-01-20) - disclaimers, ToS, privacy, acknowledgments
+- Phase 27 added: Report List Style Preferences (2026-01-20) - user-configurable bullet styles
 
 ### Blockers/Concerns
 
-None - Phase 27-01 complete. List style preferences UI operational.
+None - Phase 27 complete. All planned phases delivered.
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 27-01-PLAN.md (Settings UI for list style preferences)
+Stopped at: Completed 27-02-PLAN.md (Apply list styles to report exports)
 Resume file: None
 
 **Phase 27 PROGRESS (2026-01-20):**
 - Phase 27-01 (Settings UI): COMPLETE - List style preferences in Settings page
-- Phase 27-02 (Apply to Report Generation): Not started
+- Phase 27-02 (Apply to Report Generation): COMPLETE - PDF and Word exports use preferences
 
 **Previous milestones:**
 - v1.4: Shipped 2026-01-20 (21-24 complete; 25-26 deferred)
@@ -198,4 +203,4 @@ Resume file: None
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** `/gsd:execute-plan` for Phase 27-02 (Apply list styles to report generation)
+**Next action:** All planned phases complete. Ready for new feature requests or production deployment.
