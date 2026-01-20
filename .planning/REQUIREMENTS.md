@@ -79,6 +79,46 @@ Production readiness polish. Workspace consolidation, AI prompt alignment, expor
 - [ ] **V1.1-EX-01**: PDF export triggers direct download with report content only (no print dialog)
 - [ ] **V1.1-EX-02**: Word/DOCX download option available for reports
 
+## v1.4 Requirements
+
+Legal compliance through disclaimer-first approach. Maximum liability protection via ubiquitous warnings.
+
+### Core Legal Documents
+
+- [ ] **LEGAL-01**: Terms of Service with maximum liability protection (use at own risk, user responsibility, indemnification, no warranties, owners not responsible)
+- [ ] **LEGAL-02**: Simple Privacy Policy stating data is ephemeral and not stored
+
+### Sign-Up Gate
+
+- [ ] **GATE-01**: Sign-up requires checkbox: "I accept the Terms of Service and understand this tool is provided as-is with no warranties"
+- [ ] **GATE-02**: Sign-up requires checkbox: "I understand I must NOT upload patient-identifiable or personal information"
+
+### First-Use Acknowledgment
+
+- [ ] **ACK-01**: First login shows mandatory modal that cannot be dismissed without acknowledgment: "This is an AI drafting tool. I am solely responsible for reviewing all output. The owners accept no responsibility for any decisions made using this tool."
+
+### Persistent App-Wide Disclaimer Banner
+
+- [ ] **BANNER-01**: Every authenticated page displays a persistent disclaimer banner (not dismissible) with text like: "⚠️ Do not upload personal data. AI-generated content requires review. Use at your own risk."
+- [ ] **BANNER-02**: Banner is visually prominent but not obstructive (e.g., slim top bar, contrasting color)
+
+### Page-Specific Warnings
+
+- [ ] **WARN-01**: Dashboard shows reminder card: "This is a drafting tool. Do not enter patient-identifiable or personal information."
+- [ ] **WARN-02**: Voice transcription interface shows warning before recording: "Audio is processed by AI and not stored. Do not dictate personal identifiers."
+- [ ] **WARN-03**: Report generation page shows warning: "AI-generated draft. Review and verify all content before use."
+- [ ] **WARN-04**: Template creation shows note: "Templates should not contain personal information."
+
+### Report Output Disclaimers
+
+- [ ] **OUTPUT-01**: Every generated report displays header: "AI-GENERATED DRAFT — NOT REVIEWED"
+- [ ] **OUTPUT-02**: Every generated report displays footer: "Generated with AI assistance. User is solely responsible for accuracy. Not medical advice."
+- [ ] **OUTPUT-03**: PDF/DOCX exports include the same header and footer disclaimers
+
+### Settings Reminder
+
+- [ ] **SETT-01**: Settings page includes "Data & Privacy" section explaining ephemeral processing and user responsibility
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -118,6 +158,11 @@ Explicitly excluded. Documented to prevent scope creep.
 | Advanced template versioning | Phase 2 scope |
 | Mobile app | Web-first approach |
 | Real-time collaboration | High complexity, not core value |
+| Patient data storage | Creates liability, keep ephemeral model |
+| Report history/storage | Don't store what we tell users not to input |
+| Accuracy/performance claims | Never make claims without documented methodology |
+| Complex GDPR compliance | Disclaimer-based approach instead |
+| Cookie consent banner | Minimal analytics, overkill for startup |
 
 ## Traceability
 
@@ -163,10 +208,11 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 **Coverage:**
 - v1 requirements: 30 total (all complete)
-- v1.1 requirements: 5 total
+- v1.1 requirements: 5 total (3 complete, 2 pending)
+- v1.4 requirements: 15 total (0 complete, 15 pending)
 - Mapped to phases: 35 ✓
-- Unmapped: 0
+- Unmapped: 15 (v1.4 — awaiting roadmap)
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-17 after v1.1 roadmap created*
+*Last updated: 2026-01-20 after v1.4 legal compliance requirements added*
