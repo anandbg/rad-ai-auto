@@ -1,233 +1,224 @@
-# Legal Compliance Research Summary
+# Legal Compliance Research Summary (Simplified)
 
 **Research Date:** 2026-01-20
 **Project:** AI Radiologist - v1.4 Legal Compliance Milestone
-**Domain:** AI Medical Decision-Support Legal Compliance
-**Overall Confidence:** MEDIUM-HIGH
+**Approach:** Light-touch, disclaimer-based compliance
 
 ---
 
 ## Executive Summary
 
-AI Radiologist occupies a favorable regulatory position as a **Non-Device Clinical Decision Support** tool under FDA's 21st Century Cures Act, primarily because it:
-1. Does NOT process medical images directly (radiologist inputs findings as text)
-2. Supports rather than replaces clinical judgment
-3. Produces outputs that clinicians independently review and approve
-4. Is not time-critical (report generation, not acute triage)
+AI Radiologist is a **drafting tool for licensed radiologists** who use it at their own risk. We are NOT:
+- A medical device
+- Storing any patient data
+- Providing medical advice
+- Selling to hospitals or institutions
 
-The ephemeral data architecture (no PHI storage) significantly reduces compliance burden since HIPAA's strictest requirements apply to entities that "create, receive, maintain, or transmit" PHI. The existing architecture is already well-positioned with pass-through processing.
-
-**Critical findings:**
-- **Stack:** Termly Pro ($15/mo) + Supabase supa_audit + self-implemented deletion API is sufficient. Total compliance tooling: <$200/year. Enterprise solutions like OneTrust ($50k+) or Drata ($10k+) are premature overkill.
-- **Features:** Table stakes are achievable: Terms of Service, Privacy Policy, consent flow, AI disclaimers, "not medical advice" banners. All low-to-medium complexity.
-- **Architecture:** Current Supabase + OpenAI API architecture is compliant. Key action: Sign OpenAI BAA (email baa@openai.com) and verify zero-retention is enabled.
-- **Pitfalls:** The #1 risk is misclassifying regulatory status. Document CDS criteria compliance NOW. The Pieces Technologies settlement (Texas, 2024) shows state AGs will enforce existing consumer protection laws against AI companies.
+The compliance strategy is simple: **clear disclaimers everywhere, bulletproof Terms of Service, and full responsibility on the licensed professional using the tool.**
 
 ---
 
-## Key Findings by Dimension
+## Core Compliance Approach
 
-### Stack Research
+| What We Do | What This Means |
+|------------|-----------------|
+| Ephemeral processing only | No data storage = no HIPAA obligations |
+| Sell to individual radiologists | B2C/B2B to professionals, not institutions |
+| Provide drafting assistance | Not a medical device, not medical advice |
+| Require user acknowledgment | They accept full responsibility |
 
-| Tool Category | Recommendation | Cost | Why |
-|--------------|----------------|------|-----|
-| Consent Management | Termly Pro | $15/mo | Includes consent banner + policy generators + AI disclosure templates |
-| Audit Logging | Supabase supa_audit | Free | Already using Supabase; trigger-based, no external service needed |
-| Data Deletion | Self-implemented API | Dev time | Simple for ephemeral data model |
-| Legal Docs | Termly generators | Included | Privacy Policy, Terms of Service, Disclaimers |
-
-**What NOT to use:** OneTrust ($50k+/yr), Drata/Vanta ($10k+/yr), HITRUST certification ($100k+) - all enterprise overkill for current stage.
-
-### Features Research
-
-**Table Stakes (Must Have for Launch):**
-| Feature | Complexity | Why Critical |
-|---------|------------|--------------|
-| Terms of Service | Medium | Legal requirement, clickwrap agreement |
-| Privacy Policy | Medium | GDPR/CCPA, multi-jurisdictional |
-| First-use consent flow | Medium | Gates app access, documents acceptance |
-| "Not medical advice" disclaimers | Low | Liability protection |
-| AI use disclosure | Low | State law compliance (CA, TX, UT, CO) |
-
-**Anti-Features (Deliberately Avoid):**
-- NO patient data storage (avoids HIPAA BA requirements)
-- NO autonomous diagnosis (avoids FDA 510(k))
-- NO direct patient communication (maintains clinician intermediary)
-- NO medical image processing (maintains CDS exemption)
-
-### Architecture Research
-
-**Current state is well-positioned:**
-- Pass-through processing confirmed in `/api/generate` and `/api/transcribe`
-- Client-side PDF/Word export (no report content to server)
-- Session tables store metadata only, no PHI fields
-- IndexedDB drafts need hardening (auto-expiration, clear-all feature)
-
-**Key architectural requirements:**
-1. Sign OpenAI BAA and enable zero-retention
-2. Verify Vercel doesn't log request bodies
-3. Add IndexedDB auto-expiration (24hr)
-4. Implement "Clear All Drafts" in settings
-
-### Pitfalls Research
-
-**Critical risks to mitigate:**
-
-| Pitfall | Risk Level | Prevention |
-|---------|-----------|------------|
-| Misclassifying CDS status | CRITICAL | Document all 4 FDA criteria with legal counsel |
-| Unsubstantiated accuracy claims | HIGH | Audit marketing materials, document methodology |
-| Missing BAAs | HIGH | Audit all vendors (OpenAI, Supabase, Vercel) |
-| Practicing medicine without license | HIGH | Position AI as "assistant" not "advisor" |
-
-**Real-world precedents:**
-- Pieces Technologies (TX, Sept 2024): First state AG settlement over AI accuracy claims
-- Exer Labs (FDA, Oct 2024): Warning letter for misclassification
-- EU MDR Survey: 73% of startups initially misclassified devices (€1.4M average remediation)
+**The user is a licensed medical professional. They are responsible for:**
+- What they input
+- Reviewing all AI output
+- The accuracy of any report they sign
+- Compliance with their own institutional/regulatory requirements
 
 ---
 
-## Confidence Assessment
+## What We Need
 
-| Area | Level | Reason |
-|------|-------|--------|
-| FDA CDS classification | HIGH | Official FDA guidance documents |
-| HIPAA BAA requirements | HIGH | Documented OCR enforcement history |
-| State AI disclosure laws | MEDIUM | Laws published but evolving rapidly |
-| OpenAI BAA/ZDR | HIGH | Official documentation |
-| EU MDR/AI Act | MEDIUM | Regulations published, implementation ongoing |
-| Tooling recommendations | MEDIUM-HIGH | Verified pricing, may vary |
+### 1. Terms of Service (Critical)
 
----
+Must include:
 
-## Implications for Roadmap
+```
+KEY CLAUSES:
 
-Based on research, suggested phase structure for v1.4:
+1. NOT A MEDICAL DEVICE
+   "This software is a documentation drafting tool. It is not a medical
+   device, does not provide medical advice, and is not intended to
+   diagnose, treat, or replace professional medical judgment."
 
-### Phase 1: Regulatory Foundation (P0)
-**Rationale:** Must establish legal foundation before any user-facing compliance features.
+2. USER RESPONSIBILITY
+   "You are a licensed healthcare professional. You assume full
+   responsibility for reviewing, editing, and approving any content
+   generated by this tool before clinical use."
 
-**Covers:**
-- Document FDA CDS classification rationale (from PITFALLS.md)
-- Audit and sign vendor BAAs (OpenAI, Supabase, Vercel) (from PITFALLS.md)
-- Marketing claims audit and remediation (from PITFALLS.md)
-- Implement Termly Pro consent + policy management (from STACK.md)
+3. NO PHI INPUT
+   "Do not enter patient-identifiable information. You are responsible
+   for de-identifying any content you input."
 
-**Avoids:** Misclassification pitfall, BAA gaps, deceptive trade practices exposure
+4. NO DATA STORAGE
+   "We do not store, retain, or have access to any content you generate.
+   All processing is ephemeral."
 
-### Phase 2: Legal Documents & Consent (P0)
-**Rationale:** Core legal documents are launch blockers.
+5. USE AT YOUR OWN RISK
+   "This tool is provided 'as is' without warranties. You use it at your
+   own risk and accept full liability for its use in your practice."
 
-**Covers:**
-- Terms of Service with healthcare-specific provisions (from FEATURES.md)
-- Privacy Policy (multi-jurisdictional) (from FEATURES.md)
-- First-use consent flow (from FEATURES.md)
-- Cookie/analytics consent banner (from FEATURES.md)
+6. INDEMNIFICATION
+   "You agree to indemnify and hold harmless [Company] from any claims
+   arising from your use of this tool."
 
-**Uses:** Termly policy generators (from STACK.md)
+7. LIMITATION OF LIABILITY
+   "In no event shall [Company] be liable for any clinical decisions,
+   patient outcomes, or professional consequences arising from use of
+   this tool."
+```
 
-### Phase 3: In-App Compliance Features (P0-P1)
-**Rationale:** User-facing disclaimers and transparency are required before launch.
+### 2. Privacy Policy (Simple)
 
-**Covers:**
-- "Not medical advice" disclaimer system (from FEATURES.md)
-- AI use disclosure throughout app (from FEATURES.md)
-- Data handling transparency messaging (from FEATURES.md)
-- Decision-support disclaimers in report generation UI (from STACK.md)
+```
+KEY POINTS:
 
-**Implements:** Architecture patterns from ARCHITECTURE.md
+- We collect: Account info (email, name), usage metadata, payment info
+- We do NOT collect: Patient data, report content, transcription content
+- All AI processing is ephemeral - content is not stored
+- We use OpenAI for AI processing (their privacy policy applies during processing)
+- We use Stripe for payments
+- You can delete your account anytime
+```
 
-### Phase 4: Data Architecture Hardening (P1)
-**Rationale:** Ensure ephemeral data handling is provably compliant.
+### 3. In-App Disclaimers
 
-**Covers:**
-- IndexedDB auto-expiration (24hr) (from ARCHITECTURE.md)
-- "Clear All Drafts" feature (from ARCHITECTURE.md)
-- Metadata-only audit logging (supa_audit) (from ARCHITECTURE.md, STACK.md)
-- Account deletion API (right to erasure) (from STACK.md)
+| Location | Disclaimer |
+|----------|------------|
+| **Sign-up** | Checkbox: "I am a licensed healthcare professional and accept the Terms of Service" |
+| **First login** | Acknowledgment: "I understand this is a drafting tool and I am responsible for all clinical decisions" |
+| **Report generation** | Banner: "AI-GENERATED DRAFT - Review before clinical use" |
+| **Every generated report** | Footer: "Generated with AI assistance. Not reviewed. Not medical advice." |
+| **Export** | Reminder: "You are responsible for the accuracy of this report" |
 
-**Verifies:** No-PHI-storage architecture compliance
+### 4. Website/Marketing
 
-### Phase 5: Compliance Documentation (P1)
-**Rationale:** Documentation for auditors, investors, enterprise clients.
+**Do say:**
+- "AI-powered report drafting tool"
+- "Save time on documentation"
+- "For licensed radiologists"
 
-**Covers:**
-- PRIVACY_CONTROLS.md document (from ARCHITECTURE.md)
-- Verification scripts (schema audit, code audit) (from ARCHITECTURE.md)
-- Compliance posture documentation for stakeholders
-- Breach notification process (from FEATURES.md)
-
-### Phase 6: International Readiness (P2 - If EU Planned)
-**Rationale:** EU has dual MDR + AI Act burden. Start early if targeting.
-
-**Covers:**
-- MDR classification assessment (from PITFALLS.md)
-- AI Act high-risk mapping (from PITFALLS.md)
-- GDPR DPIA preparation (from FEATURES.md)
-- Notified body relationship (2+ year wait times)
+**Don't say:**
+- Any accuracy percentages without methodology
+- "Diagnose" or "detect" anything
+- Comparisons to human performance
+- "HIPAA compliant" (we're not claiming compliance, we're avoiding the need for it)
 
 ---
 
-## Phase Ordering Rationale
+## What We DON'T Need
 
-1. **Regulatory foundation first** - Can't launch without CDS classification and BAAs
-2. **Legal documents second** - ToS/Privacy are literal launch blockers
-3. **In-app features third** - Disclaimers require legal docs to be finalized
-4. **Architecture hardening fourth** - Strengthens existing compliant architecture
-5. **Documentation fifth** - Captures completed compliance work for stakeholders
-6. **International sixth** - Only if EU is on near-term roadmap
-
----
-
-## Research Flags for Phases
-
-| Phase | Research Needed? | Reason |
-|-------|-----------------|--------|
-| 1 | YES - Legal counsel | CDS classification needs formal legal opinion |
-| 2 | NO | Standard patterns, Termly handles |
-| 3 | NO | Straightforward UI work |
-| 4 | NO | Technical implementation |
-| 5 | NO | Documentation of completed work |
-| 6 | YES | EU MDR/AI Act requires specialist counsel |
+| Skip This | Why |
+|-----------|-----|
+| BAAs with vendors | No PHI storage, users responsible for what they input |
+| HIPAA compliance program | Not a covered entity, not storing PHI |
+| FDA registration | Not a medical device, decision support tool |
+| SOC 2 certification | Not selling to enterprises requiring it |
+| Enterprise compliance tools | Overkill for our model |
+| Complex consent flows | Simple acknowledgment is sufficient |
 
 ---
 
-## Open Questions for Legal Counsel
+## Implementation for v1.4
 
-1. **CDS Criterion 4:** How does "independent review" apply when AI generates report text? Radiologist reviews the output, but can they verify the "reasoning"?
+### Phase 1: Legal Documents
+- [ ] Draft Terms of Service with all key clauses above
+- [ ] Draft simple Privacy Policy
+- [ ] Have lawyer review (one-time cost, not ongoing compliance)
 
-2. **OpenAI BAA for ephemeral processing:** Is BAA strictly required if PHI is never stored? Research says yes (PHI exists during processing), but legal should confirm.
+### Phase 2: Website Disclaimers
+- [ ] Add Terms of Service page
+- [ ] Add Privacy Policy page
+- [ ] Add "Not Medical Advice" footer on all pages
+- [ ] Add "For Licensed Healthcare Professionals" messaging
 
-3. **California AB 3030 scope:** Does this apply to B2B SaaS sold to healthcare providers, or only direct patient communications?
+### Phase 3: In-App Acknowledgments
+- [ ] Sign-up checkbox for Terms acceptance
+- [ ] First-login acknowledgment modal
+- [ ] Persistent "AI Draft" banner on generation screens
+- [ ] Footer on all generated reports
 
-4. **Breach notification for ephemeral data:** What constitutes a "breach" when reports aren't stored?
-
-5. **EU market entry timing:** Should we pursue MDR classification now (long timeline) or defer until US revenue is established?
-
----
-
-## Recommended Next Steps
-
-1. **Immediate:** Legal counsel engagement for CDS classification review
-2. **Week 1:** Vendor BAA audit (OpenAI, Supabase, Vercel)
-3. **Week 2:** Set up Termly Pro, begin ToS/Privacy Policy drafting
-4. **Week 3-4:** Implement consent flows and disclaimer UI
-5. **Week 4-6:** Architecture hardening (IndexedDB, audit logging)
-6. **Week 6+:** Documentation and compliance verification
-
----
-
-## Files Created
-
-| File | Purpose |
-|------|---------|
-| `STACK.md` | Compliance tooling recommendations with pricing |
-| `FEATURES.md` | Required compliance features prioritized |
-| `ARCHITECTURE.md` | Privacy-preserving data architecture patterns |
-| `PITFALLS.md` | Common mistakes and prevention strategies |
-| `SUMMARY.md` | This synthesis document |
+### Phase 4: Marketing Review
+- [ ] Audit all website copy for prohibited claims
+- [ ] Remove any accuracy/performance claims without documentation
+- [ ] Ensure "drafting tool" positioning is clear throughout
 
 ---
 
-*Research valid until: 2026-04-20 (regulatory landscape evolving)*
-*Recommended re-validation: Before each major launch milestone*
+## Risk Acknowledgment
+
+This light-touch approach works because:
+
+1. **Licensed professionals** - Users are radiologists who understand their responsibilities
+2. **No data storage** - Nothing to breach, nothing to protect
+3. **Clear disclaimers** - Users explicitly accept responsibility
+4. **Drafting tool positioning** - We're like a fancy text editor, not a diagnostic system
+
+**Remaining risks we accept:**
+- If we make marketing claims we can't substantiate (mitigation: don't make claims)
+- If a user ignores disclaimers and something goes wrong (mitigation: clear Terms, indemnification)
+- If regulations change (mitigation: monitor, adapt)
+
+---
+
+## Simplified Phase Structure for v1.4
+
+```
+Phase 1: Legal Documents (1-2 weeks)
+├── Terms of Service
+├── Privacy Policy
+└── Lawyer review
+
+Phase 2: Website & App Integration (1 week)
+├── Legal pages on website
+├── Sign-up acknowledgment
+├── In-app disclaimers
+└── Report footers
+
+Phase 3: Marketing Cleanup (few days)
+├── Audit copy for prohibited claims
+└── Ensure "drafting tool" positioning
+
+Done.
+```
+
+---
+
+## What Success Looks Like
+
+Before a user generates their first report, they will have:
+1. Agreed to Terms of Service (checkbox at signup)
+2. Acknowledged this is a drafting tool (first-login modal)
+3. Seen the "AI Draft - Review Required" banner
+4. Understood they are fully responsible
+
+Every generated report will show:
+- "AI-Generated Draft" indicator
+- "Not reviewed. Not medical advice." footer
+- Reminder that the radiologist is responsible
+
+**The message is unmistakable: This is your tool. You're responsible. Use it wisely.**
+
+---
+
+## Files in This Research Folder
+
+| File | Status |
+|------|--------|
+| `SUMMARY.md` | This file - simplified approach |
+| `STACK.md` | Reference only - enterprise tooling we're NOT using |
+| `FEATURES.md` | Reference only - full feature list, use selectively |
+| `ARCHITECTURE.md` | Still relevant - confirms our ephemeral model is sound |
+| `PITFALLS.md` | Reference only - mostly for enterprise/regulated scenarios |
+
+---
+
+*This approach prioritizes simplicity and user responsibility over complex compliance frameworks.*
