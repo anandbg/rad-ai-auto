@@ -7,7 +7,7 @@
 - ✅ **v1.2 Template Experience** - Phases 15, 17, 18 (shipped 2026-01-20)
 - ✅ **v1.3 Production Infrastructure** - Phases 16, 19, 20 (shipped 2026-01-20)
 - 🚧 **v1.4 Legal Compliance** - Phases 21-26 (in progress)
-- 📋 **v1.5 Report Formatting** - Phase 27 (planned)
+- ✅ **v1.5 Report Formatting** - Phase 27 (shipped 2026-01-20)
 
 ## Phases
 
@@ -614,7 +614,8 @@ Plans:
 Plans:
 - [ ] 26-01: Add Data & Privacy section to Settings
 
-## v1.5 Report Formatting (PLANNED)
+<details>
+<summary>✅ v1.5 Report Formatting (Phase 27) - SHIPPED 2026-01-20</summary>
 
 **Milestone Goal:** Enable users to customize how list items appear in their generated radiology reports with per-section configuration.
 
@@ -632,12 +633,13 @@ Plans:
   7. Report generation applies selected styles to list items
   8. PDF export renders list styles correctly
   9. Word export renders list styles correctly
-**Research**: Minimal (extending existing settings and export functionality)
-**Plans**: 2 plans
+**Plans**: 2 plans (complete)
 
 Plans:
-- [ ] 27-01: Settings UI for list style preferences
-- [ ] 27-02: Apply list styles to report generation and exports
+- [x] 27-01: Settings UI for list style preferences
+- [x] 27-02: Apply list styles to report generation and exports
+
+</details>
 
 ## Progress
 
@@ -660,7 +662,7 @@ Phases execute in numeric order: 15 → 16 → ...
 | 24. Page Warnings | v1.4 | 0/1 | Not started | - |
 | 25. Report Disclaimers | v1.4 | 0/1 | Not started | - |
 | 26. Settings Privacy | v1.4 | 0/1 | Not started | - |
-| 27. List Style Preferences | v1.5 | 0/2 | Not started | - |
+| 27. List Style Preferences | v1.5 | 2/2 | Complete | 2026-01-20 |
 
 ---
 *Roadmap created: 2026-01-16*
@@ -670,3 +672,4 @@ Phases execute in numeric order: 15 → 16 → ...
 *v1.3 added: 2026-01-18*
 *v1.3 shipped: 2026-01-20*
 *v1.4 added: 2026-01-20*
+*v1.5 shipped: 2026-01-20*

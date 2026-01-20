@@ -125,14 +125,14 @@ Report formatting customization. Users can personalize how list items appear in 
 
 ### Report Formatting
 
-- [ ] **FMT-01**: User can access list style preferences in Settings page
-- [ ] **FMT-02**: User can choose from 5 list styles: Bullet (•), Dash (-), Arrow (→), Numbered (1.), None
-- [ ] **FMT-03**: User can set list style per report section (Clinical Info, Technique, Findings, Impression, etc.)
-- [ ] **FMT-04**: User can apply a style to all sections at once ("Apply to All" action)
-- [ ] **FMT-05**: Default style is Bullet (•) for new users
-- [ ] **FMT-06**: List style preference applies only to newly generated reports
-- [ ] **FMT-07**: List style renders correctly in PDF export
-- [ ] **FMT-08**: List style renders correctly in Word export
+- [x] **FMT-01**: User can access list style preferences in Settings page
+- [x] **FMT-02**: User can choose from 5 list styles: Bullet (•), Dash (-), Arrow (→), Numbered (1.), None
+- [x] **FMT-03**: User can set list style per report section (Clinical Info, Technique, Findings, Impression, etc.)
+- [x] **FMT-04**: User can apply a style to all sections at once ("Apply to All" action)
+- [x] **FMT-05**: Default style is Bullet (•) for new users
+- [x] **FMT-06**: List style preference applies only to newly generated reports
+- [x] **FMT-07**: List style renders correctly in PDF export
+- [x] **FMT-08**: List style renders correctly in Word export
 
 ## v2 Requirements
 
@@ -236,14 +236,14 @@ Which phases cover which requirements. Updated by create-roadmap.
 | OUTPUT-02 | Phase 25 | Pending |
 | OUTPUT-03 | Phase 25 | Pending |
 | SETT-01 (v1.4) | Phase 26 | Pending |
-| FMT-01 | Phase 27 | Pending |
-| FMT-02 | Phase 27 | Pending |
-| FMT-03 | Phase 27 | Pending |
-| FMT-04 | Phase 27 | Pending |
-| FMT-05 | Phase 27 | Pending |
-| FMT-06 | Phase 27 | Pending |
-| FMT-07 | Phase 27 | Pending |
-| FMT-08 | Phase 27 | Pending |
+| FMT-01 | Phase 27 | Complete |
+| FMT-02 | Phase 27 | Complete |
+| FMT-03 | Phase 27 | Complete |
+| FMT-04 | Phase 27 | Complete |
+| FMT-05 | Phase 27 | Complete |
+| FMT-06 | Phase 27 | Complete |
+| FMT-07 | Phase 27 | Complete |
+| FMT-08 | Phase 27 | Complete |
 
 **Coverage:**
 - v1 requirements: 30 total (all complete)
