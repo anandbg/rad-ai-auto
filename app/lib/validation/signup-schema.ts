@@ -1,0 +1,33 @@
+import { z } from 'zod';
+
+/**
+ * Signup form validation schema
+ *
+ * Includes all user input fields plus mandatory legal consent checkboxes:
+ * - acceptTerms: User must accept Terms of Service
+ * - acceptNoPhiPolicy: User must acknowledge no PHI/PII upload policy
+ */
+export const signupSchema = z.object({
+  name: z.string()
+    .min(1, 'Name is required')
+    .min(2, 'Name must be at least 2 characters'),
+  email: z.string()
+    .min(1, 'Email is required')
+    .email('Please enter a valid email address'),
+  password: z.string()
+    .min(1, 'Password is required')
+    .min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string()
+    .min(1, 'Please confirm your password'),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: 'You must accept the Terms of Service to continue' }),
+  }),
+  acceptNoPhiPolicy: z.literal(true, {
+    errorMap: () => ({ message: 'You must acknowledge the no personal data policy to continue' }),
+  }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords must match',
+  path: ['confirmPassword'],
+});
+
+export type SignupFormData = z.infer<typeof signupSchema>;
