@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 ## Current Position
 
 Milestone: v1.4 Legal Compliance
-Phase: 21 of 26 (Legal Documents & Website Pages)
+Phase: 22 of 26 (Sign-up Acknowledgment)
 Plan: 1 of 1 complete
 Status: Phase complete
-Last activity: 2026-01-20 — Completed 21-01-PLAN.md (Legal Documents)
+Last activity: 2026-01-20 — Completed 22-01-PLAN.md (Sign-up Legal Checkboxes)
 
-Progress: [████████████████████░░] 88% (v1.0-v1.3 complete, v1.4 in progress)
+Progress: [█████████████████████░░] 90% (v1.0-v1.3 complete, v1.4 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 38
-- Average duration: 7.6 min
-- Total execution time: 4.82 hours
+- Total plans completed: 39
+- Average duration: 7.4 min
+- Total execution time: 4.86 hours
 
 **By Phase (v1.0):**
 
@@ -68,10 +68,11 @@ Progress: [████████████████████░░] 8
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 21-legal-documents | 1 | 8 min | 8 min |
+| 22-sign-up-acknowledgment | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 19-03 (2 min), 20-04 (5 min), 20-03 (6 min), 20-05 (8 min), 21-01 (8 min)
-- Trend: Legal compliance plans execute at standard pace
+- Last 5 plans: 20-04 (5 min), 20-03 (6 min), 20-05 (8 min), 21-01 (8 min), 22-01 (2 min)
+- Trend: Simple checkbox plan executed quickly
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Progress: [████████████████████░░] 8
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 22-01]: Use z.literal(true) for checkbox validation (strict boolean enforcement)
+- [Phase 22-01]: Create reusable Checkbox component with Radix UI
+- [Phase 22-01]: Open Terms link in new tab to preserve form state
 - [Phase 21-01]: Use placeholder [Company Legal Name] where formal legal entity required
 - [Phase 21-01]: Use legal@airad.io and privacy@airad.io as contact emails
 - [Phase 21-01]: Legal pages styled consistently with app design tokens
@@ -155,17 +159,17 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None - Phase 21 complete. Legal foundation in place.
+None - Phase 22 complete. Sign-up gate operational.
 
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 21-01-PLAN.md (Legal Documents)
+Stopped at: Completed 22-01-PLAN.md (Sign-up Legal Checkboxes)
 Resume file: None
 
 **v1.4 Legal Compliance PROGRESS (2026-01-20):**
 - Phase 21 (Legal Documents): COMPLETE - Terms, Privacy, Footer
-- Phase 22 (Sign-up Acknowledgment): Not started
+- Phase 22 (Sign-up Acknowledgment): COMPLETE - ToS checkbox, no-PHI checkbox
 - Phase 23 (AI Banner): Not started
 - Phase 24 (Page Warnings): Not started
 - Phase 25 (Report Disclaimers): Not started
@@ -177,4 +181,4 @@ Resume file: None
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** `/gsd:plan-phase 22` to plan Sign-Up Gate phase
+**Next action:** `/gsd:execute-plan` for Phase 23 (AI Banner)
