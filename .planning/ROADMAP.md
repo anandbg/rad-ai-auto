@@ -548,8 +548,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 22-01: Sign-up form mandatory checkboxes
-- [ ] 22-02: First-use acknowledgment modal
+- [x] 22-01: Sign-up form mandatory checkboxes
+- [x] 22-02: First-use acknowledgment modal
 
 ### Phase 23: Persistent App-Wide Disclaimer Banner
 **Goal**: Every authenticated page shows persistent warning that cannot be dismissed
@@ -629,7 +629,7 @@ Phases execute in numeric order: 15 → 16 → ...
 | 19. Stripe Production Setup | v1.3 | 3/3 | Complete | 2026-01-19 |
 | 20. Vercel Deployment Readiness | v1.3 | 5/5 | Complete | 2026-01-20 |
 | 21. Legal Documents | v1.4 | 1/1 | Complete | 2026-01-20 |
-| 22. Sign-Up Acknowledgment | v1.4 | 0/2 | Not started | - |
+| 22. Sign-Up Acknowledgment | v1.4 | 2/2 | Complete | 2026-01-20 |
 | 23. Disclaimer Banner | v1.4 | 0/1 | Not started | - |
 | 24. Page Warnings | v1.4 | 0/1 | Not started | - |
 | 25. Report Disclaimers | v1.4 | 0/1 | Not started | - |

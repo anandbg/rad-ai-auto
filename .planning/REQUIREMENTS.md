@@ -90,12 +90,12 @@ Legal compliance through disclaimer-first approach. Maximum liability protection
 
 ### Sign-Up Gate
 
-- [ ] **GATE-01**: Sign-up requires checkbox: "I accept the Terms of Service and understand this tool is provided as-is with no warranties"
-- [ ] **GATE-02**: Sign-up requires checkbox: "I understand I must NOT upload patient-identifiable or personal information"
+- [x] **GATE-01**: Sign-up requires checkbox: "I accept the Terms of Service and understand this tool is provided as-is with no warranties"
+- [x] **GATE-02**: Sign-up requires checkbox: "I understand I must NOT upload patient-identifiable or personal information"
 
 ### First-Use Acknowledgment
 
-- [ ] **ACK-01**: First login shows mandatory modal that cannot be dismissed without acknowledgment: "This is an AI drafting tool. I am solely responsible for reviewing all output. The owners accept no responsibility for any decisions made using this tool."
+- [x] **ACK-01**: First login shows mandatory modal that cannot be dismissed without acknowledgment: "This is an AI drafting tool. I am solely responsible for reviewing all output. The owners accept no responsibility for any decisions made using this tool."
 
 ### Persistent App-Wide Disclaimer Banner
 
@@ -208,9 +208,9 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 | LEGAL-01 | Phase 21 | Complete |
 | LEGAL-02 | Phase 21 | Complete |
-| GATE-01 | Phase 22 | Pending |
-| GATE-02 | Phase 22 | Pending |
-| ACK-01 | Phase 22 | Pending |
+| GATE-01 | Phase 22 | Complete |
+| GATE-02 | Phase 22 | Complete |
+| ACK-01 | Phase 22 | Complete |
 | BANNER-01 | Phase 23 | Pending |
 | BANNER-02 | Phase 23 | Pending |
 | WARN-01 | Phase 24 | Pending |
