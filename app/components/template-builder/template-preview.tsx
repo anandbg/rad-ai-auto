@@ -1,7 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { TemplateSection } from '@/lib/validation/template-schema';
+import { useTemplateMarkdownComponents } from '@/lib/template/syntax-highlighter';
 
 interface TemplatePreviewProps {
   name: string;
@@ -10,40 +12,16 @@ interface TemplatePreviewProps {
 }
 
 /**
- * TemplatePreview - Live preview of template with syntax highlighting
+ * TemplatePreview - Live preview of template with markdown rendering and syntax highlighting
  *
- * Highlights:
+ * Renders markdown content (headers, lists, bold, italic, etc.) while also highlighting:
  * - [placeholders] - dynamic content markers (brand color)
  * - (instructions) - conditional guidance (muted italic)
  * - "verbatim" - exact text to include (bold)
  */
 export function TemplatePreview({ name, description, sections }: TemplatePreviewProps) {
-  // Render each section with highlighted syntax
-  const renderedSections = useMemo(() => {
-    return sections.map((section) => {
-      const renderedContent = section.content
-        // [placeholders] - highlight in brand color with background
-        .replace(
-          /\[([^\]]+)\]/g,
-          '<span class="inline-block px-1 py-0.5 bg-brand/20 text-brand rounded text-sm">[$1]</span>'
-        )
-        // (instructions) - muted italic text
-        .replace(
-          /\(([^)]+)\)/g,
-          '<span class="text-text-secondary italic">($1)</span>'
-        )
-        // "verbatim" - bold text
-        .replace(
-          /"([^"]+)"/g,
-          '<span class="font-semibold">"$1"</span>'
-        );
-
-      return {
-        ...section,
-        renderedContent,
-      };
-    });
-  }, [sections]);
+  // Custom components for ReactMarkdown that apply template syntax highlighting
+  const markdownComponents = useTemplateMarkdownComponents();
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-surface">
@@ -70,18 +48,22 @@ export function TemplatePreview({ name, description, sections }: TemplatePreview
           </div>
         ) : (
           <div className="space-y-6">
-            {renderedSections.map((section) => (
+            {sections.map((section) => (
               <div key={section.id} className="space-y-2">
                 {/* Section name in uppercase */}
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-text-secondary border-b border-border pb-1">
                   {section.name}
                 </h3>
 
-                {/* Section content with highlighted syntax */}
-                <div
-                  className="prose prose-sm max-w-none text-text-primary"
-                  dangerouslySetInnerHTML={{ __html: section.renderedContent }}
-                />
+                {/* Section content with markdown rendering and syntax highlighting */}
+                <article className="prose prose-sm max-w-none text-text-primary prose-headings:text-text-primary prose-p:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary prose-ul:my-2 prose-ol:my-2 prose-p:my-2">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                  >
+                    {section.content || ''}
+                  </ReactMarkdown>
+                </article>
               </div>
             ))}
           </div>

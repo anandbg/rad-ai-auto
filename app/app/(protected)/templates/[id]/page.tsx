@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,6 +13,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { useToast } from '@/components/ui/toast';
 import { useUnsavedChanges } from '@/lib/hooks/use-unsaved-changes';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { useTemplateMarkdownComponents } from '@/lib/template/syntax-highlighter';
 
 // Section interface for template sections
 interface TemplateSection {
@@ -136,6 +139,7 @@ export default function TemplateDetailPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const id = params.id as string;
+  const markdownComponents = useTemplateMarkdownComponents();
 
   const [template, setTemplate] = useState<Template | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -1130,10 +1134,15 @@ The lungs are clear. No focal consolidation, pleural effusion, or pneumothorax. 
                       className="rounded-lg border border-border bg-surface-muted p-4"
                       data-testid={`template-section-${index}`}
                     >
-                      <h4 className="font-medium text-text-primary mb-2">{section.name}</h4>
-                      <pre className="whitespace-pre-wrap font-mono text-sm text-text-secondary">
-                        {section.content || 'No content'}
-                      </pre>
+                      <h4 className="font-medium text-text-primary mb-2 text-sm uppercase tracking-wider border-b border-border pb-1">{section.name}</h4>
+                      <article className="prose prose-sm max-w-none text-text-secondary prose-headings:text-text-primary prose-p:text-text-secondary prose-li:text-text-secondary prose-strong:text-text-primary prose-ul:my-2 prose-ol:my-2 prose-p:my-2">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={markdownComponents}
+                        >
+                          {section.content || 'No content'}
+                        </ReactMarkdown>
+                      </article>
                     </div>
                   ))}
                 </div>
@@ -1148,9 +1157,18 @@ The lungs are clear. No focal consolidation, pleural effusion, or pneumothorax. 
               <CardDescription>Report template with placeholders</CardDescription>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap rounded-lg bg-surface-muted p-4 font-mono text-sm text-text-primary">
-                {template.content || 'No additional content defined.'}
-              </pre>
+              {template.content ? (
+                <article className="prose prose-sm max-w-none rounded-lg bg-surface-muted p-4 text-text-primary prose-headings:text-text-primary prose-p:text-text-primary prose-li:text-text-primary prose-strong:text-text-primary prose-ul:my-2 prose-ol:my-2 prose-p:my-2">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                  >
+                    {template.content}
+                  </ReactMarkdown>
+                </article>
+              ) : (
+                <p className="text-text-secondary text-sm">No additional content defined.</p>
+              )}
             </CardContent>
           </Card>
 
