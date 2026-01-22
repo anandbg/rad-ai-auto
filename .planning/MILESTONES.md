@@ -1,5 +1,56 @@
 # Milestones
 
+## v1.5 — Report Formatting (2026-01-20)
+
+**Goal:** Enable users to customize list styles in generated radiology reports.
+
+**Shipped:**
+- Phase 27: List Style Preferences — Per-section bullet/list style configuration
+
+**Metrics:**
+- 2 plans executed
+
+**Outcome:** Users can customize report formatting with 5 list styles (bullet, dash, arrow, numbered, none) per section.
+
+---
+
+## v1.4 — Legal Compliance (2026-01-20)
+
+**Goal:** Implement all legal requirements for global commercial launch with disclaimer-based compliance.
+
+**Shipped:**
+- Phase 21: Legal Documents — Terms of Service and Privacy Policy
+- Phase 22: Sign-Up Acknowledgment — Mandatory checkboxes and first-use modal
+- Phase 23: Disclaimer Banner — Persistent non-dismissible warning
+- Phase 24: Page Warnings — Context-specific warnings throughout app
+- Phase 25: Report Disclaimers — Header/footer disclaimers in display and exports
+- Phase 26: Settings Privacy — Data & Privacy section in Settings
+
+**Metrics:**
+- 7 plans executed
+- 15/15 requirements satisfied
+- Full audit passed
+
+**Outcome:** Complete liability protection stack from signup through report export.
+
+---
+
+## v1.3 — Production Infrastructure (2026-01-20)
+
+**Goal:** Production-grade infrastructure with environment separation.
+
+**Shipped:**
+- Phase 16: Infrastructure Setup — Company identity, Supabase dev/prod, Vercel, Google OAuth
+- Phase 19: Stripe Production — Webhook integration and go-live checklist
+- Phase 20: Vercel Deployment — Build optimization, security headers, monitoring
+
+**Metrics:**
+- 13 plans executed
+
+**Outcome:** Production-ready deployment infrastructure with proper environment separation.
+
+---
+
 ## v1.2 — Template Experience (2026-01-20)
 
 **Goal:** Overhaul template creation with AI-assisted workflows and add marketing landing page.
@@ -62,3 +113,4 @@
 
 ---
 *Archive of completed milestones*
+*Batch archived: 2026-01-22*
