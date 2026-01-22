@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 29 Code Refactoring - Type Safety & Error Handling Complete
+**Current focus:** Phase 29 Code Refactoring - Query Optimization & Pagination Complete
 
 ## Current Position
 
 Milestone: Post-v1.4 Maintenance
 Phase: 29 of 29 (Code Refactoring)
-Plan: 6 of 8 complete
+Plan: 7 of 8 complete
 Status: In progress
-Last activity: 2026-01-22 — Completed 29-02-PLAN.md (Bundle Size Reduction)
+Last activity: 2026-01-22 — Completed 29-08-PLAN.md (Query Optimization & Pagination)
 
-Progress: [████████████████████████░] 98% (v1.0-v1.4 complete, phase 29 in progress)
+Progress: [████████████████████████░] 99% (v1.0-v1.4 complete, phase 29 near complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 46
-- Average duration: 7.2 min
-- Total execution time: 5.5 hours
+- Total plans completed: 47
+- Average duration: 7.1 min
+- Total execution time: 5.55 hours
 
 **By Phase (v1.0):**
 
@@ -79,11 +79,11 @@ Progress: [███████████████████████
 | 25-report-disclaimers | 1 | 3 min | 3 min |
 | 26-settings-privacy | 1 | 1 min | 1 min |
 | 27-report-list-style-preferences | 2 | 20 min | 10 min |
-| 29-code-refactoring | 6 | 64 min | 10.7 min |
+| 29-code-refactoring | 7 | 67 min | 9.6 min |
 
 **Recent Trend:**
-- Last 5 plans: 29-02 (25 min), 29-07 (13 min), 29-04 (12 min), 29-03 (5 min), 29-01 (7 min)
-- Trend: Bundle optimization and code quality improvements
+- Last 5 plans: 29-08 (3 min), 29-02 (25 min), 29-07 (13 min), 29-04 (12 min), 29-03 (5 min)
+- Trend: API optimization and code quality improvements
 
 ## Accumulated Context
 
@@ -92,6 +92,9 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 29-08]: Use offset/limit pattern for pagination (compatible with Supabase range)
+- [Phase 29-08]: Cap limits (100 for templates, 200 for macros) to prevent abuse
+- [Phase 29-08]: localStorage wrapper is SSR-safe (checks typeof window)
 - [Phase 29-02]: Dynamic imports for heavy export libraries (jsPDF, docx) - reduces initial bundle
 - [Phase 29-02]: Centralized export modules in lib/export/ for reusability
 - [Phase 29-07]: Environment-aware logging (dev vs production log levels)
@@ -213,7 +216,7 @@ Pre-existing ESLint build issue: imports being stripped during lint phase (jsPDF
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Completed 29-02-PLAN.md (Bundle Size Reduction)
+Stopped at: Completed 29-08-PLAN.md (Query Optimization & Pagination)
 Resume file: None
 
 **Phase 29 PROGRESS (2026-01-22):**
@@ -222,6 +225,7 @@ Resume file: None
 - Phase 29-03 (Hook Consolidation): COMPLETE - useMacros SWR hook created
 - Phase 29-04 (Stripe Hardening): COMPLETE - Webhook idempotency, error handling, flexible payment methods
 - Phase 29-07 (Type Safety & Error Handling): COMPLETE - Centralized logger, React error boundary in protected routes
+- Phase 29-08 (Query Optimization & Pagination): COMPLETE - Templates/macros APIs paginated, draft storage utility created
 
 **Previous milestones:**
 - v1.4: Shipped 2026-01-20 (21-24 complete; 25-27 post-v1.4 enhancements complete)
@@ -230,4 +234,4 @@ Resume file: None
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** Continue with Phase 29 plans (29-05 through 29-08) or Phase 28 (Production Deployment).
+**Next action:** Continue with Phase 29 remaining plans (29-05, 29-06) or Phase 28 (Production Deployment).
