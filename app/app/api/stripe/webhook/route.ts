@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
+import { handleStripeError } from '@/lib/stripe/error-handler';
 
 // Conditional logging - only log in development
 const isDev = process.env.NODE_ENV === 'development';
@@ -92,6 +93,32 @@ export async function POST(request: NextRequest) {
       { error: `Webhook signature verification failed: ${errorMessage}` },
       { status: 400 }
     );
+  }
+
+  // Check if event was already processed (idempotency)
+  // This prevents duplicate processing if Stripe retries delivery
+  const supabase = createSupabaseServiceClient();
+  try {
+    const { data: existingEvent } = await supabase
+      .from('stripe_webhook_events')
+      .select('id')
+      .eq('event_id', event.id)
+      .single();
+
+    if (existingEvent) {
+      log(`Event ${event.id} already processed, skipping`);
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
+    // Record the event before processing to prevent race conditions
+    await supabase.from('stripe_webhook_events').insert({
+      event_id: event.id,
+      event_type: event.type,
+    });
+  } catch (err) {
+    // If we can't check/record idempotency, log but continue processing
+    // This handles the case where the table doesn't exist yet (migration not run)
+    log(`Idempotency check failed (table may not exist yet): ${err instanceof Error ? err.message : 'Unknown'}`);
   }
 
   // Handle different event types
@@ -244,11 +271,20 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true, event_type: event.type });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    console.error(`[Stripe Webhook] Error processing event: ${errorMessage}`);
+    const errorInfo = handleStripeError(err);
+    console.error(`[Stripe Webhook] Error processing event: ${errorInfo.message} (type: ${errorInfo.type}, retryable: ${errorInfo.retryable})`);
+
+    // Return 200 for non-retryable errors to prevent Stripe from retrying
+    // Return 500 for retryable errors so Stripe will retry later
+    const status = errorInfo.retryable ? 500 : 200;
+
     return NextResponse.json(
-      { error: `Error processing webhook: ${errorMessage}` },
-      { status: 500 }
+      {
+        error: `Error processing webhook: ${errorInfo.message}`,
+        error_type: errorInfo.type,
+        retryable: errorInfo.retryable,
+      },
+      { status }
     );
   }
 }
