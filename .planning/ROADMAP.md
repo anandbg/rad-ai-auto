@@ -9,6 +9,29 @@
 - ✅ **v1.4 Legal Compliance** — Phases 21-26 (shipped 2026-01-20) → [archive](milestones/v1.4-ROADMAP.md)
 - ✅ **v1.5 Report Formatting** — Phase 27 (shipped 2026-01-20) → [archive](milestones/v1.5-ROADMAP.md)
 - 🚧 **v2.0 Production Launch** — Phase 28 (in progress)
+- ✅ **v2.1 Code Quality** — Phase 29 (shipped 2026-01-22)
+
+## ✅ v2.1 Code Quality — Complete
+
+**Milestone Goal:** Comprehensive code refactoring for performance, maintainability, and best practices compliance.
+
+### Phase 29: Code Refactoring — ✓ Complete (2026-01-22)
+
+**Goal:** Address all identified refactoring opportunities from unified code review
+**Plans executed:** 8 (all successful)
+**Duration:** ~78 minutes total
+
+Key deliverables:
+- ✅ Query parallelization (Promise.all, React.cache)
+- ✅ Bundle optimization (~630KB savings via dynamic imports)
+- ✅ SWR hooks for data fetching
+- ✅ Stripe webhook idempotency and error handling
+- ✅ Code deduplication (Template types, syntax highlighter)
+- ✅ Component splitting (report-workspace 863→373 lines)
+- ✅ Centralized logging and error boundaries
+- ✅ Pagination for templates/macros APIs
+
+---
 
 ## 🚧 v2.0 Production Launch
 
@@ -78,6 +101,7 @@ From `.planning/phases/19-stripe-production-setup/PRODUCTION-CHECKLIST.md`:
 | v1.4 Legal Compliance | 21-26 | 7 | ✅ Shipped 2026-01-20 |
 | v1.5 Report Formatting | 27 | 2 | ✅ Shipped 2026-01-20 |
 | **v2.0 Production Launch** | **28** | **5** | 🚧 In progress |
+| **v2.1 Code Quality** | **29** | **8** | ✅ Shipped 2026-01-22 |
 
 ---
 *Roadmap created: 2026-01-16*
