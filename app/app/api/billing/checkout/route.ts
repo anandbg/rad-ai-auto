@@ -109,14 +109,16 @@ export async function POST(request: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     // Create Stripe Checkout session
+    // Note: payment_method_types is not specified - Stripe will automatically show
+    // all payment methods enabled in your Dashboard (Apple Pay, Google Pay, Link, etc.)
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: 'subscription',
-      payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/billing?success=true`,
       cancel_url: `${appUrl}/billing?canceled=true`,
       metadata: { user_id: user.id },
+      payment_method_collection: 'if_required', // Only collect if needed for subscription
     });
 
     return NextResponse.json({ url: session.url });
