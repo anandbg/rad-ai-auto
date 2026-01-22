@@ -7,117 +7,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
 import { usePreferences } from '@/lib/preferences/preferences-context';
 import { useToast } from '@/components/ui/toast';
+import { detectModality, detectBodyPart, type ModalityDetection } from '@/lib/detection';
 
 // Supported audio file types and size limits
 const SUPPORTED_FILE_TYPES = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/wave', 'audio/x-wav', 'audio/m4a', 'audio/mp4', 'audio/x-m4a'];
 const SUPPORTED_EXTENSIONS = ['.mp3', '.wav', '.m4a'];
 const MAX_FILE_SIZE_MB = 25;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-
-// Modality detection result interface
-interface ModalityDetection {
-  modality: string;
-  confidence: number;
-  keywords: string[];
-}
-
-// Modality detection keywords and patterns
-const MODALITY_PATTERNS: { modality: string; keywords: string[]; weight: number }[] = [
-  { modality: 'CT', keywords: ['ct', 'ct scan', 'computed tomography', 'cat scan', 'hounsfield', 'contrast enhanced ct', 'cect', 'non-contrast ct', 'ncct'], weight: 1.0 },
-  { modality: 'MRI', keywords: ['mri', 'mr', 'magnetic resonance', 't1', 't2', 'flair', 'dwi', 'diffusion weighted', 'gadolinium', 't1w', 't2w'], weight: 1.0 },
-  { modality: 'X-Ray', keywords: ['x-ray', 'xray', 'radiograph', 'plain film', 'chest x-ray', 'cxr', 'pa view', 'lateral view', 'ap view'], weight: 1.0 },
-  { modality: 'Ultrasound', keywords: ['ultrasound', 'us', 'sonogram', 'sonography', 'doppler', 'echocardiogram', 'echo', 'transducer'], weight: 1.0 },
-  { modality: 'PET', keywords: ['pet', 'pet scan', 'pet-ct', 'positron emission', 'fdg', 'suv', 'metabolic activity'], weight: 1.0 },
-  { modality: 'Mammography', keywords: ['mammogram', 'mammography', 'breast imaging', 'birads', 'bi-rads', 'breast screening'], weight: 1.0 },
-  { modality: 'Fluoroscopy', keywords: ['fluoroscopy', 'fluoro', 'barium', 'swallow study', 'upper gi', 'lower gi', 'real-time imaging'], weight: 1.0 },
-  { modality: 'Nuclear Medicine', keywords: ['nuclear', 'scintigraphy', 'bone scan', 'thyroid scan', 'spect', 'gamma camera', 'radiotracer'], weight: 1.0 },
-];
-
-// Function to detect modality from text
-function detectModality(text: string): ModalityDetection | null {
-  if (!text || text.trim().length < 10) return null;
-
-  const lowerText = text.toLowerCase();
-  const results: { modality: string; score: number; matchedKeywords: string[] }[] = [];
-
-  for (const pattern of MODALITY_PATTERNS) {
-    const matchedKeywords: string[] = [];
-    let score = 0;
-
-    for (const keyword of pattern.keywords) {
-      // Use word boundary matching for more accurate detection
-      const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-      const matches = lowerText.match(regex);
-      if (matches) {
-        score += matches.length * pattern.weight;
-        if (!matchedKeywords.includes(keyword)) {
-          matchedKeywords.push(keyword);
-        }
-      }
-    }
-
-    if (score > 0) {
-      results.push({ modality: pattern.modality, score, matchedKeywords });
-    }
-  }
-
-  if (results.length === 0) return null;
-
-  // Sort by score descending
-  results.sort((a, b) => b.score - a.score);
-
-  const bestMatch = results[0];
-  if (!bestMatch) return null;
-
-  const totalScore = results.reduce((sum, r) => sum + r.score, 0);
-
-  // Calculate confidence as percentage of total score
-  const confidence = Math.min(99, Math.round((bestMatch.score / Math.max(totalScore, 1)) * 100));
-
-  return {
-    modality: bestMatch.modality,
-    confidence,
-    keywords: bestMatch.matchedKeywords,
-  };
-}
-
-// Body part detection patterns
-const BODY_PART_PATTERNS: { bodyPart: string; keywords: string[] }[] = [
-  { bodyPart: 'Head', keywords: ['head', 'brain', 'skull', 'cranial', 'intracranial', 'cerebral'] },
-  { bodyPart: 'Neck', keywords: ['neck', 'cervical', 'thyroid', 'carotid', 'larynx'] },
-  { bodyPart: 'Chest', keywords: ['chest', 'thorax', 'thoracic', 'lung', 'pulmonary', 'cardiac', 'heart', 'mediastinal', 'pleural'] },
-  { bodyPart: 'Abdomen', keywords: ['abdomen', 'abdominal', 'liver', 'spleen', 'kidney', 'renal', 'pancreas', 'gallbladder', 'intestine', 'bowel', 'colon'] },
-  { bodyPart: 'Pelvis', keywords: ['pelvis', 'pelvic', 'bladder', 'prostate', 'uterus', 'ovary', 'rectum', 'hip'] },
-  { bodyPart: 'Spine', keywords: ['spine', 'spinal', 'vertebra', 'disc', 'lumbar', 'thoracic spine', 'cervical spine', 'sacral'] },
-  { bodyPart: 'Upper Extremity', keywords: ['arm', 'shoulder', 'elbow', 'wrist', 'hand', 'humerus', 'radius', 'ulna'] },
-  { bodyPart: 'Lower Extremity', keywords: ['leg', 'knee', 'ankle', 'foot', 'femur', 'tibia', 'fibula', 'thigh', 'calf'] },
-];
-
-// Function to detect body part from text
-function detectBodyPart(text: string): string | null {
-  if (!text || text.trim().length < 10) return null;
-
-  const lowerText = text.toLowerCase();
-  const results: { bodyPart: string; score: number }[] = [];
-
-  for (const pattern of BODY_PART_PATTERNS) {
-    let score = 0;
-    for (const keyword of pattern.keywords) {
-      const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-      const matches = lowerText.match(regex);
-      if (matches) {
-        score += matches.length;
-      }
-    }
-    if (score > 0) {
-      results.push({ bodyPart: pattern.bodyPart, score });
-    }
-  }
-
-  if (results.length === 0) return null;
-  results.sort((a, b) => b.score - a.score);
-  return results[0]?.bodyPart ?? null;
-}
 
 // Context expansion interface
 interface ContextExpansion {
