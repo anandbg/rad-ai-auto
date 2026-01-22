@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 29 Code Refactoring - Code Consolidation Complete
+**Current focus:** Phase 29 Code Refactoring - Complete
 
 ## Current Position
 
@@ -13,16 +13,16 @@ Milestone: Post-v1.4 Maintenance
 Phase: 29 of 29 (Code Refactoring)
 Plan: 8 of 8 complete
 Status: Phase complete
-Last activity: 2026-01-22 — Completed 29-05-PLAN.md (Code Consolidation)
+Last activity: 2026-01-22 — Completed 29-06-PLAN.md (Large Component Split)
 
 Progress: [█████████████████████████] 100% (v1.0-v1.4 complete, phase 29 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 48
-- Average duration: 7.1 min
-- Total execution time: 5.65 hours
+- Total plans completed: 49
+- Average duration: 7.0 min
+- Total execution time: 5.73 hours
 
 **By Phase (v1.0):**
 
@@ -79,11 +79,11 @@ Progress: [███████████████████████
 | 25-report-disclaimers | 1 | 3 min | 3 min |
 | 26-settings-privacy | 1 | 1 min | 1 min |
 | 27-report-list-style-preferences | 2 | 20 min | 10 min |
-| 29-code-refactoring | 8 | 73 min | 9.1 min |
+| 29-code-refactoring | 8 | 78 min | 9.75 min |
 
 **Recent Trend:**
-- Last 5 plans: 29-05 (6 min), 29-08 (3 min), 29-02 (25 min), 29-07 (13 min), 29-04 (12 min)
-- Trend: Code consolidation and type safety improvements
+- Last 5 plans: 29-06 (5 min), 29-05 (6 min), 29-08 (3 min), 29-02 (25 min), 29-07 (13 min)
+- Trend: Component split and code organization
 
 ## Accumulated Context
 
@@ -92,6 +92,9 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 29-06]: Component extraction pattern: Extract large components into separate files with explicit props interfaces
+- [Phase 29-06]: Export Template interface from report-tab for shared use in report-workspace
+- [Phase 29-06]: Detection utilities barrel export via index.ts for clean imports
 - [Phase 29-05]: Use explicit type exports in types/index.ts to avoid database.ts conflicts
 - [Phase 29-05]: Make TemplateListItem date fields optional (not always needed for UI)
 - [Phase 29-05]: Export both function and hook from syntax highlighter for flexibility
@@ -219,7 +222,7 @@ Pre-existing ESLint build issue: imports being stripped during lint phase (jsPDF
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Completed 29-05-PLAN.md (Code Consolidation)
+Stopped at: Completed 29-06-PLAN.md (Large Component Split)
 Resume file: None
 
 **Phase 29 PROGRESS (2026-01-22):**
@@ -228,6 +231,7 @@ Resume file: None
 - Phase 29-03 (Hook Consolidation): COMPLETE - useMacros SWR hook created
 - Phase 29-04 (Stripe Hardening): COMPLETE - Webhook idempotency, error handling, flexible payment methods
 - Phase 29-05 (Code Consolidation): COMPLETE - Template types consolidated, syntax highlighter extracted, useDialog hook created
+- Phase 29-06 (Large Component Split): COMPLETE - TranscribeTab/ReportTab extracted, detection utilities in lib/detection/
 - Phase 29-07 (Type Safety & Error Handling): COMPLETE - Centralized logger, React error boundary in protected routes
 - Phase 29-08 (Query Optimization & Pagination): COMPLETE - Templates/macros APIs paginated, draft storage utility created
 
