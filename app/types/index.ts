@@ -5,6 +5,19 @@
 // Re-export database types
 export * from './database';
 
+// Re-export template types (canonical source)
+// Note: TemplateSection and TemplateType from template.ts shadow database.ts types
+// Use explicit imports: import { Template } from '@/types/template' for UI components
+// Use database.ts types for Supabase operations
+export type {
+  Template,
+  TemplateFormData,
+  TemplateListItem,
+} from './template';
+
+// Export TemplateSection from template.ts as UITemplateSection to avoid conflict
+export type { TemplateSection as UITemplateSection } from './template';
+
 // API response types
 export interface ApiResponse<T = unknown> {
   data?: T;

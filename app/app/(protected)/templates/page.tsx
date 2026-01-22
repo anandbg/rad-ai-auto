@@ -14,19 +14,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { PageWrapper } from '@/components/motion/page-wrapper';
 import { FadeIn } from '@/components/motion/fade-in';
 import { StaggerContainer } from '@/components/motion/stagger-container';
-
-// Template interface
-interface Template {
-  id: string;
-  name: string;
-  modality: string;
-  bodyPart: string;
-  description: string;
-  isGlobal: boolean;
-  createdAt: string;
-  updatedAt: string;
-  content?: string;
-}
+import type { Template } from '@/types/template';
 
 function TemplatesPageContent() {
   const { user } = useAuth();
@@ -195,7 +183,7 @@ function TemplatesPageContent() {
     const trimmedSearch = searchQuery.trim().toLowerCase();
     const matchesSearch = !trimmedSearch ||
       template.name.toLowerCase().includes(trimmedSearch) ||
-      template.description.toLowerCase().includes(trimmedSearch) ||
+      (template.description ?? '').toLowerCase().includes(trimmedSearch) ||
       template.bodyPart.toLowerCase().includes(trimmedSearch);
     const matchesModality = selectedModality === 'all' || template.modality === selectedModality;
     return matchesSearch && matchesModality;

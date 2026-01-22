@@ -11,23 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useAuth } from '@/lib/auth/auth-context';
 import { usePreferences } from '@/lib/preferences/preferences-context';
 import { saveDraft as saveToIndexedDB, getDraft as getFromIndexedDB, isOnline, onOnlineStatusChange, type Draft } from '@/lib/storage/indexeddb';
+import type { Template } from '@/types/template';
 
 // Draft storage key
 const GENERATE_DRAFT_KEY = 'ai-rad-generate-draft';
 const INDEXEDDB_DRAFT_ID = 'generate-report-draft';
-
-// Template interface
-interface Template {
-  id: string;
-  name: string;
-  modality: string;
-  bodyPart: string;
-  description: string;
-  isGlobal: boolean;
-  content?: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 // Plan limits (Free plan)
 const REPORT_LIMIT = 10;

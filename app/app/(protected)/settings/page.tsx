@@ -12,6 +12,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { PageWrapper } from '@/components/motion/page-wrapper';
 import { FadeIn } from '@/components/motion/fade-in';
 import Link from 'next/link';
+import type { TemplateListItem } from '@/types/template';
 
 // Section labels for report formatting
 const SECTION_LABELS: Record<keyof SectionListStyle, string> = {
@@ -48,21 +49,12 @@ function useHashScroll(isReady: boolean) {
   }, [isReady]);
 }
 
-// Template interface matching other pages
-interface Template {
-  id: string;
-  name: string;
-  modality: string;
-  bodyPart: string;
-  isGlobal: boolean;
-}
-
 export default function SettingsPage() {
   const { user, updateProfile, signOut } = useAuth();
   const { preferences, updatePreference, resolvedTheme, isLoading } = usePreferences();
   const { showToast } = useToast();
   const [saving, setSaving] = useState<string | null>(null);
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<TemplateListItem[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -110,7 +102,7 @@ export default function SettingsPage() {
         .eq('is_published', true)
         .order('name');
 
-      const formattedTemplates: Template[] = [
+      const formattedTemplates: TemplateListItem[] = [
         ...(personalTemplates || []).map(t => ({
           id: t.id,
           name: t.name,
