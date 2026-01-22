@@ -5,20 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import jsPDF from 'jspdf';
-import {
-  Document,
-  Paragraph,
-  TextRun,
-  HeadingLevel,
-  Packer,
-  AlignmentType,
-  Header,
-  Footer,
-  BorderStyle,
-  LevelFormat,
-} from 'docx';
-import { saveAs } from 'file-saver';
+// PDF/Word export libraries dynamically imported from @/lib/export/*
 import {
   Download,
   Sparkles,
@@ -38,8 +25,8 @@ import { WorkspaceTabs, WorkspaceTab } from './workspace-tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/shared/cn';
 import { PageWarning } from '@/components/legal/page-warning';
-import { usePreferences, type SectionListStyle } from '@/lib/preferences/preferences-context';
-import { getListPrefix, detectSection, getStyleForSection, transformMarkdownListStyles } from '@/lib/report/list-styles';
+import { usePreferences } from '@/lib/preferences/preferences-context';
+import { transformMarkdownListStyles } from '@/lib/report/list-styles';
 
 // Brand template interface for PDF/Word export styling
 interface BrandTemplate {
@@ -197,552 +184,48 @@ export function ReportWorkspace({ selectedTemplateId, onTemplateSelect }: Report
   const handleExportPDF = async () => {
     if (!reportContent) return;
 
-    // Get brand template for styling
+    // Dynamic import to keep jsPDF library out of initial bundle (~280KB)
+    const { generatePDF } = await import('@/lib/export/pdf-generator');
+
     const brandTemplate = getDefaultBrandTemplate(undefined);
     const selectedTemplate = templates.find(t => t.id === effectiveTemplateId);
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
 
-    const primaryColor = brandTemplate?.primaryColor || '#7C3AED';
-    const institutionName = brandTemplate?.institutionName || 'Medical Center';
-    const institutionAddress = brandTemplate?.institutionAddress || '';
-    const footerText = brandTemplate?.footerText || 'Generated with AI assistance. User is solely responsible for accuracy. Not medical advice.';
-
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    await generatePDF(reportContent, `radiology-report-${timestamp}.pdf`, {
+      templateName: selectedTemplate?.label,
+      modality: selectedTemplate?.category,
+      bodyPart: selectedTemplate?.bodyPart,
+      brandTemplate: brandTemplate ? {
+        primaryColor: brandTemplate.primaryColor,
+        institutionName: brandTemplate.institutionName,
+        institutionAddress: brandTemplate.institutionAddress,
+        footerText: brandTemplate.footerText,
+      } : null,
+      listStylePreferences: preferences.listStylePreferences,
     });
-
-    // Create PDF with native jsPDF text rendering for proper page breaks
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 20;
-    const contentWidth = pageWidth - margin * 2;
-    const footerHeight = 25;
-    const maxY = pageHeight - margin - footerHeight;
-    let y = margin;
-
-    // Convert hex color to RGB
-    const hexToRgb = (hex: string): [number, number, number] => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      if (result && result[1] && result[2] && result[3]) {
-        return [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)];
-      }
-      return [124, 58, 237]; // default purple
-    };
-
-    // Helper to check if we need a new page
-    const checkPageBreak = (neededHeight: number) => {
-      if (y + neededHeight > maxY) {
-        addFooter();
-        pdf.addPage();
-        y = margin;
-      }
-    };
-
-    // Add footer to current page
-    const addFooter = () => {
-      const footerY = pageHeight - margin;
-      pdf.setDrawColor(226, 232, 240); // slate-200
-      pdf.line(margin, footerY - 15, pageWidth - margin, footerY - 15);
-      pdf.setFontSize(9);
-      pdf.setTextColor(148, 163, 184); // slate-400
-      pdf.text(footerText, margin, footerY - 8);
-      pdf.setFontSize(8);
-      pdf.setTextColor(203, 213, 225); // slate-300
-      pdf.text(`AI-Generated Report | Exported: ${now.toISOString()}`, margin, footerY - 2);
-    };
-
-    // --- HEADER ---
-    const [r, g, b] = hexToRgb(primaryColor);
-    pdf.setFontSize(20);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(r, g, b);
-    pdf.text(institutionName, margin, y);
-    y += 8;
-
-    if (institutionAddress) {
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 116, 139); // slate-500
-      pdf.text(institutionAddress, margin, y);
-      y += 6;
-    }
-
-    // Header line
-    pdf.setDrawColor(r, g, b);
-    pdf.setLineWidth(0.8);
-    pdf.line(margin, y + 2, pageWidth - margin, y + 2);
-    y += 10;
-
-    // --- METADATA BOX ---
-    pdf.setFillColor(248, 250, 252); // slate-50
-    pdf.roundedRect(margin, y, contentWidth, 18, 2, 2, 'F');
-    y += 5;
-
-    pdf.setFontSize(10);
-    pdf.setTextColor(71, 85, 105); // slate-600
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Template:', margin + 4, y + 3);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(selectedTemplate?.label || 'General', margin + 26, y + 3);
-
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Modality:', margin + contentWidth / 2, y + 3);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(selectedTemplate?.category || 'N/A', margin + contentWidth / 2 + 22, y + 3);
-
-    y += 7;
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Body Part:', margin + 4, y + 3);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(selectedTemplate?.bodyPart || 'N/A', margin + 26, y + 3);
-
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Date:', margin + contentWidth / 2, y + 3);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(dateStr, margin + contentWidth / 2 + 14, y + 3);
-
-    y += 15;
-
-    // --- DISCLAIMER BANNER ---
-    pdf.setFillColor(254, 243, 199); // amber-100
-    pdf.roundedRect(margin, y, contentWidth, 12, 2, 2, 'F');
-    pdf.setFontSize(11);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(180, 83, 9); // amber-700
-    pdf.text('AI-GENERATED DRAFT — NOT REVIEWED', pageWidth / 2, y + 8, { align: 'center' });
-    y += 18;
-
-    // --- CONTENT ---
-    const lines = reportContent.split('\n');
-
-    // Track current section for list style preferences
-    let currentSection: keyof SectionListStyle | null = null;
-    let listItemIndex = 0;
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-
-      if (!trimmed) {
-        y += 3;
-        continue;
-      }
-
-      // H2 heading - detect section
-      if (trimmed.startsWith('## ')) {
-        const headingText = trimmed.replace(/^## /, '');
-        currentSection = detectSection(headingText);
-        listItemIndex = 0; // Reset index for new section
-        checkPageBreak(12);
-        y += 4;
-        pdf.setFontSize(14);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(30, 41, 59); // slate-800
-        pdf.text(headingText, margin, y);
-        y += 8;
-        continue;
-      }
-
-      // H3 heading - also detect section
-      if (trimmed.startsWith('### ')) {
-        const headingText = trimmed.replace(/^### /, '');
-        const detected = detectSection(headingText);
-        if (detected) {
-          currentSection = detected;
-          listItemIndex = 0;
-        }
-        checkPageBreak(10);
-        y += 2;
-        pdf.setFontSize(12);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(51, 65, 85); // slate-700
-        pdf.text(headingText, margin, y);
-        y += 7;
-        continue;
-      }
-
-      // Bullet point or numbered list
-      if (trimmed.startsWith('- ') || /^\d+\.\s/.test(trimmed)) {
-        const bulletText = trimmed.replace(/^-\s*/, '').replace(/^\d+\.\s*/, '');
-
-        // Get style from user preferences for current section
-        const style = getStyleForSection(currentSection, preferences.listStylePreferences);
-        const prefix = getListPrefix(style, listItemIndex);
-        listItemIndex++;
-
-        // Parse bold sections within the line
-        const parts = bulletText.split(/(\*\*[^*]+\*\*)/g);
-
-        // Calculate wrapped lines
-        pdf.setFontSize(10);
-        const wrappedLines = pdf.splitTextToSize(bulletText.replace(/\*\*/g, ''), contentWidth - 10);
-        checkPageBreak(wrappedLines.length * 5 + 2);
-
-        pdf.setTextColor(71, 85, 105); // slate-600
-        pdf.setFont('helvetica', 'normal');
-
-        // Adjust indentation based on whether we have a prefix
-        const textIndent = prefix ? margin + 8 : margin + 2;
-        if (prefix) {
-          pdf.text(prefix, margin + 2, y);
-        }
-
-        // Render with bold support
-        let xPos = textIndent;
-        for (const part of parts) {
-          if (part.startsWith('**') && part.endsWith('**')) {
-            pdf.setFont('helvetica', 'bold');
-            const boldText = part.slice(2, -2);
-            pdf.text(boldText, xPos, y);
-            xPos += pdf.getTextWidth(boldText);
-          } else if (part) {
-            pdf.setFont('helvetica', 'normal');
-            // Handle text wrapping for long content
-            const partLines = pdf.splitTextToSize(part, contentWidth - (xPos - margin));
-            if (partLines.length > 1) {
-              // First line at current position
-              pdf.text(partLines[0], xPos, y);
-              // Remaining lines wrapped
-              for (let i = 1; i < partLines.length; i++) {
-                y += 5;
-                checkPageBreak(5);
-                pdf.text(partLines[i], textIndent, y);
-              }
-              xPos = textIndent + pdf.getTextWidth(partLines[partLines.length - 1]);
-            } else {
-              pdf.text(part, xPos, y);
-              xPos += pdf.getTextWidth(part);
-            }
-          }
-        }
-        y += 5;
-        continue;
-      }
-
-      // Regular paragraph with bold support
-      pdf.setFontSize(10);
-      pdf.setTextColor(71, 85, 105); // slate-600
-
-      // Handle bold text within paragraph
-      const parts = trimmed.split(/(\*\*[^*]+\*\*)/g);
-      const plainText = trimmed.replace(/\*\*/g, '');
-      const wrappedLines = pdf.splitTextToSize(plainText, contentWidth);
-      checkPageBreak(wrappedLines.length * 5 + 2);
-
-      let xPos = margin;
-      for (const part of parts) {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          pdf.setFont('helvetica', 'bold');
-          const boldText = part.slice(2, -2);
-          pdf.text(boldText, xPos, y);
-          xPos += pdf.getTextWidth(boldText);
-        } else if (part) {
-          pdf.setFont('helvetica', 'normal');
-          const partLines = pdf.splitTextToSize(part, contentWidth - (xPos - margin));
-          if (partLines.length > 1) {
-            pdf.text(partLines[0], xPos, y);
-            for (let i = 1; i < partLines.length; i++) {
-              y += 5;
-              checkPageBreak(5);
-              pdf.text(partLines[i], margin, y);
-            }
-            xPos = margin + pdf.getTextWidth(partLines[partLines.length - 1]);
-          } else {
-            pdf.text(part, xPos, y);
-            xPos += pdf.getTextWidth(part);
-          }
-        }
-      }
-      y += 5;
-    }
-
-    // Add footer to the last page
-    addFooter();
-
-    // Generate filename with timestamp
-    const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
-    pdf.save(`radiology-report-${timestamp}.pdf`);
   };
 
   const handleExportWord = async () => {
     if (!reportContent) return;
 
-    // Get brand template for styling
+    // Dynamic import to keep docx library out of initial bundle (~350KB)
+    const { generateWord } = await import('@/lib/export/word-generator');
+
     const brandTemplate = getDefaultBrandTemplate(undefined);
     const selectedTemplate = templates.find(t => t.id === effectiveTemplateId);
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
 
-    const institutionName = brandTemplate?.institutionName || 'Medical Center';
-    const institutionAddress = brandTemplate?.institutionAddress || '';
-    const footerText = brandTemplate?.footerText || 'Generated with AI assistance. User is solely responsible for accuracy. Not medical advice.';
-
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    await generateWord(reportContent, `radiology-report-${timestamp}.docx`, {
+      templateName: selectedTemplate?.label,
+      modality: selectedTemplate?.category,
+      bodyPart: selectedTemplate?.bodyPart,
+      brandTemplate: brandTemplate ? {
+        institutionName: brandTemplate.institutionName,
+        institutionAddress: brandTemplate.institutionAddress,
+        footerText: brandTemplate.footerText,
+      } : null,
+      listStylePreferences: preferences.listStylePreferences,
     });
-
-    // Helper function to parse bold text
-    function parseBoldText(text: string): TextRun[] {
-      const runs: TextRun[] = [];
-      const parts = text.split(/(\*\*[^*]+\*\*)/g);
-
-      for (const part of parts) {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          runs.push(new TextRun({
-            text: part.slice(2, -2),
-            bold: true,
-          }));
-        } else if (part) {
-          runs.push(new TextRun({ text: part }));
-        }
-      }
-
-      return runs.length > 0 ? runs : [new TextRun({ text: '' })];
-    }
-
-    // Parse markdown content into docx paragraphs
-    const contentParagraphs: Paragraph[] = [];
-    const lines = reportContent.split('\n');
-
-    // Track current section for list style preferences
-    let currentSection: keyof SectionListStyle | null = null;
-    let listItemIndex = 0;
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) {
-        contentParagraphs.push(new Paragraph({ text: '' }));
-        continue;
-      }
-
-      // H2 heading - detect section
-      if (trimmed.startsWith('## ')) {
-        const headingText = trimmed.replace(/^## /, '');
-        currentSection = detectSection(headingText);
-        listItemIndex = 0; // Reset index for new section
-        contentParagraphs.push(
-          new Paragraph({
-            text: headingText,
-            heading: HeadingLevel.HEADING_2,
-            spacing: { before: 300, after: 120 },
-          })
-        );
-        continue;
-      }
-
-      // H3 heading - also detect section
-      if (trimmed.startsWith('### ')) {
-        const headingText = trimmed.replace(/^### /, '');
-        const detected = detectSection(headingText);
-        if (detected) {
-          currentSection = detected;
-          listItemIndex = 0;
-        }
-        contentParagraphs.push(
-          new Paragraph({
-            text: headingText,
-            heading: HeadingLevel.HEADING_3,
-            spacing: { before: 200, after: 80 },
-          })
-        );
-        continue;
-      }
-
-      // Bullet point or numbered list in markdown
-      if (trimmed.startsWith('- ') || /^\d+\.\s/.test(trimmed)) {
-        const bulletText = trimmed.replace(/^-\s*/, '').replace(/^\d+\.\s*/, '');
-        const runs = parseBoldText(bulletText);
-
-        // Get style from user preferences for current section
-        const style = getStyleForSection(currentSection, preferences.listStylePreferences);
-
-        if (style === 'none') {
-          // Plain paragraph, no bullet - just slight indent
-          contentParagraphs.push(
-            new Paragraph({
-              children: runs,
-              spacing: { before: 40, after: 40 },
-              indent: { left: 360 },
-            })
-          );
-        } else if (style === 'numbered') {
-          // Use Word's native numbering
-          contentParagraphs.push(
-            new Paragraph({
-              children: runs,
-              numbering: { reference: 'numberedList', level: 0 },
-              spacing: { before: 40, after: 40 },
-            })
-          );
-        } else {
-          // Custom bullet character (bullet, dash, or arrow)
-          const prefix = getListPrefix(style, listItemIndex);
-          contentParagraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({ text: prefix + ' ' }),
-                ...runs,
-              ],
-              spacing: { before: 40, after: 40 },
-              indent: { left: 360, hanging: 180 },
-            })
-          );
-        }
-        listItemIndex++;
-        continue;
-      }
-
-      // Regular paragraph with bold text support
-      const runs = parseBoldText(trimmed);
-      contentParagraphs.push(
-        new Paragraph({
-          children: runs,
-          spacing: { before: 80, after: 80 },
-        })
-      );
-    }
-
-    // Create the document with numbering config for numbered lists
-    const doc = new Document({
-      numbering: {
-        config: [{
-          reference: 'numberedList',
-          levels: [{
-            level: 0,
-            format: LevelFormat.DECIMAL,
-            text: '%1.',
-            alignment: AlignmentType.START,
-            style: { paragraph: { indent: { left: 360, hanging: 180 } } },
-          }],
-        }],
-      },
-      sections: [{
-        properties: {},
-        headers: {
-          default: new Header({
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: institutionName,
-                    bold: true,
-                    size: 32, // 16pt
-                  }),
-                ],
-              }),
-              ...(institutionAddress ? [
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: institutionAddress,
-                      size: 20, // 10pt
-                      color: '666666',
-                    }),
-                  ],
-                }),
-              ] : []),
-              new Paragraph({
-                border: {
-                  bottom: {
-                    color: '7C3AED',
-                    style: BorderStyle.SINGLE,
-                    size: 12,
-                  },
-                },
-                spacing: { after: 200 },
-              }),
-            ],
-          }),
-        },
-        footers: {
-          default: new Footer({
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: footerText,
-                    size: 18, // 9pt
-                    color: '999999',
-                  }),
-                ],
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: 'AI-Generated Report',
-                    size: 16, // 8pt
-                    color: 'BBBBBB',
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-              }),
-            ],
-          }),
-        },
-        children: [
-          // Metadata section
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Template: ', bold: true }),
-              new TextRun({ text: selectedTemplate?.label || 'General' }),
-              new TextRun({ text: '    Modality: ', bold: true }),
-              new TextRun({ text: selectedTemplate?.category || 'N/A' }),
-            ],
-            spacing: { after: 80 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Body Part: ', bold: true }),
-              new TextRun({ text: selectedTemplate?.bodyPart || 'N/A' }),
-              new TextRun({ text: '    Date: ', bold: true }),
-              new TextRun({ text: dateStr }),
-            ],
-            spacing: { after: 200 },
-          }),
-          new Paragraph({
-            border: {
-              bottom: {
-                color: 'E2E8F0',
-                style: BorderStyle.SINGLE,
-                size: 6,
-              },
-            },
-            spacing: { after: 200 },
-          }),
-          // Disclaimer banner
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: 'AI-GENERATED DRAFT — NOT REVIEWED',
-                bold: true,
-                size: 24, // 12pt
-                color: 'B45309', // amber-700
-              }),
-            ],
-            alignment: AlignmentType.CENTER,
-            shading: {
-              fill: 'FEF3C7', // amber-100
-            },
-            spacing: { before: 200, after: 200 },
-          }),
-          // Report content
-          ...contentParagraphs,
-        ],
-      }],
-    });
-
-    // Generate and download the document
-    const blob = await Packer.toBlob(doc);
-    const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
-    saveAs(blob, `radiology-report-${timestamp}.docx`);
   };
 
   const handleClear = () => {
@@ -1341,7 +824,7 @@ function ReportTab({
                   Generated Report
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  AI-generated • Review and edit before finalizing
+                  AI-generated - Review and edit before finalizing
                 </p>
               </div>
             </div>
@@ -1351,7 +834,7 @@ function ReportTab({
               <div className="flex items-center justify-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
                 <span className="text-sm font-bold text-amber-700 dark:text-amber-300 text-center">
-                  AI-GENERATED DRAFT — NOT REVIEWED
+                  AI-GENERATED DRAFT - NOT REVIEWED
                 </span>
               </div>
             </div>
