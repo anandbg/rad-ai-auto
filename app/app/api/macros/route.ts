@@ -4,10 +4,15 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 /**
  * GET /api/macros
  *
- * Retrieves all macros for the authenticated user.
- * Includes category information.
+ * Retrieves macros for the authenticated user with pagination support.
+ *
+ * Query params:
+ * - limit: number (default 100, max 200)
+ * - offset: number (default 0)
+ * - category: string (optional category_id filter)
+ * - active: 'true' | 'false' (optional active status filter)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -23,12 +28,33 @@ export async function GET() {
       );
     }
 
-    // Fetch macros for this user
-    const { data: macros, error: fetchError } = await supabase
+    // Parse pagination and filter params
+    const searchParams = request.nextUrl.searchParams;
+    const limit = Math.min(parseInt(searchParams.get('limit') || '100'), 200);
+    const offset = parseInt(searchParams.get('offset') || '0');
+    const categoryId = searchParams.get('category');
+    const activeFilter = searchParams.get('active');
+
+    // Build query with filters
+    let query = supabase
       .from('transcription_macros')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      .select('*', { count: 'exact' })
+      .eq('user_id', user.id);
+
+    // Apply optional filters
+    if (categoryId) {
+      query = query.eq('category_id', categoryId);
+    }
+    if (activeFilter === 'true') {
+      query = query.eq('is_active', true);
+    } else if (activeFilter === 'false') {
+      query = query.eq('is_active', false);
+    }
+
+    // Apply pagination and ordering
+    const { data: macros, error: fetchError, count } = await query
+      .order('name', { ascending: true })
+      .range(offset, offset + limit - 1);
 
     if (fetchError) {
       console.error('Error fetching macros:', fetchError);
@@ -58,7 +84,13 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      data: formattedMacros
+      data: formattedMacros,
+      pagination: {
+        total: count || 0,
+        limit,
+        offset,
+        hasMore: (offset + limit) < (count || 0),
+      },
     });
   } catch (error) {
     console.error('Error in GET /api/macros:', error);
