@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useSubscription, useUsageStats } from '@/lib/hooks/use-subscription';
 import { PageWrapper } from '@/components/motion/page-wrapper';
 import { FadeIn } from '@/components/motion/fade-in';
 import { StaggerContainer } from '@/components/motion/stagger-container';
@@ -67,19 +67,6 @@ interface Invoice {
   invoiceUrl: string | null;
 }
 
-interface Subscription {
-  plan: string;
-  status: string;
-  stripe_customer_id?: string;
-  period_end?: string;
-}
-
-interface UsageStats {
-  reportsGenerated: number;
-  transcriptionMinutes: number;
-  templateCount: number;
-}
-
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -90,88 +77,24 @@ function formatDate(dateString: string) {
 
 export default function BillingPage() {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+
+  // SWR hooks for subscription and usage data
+  const { data: subscription, isLoading: subscriptionLoading } = useSubscription(user?.id);
+  const { data: usageStats, isLoading: usageLoading } = useUsageStats(user?.id);
+
+  // Local state for invoices (still uses API route)
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [usageStats, setUsageStats] = useState<UsageStats>({
+  const [invoicesLoading, setInvoicesLoading] = useState(true);
+
+  // Combined loading state for main data
+  const loading = subscriptionLoading || usageLoading;
+
+  // Default usage stats for when data hasn't loaded yet
+  const currentUsageStats = usageStats ?? {
     reportsGenerated: 0,
     transcriptionMinutes: 0,
     templateCount: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [invoicesLoading, setInvoicesLoading] = useState(true);
-
-  // Load subscription and usage data
-  useEffect(() => {
-    const loadBillingData = async () => {
-      if (!user?.id) return;
-
-      const supabase = createSupabaseBrowserClient();
-
-      try {
-        // Calculate date range for current billing period
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-        // Fetch all data in parallel using Promise.all
-        const [subResult, creditsResult, templateCountResult] = await Promise.all([
-          // Fetch subscription
-          supabase
-            .from('subscriptions')
-            .select('*')
-            .eq('user_id', user.id)
-            .single(),
-          // Fetch credits usage this month (deductions are negative)
-          supabase
-            .from('credits_ledger')
-            .select('delta, reason, meta')
-            .eq('user_id', user.id)
-            .gte('created_at', startOfMonth)
-            .lt('delta', 0),
-          // Fetch template count
-          supabase
-            .from('templates_personal')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id),
-        ]);
-
-        // Process subscription result
-        if (subResult.data) {
-          setSubscription(subResult.data);
-        } else {
-          // Default to free plan if no subscription
-          setSubscription({
-            plan: 'free',
-            status: 'active',
-          });
-        }
-
-        // Process credits usage result
-        const creditsUsed = creditsResult.data;
-
-        // Count reports by checking meta.type === 'report' or reason === 'debit' with report context
-        const reportsGenerated = creditsUsed?.filter(c =>
-          c.reason === 'debit' && (c.meta as { type?: string })?.type === 'report'
-        ).length || 0;
-
-        // Count transcription minutes from meta.minutes or sum debits with transcription type
-        const transcriptionMinutes = creditsUsed
-          ?.filter(c => c.reason === 'debit' && (c.meta as { type?: string })?.type === 'transcription')
-          .reduce((sum, c) => sum + ((c.meta as { minutes?: number })?.minutes || Math.abs(c.delta)), 0) || 0;
-
-        setUsageStats({
-          reportsGenerated,
-          transcriptionMinutes,
-          templateCount: templateCountResult.count || 0,
-        });
-      } catch (error) {
-        console.error('Error loading billing data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadBillingData();
-  }, [user?.id]);
+  };
 
   // Load invoices from Stripe API
   useEffect(() => {
@@ -315,13 +238,13 @@ export default function BillingPage() {
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-text-secondary">Reports Generated</span>
                     <span className="font-medium text-text-primary" data-testid="billing-reports-count">
-                      {usageStats.reportsGenerated} / {limits.reports === Infinity ? 'Unlimited' : limits.reports}
+                      {currentUsageStats.reportsGenerated} / {limits.reports === Infinity ? 'Unlimited' : limits.reports}
                     </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
                     <div
                       className="h-full bg-brand transition-all"
-                      style={{ width: `${usagePercentage(usageStats.reportsGenerated, limits.reports)}%` }}
+                      style={{ width: `${usagePercentage(currentUsageStats.reportsGenerated, limits.reports)}%` }}
                     />
                   </div>
                 </div>
@@ -331,13 +254,13 @@ export default function BillingPage() {
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-text-secondary">Transcription Minutes</span>
                     <span className="font-medium text-text-primary" data-testid="billing-transcription-minutes">
-                      {usageStats.transcriptionMinutes} / {limits.transcription === Infinity ? 'Unlimited' : limits.transcription + ' min'}
+                      {currentUsageStats.transcriptionMinutes} / {limits.transcription === Infinity ? 'Unlimited' : limits.transcription + ' min'}
                     </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
                     <div
                       className="h-full bg-info transition-all"
-                      style={{ width: `${usagePercentage(usageStats.transcriptionMinutes, limits.transcription)}%` }}
+                      style={{ width: `${usagePercentage(currentUsageStats.transcriptionMinutes, limits.transcription)}%` }}
                     />
                   </div>
                 </div>
@@ -347,13 +270,13 @@ export default function BillingPage() {
                   <div className="mb-1 flex justify-between text-sm">
                     <span className="text-text-secondary">Personal Templates</span>
                     <span className="font-medium text-text-primary" data-testid="billing-templates-count">
-                      {usageStats.templateCount} / {limits.templates === Infinity ? 'Unlimited' : limits.templates}
+                      {currentUsageStats.templateCount} / {limits.templates === Infinity ? 'Unlimited' : limits.templates}
                     </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
                     <div
                       className="h-full bg-success transition-all"
-                      style={{ width: `${usagePercentage(usageStats.templateCount, limits.templates)}%` }}
+                      style={{ width: `${usagePercentage(currentUsageStats.templateCount, limits.templates)}%` }}
                     />
                   </div>
                 </div>
