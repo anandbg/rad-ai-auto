@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 26 Complete - Settings Privacy
+**Current focus:** Phase 29 Code Refactoring - Query Parallelization
 
 ## Current Position
 
-Milestone: Post-v1.4 Enhancements
-Phase: 26 of 27 (Settings Privacy)
-Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-01-20 — Completed 26-01-PLAN.md (Data & Privacy section in Settings)
+Milestone: Post-v1.4 Maintenance
+Phase: 29 of 29 (Code Refactoring)
+Plan: 1 of 8 complete
+Status: In progress
+Last activity: 2026-01-22 — Completed 29-01-PLAN.md (Database Query Parallelization)
 
-Progress: [████████████████████████] 100% (v1.0-v1.4 complete, phases 25-27 complete)
+Progress: [████████████████████████░] 98% (v1.0-v1.4 complete, phase 29 in progress)
 
 ## Performance Metrics
 
@@ -79,10 +79,11 @@ Progress: [███████████████████████
 | 25-report-disclaimers | 1 | 3 min | 3 min |
 | 26-settings-privacy | 1 | 1 min | 1 min |
 | 27-report-list-style-preferences | 2 | 20 min | 10 min |
+| 29-code-refactoring | 1 | 7 min | 7 min |
 
 **Recent Trend:**
-- Last 5 plans: 27-01 (12 min), 27-02 (8 min), 25-01 (3 min), 26-01 (1 min)
-- Trend: Fast execution - settings privacy completed in 1 minute
+- Last 5 plans: 29-01 (7 min), 27-02 (8 min), 27-01 (12 min), 26-01 (1 min), 25-01 (3 min)
+- Trend: Query parallelization complete, reducing page load times
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 29-01]: Use Promise.all pattern for independent database queries
+- [Phase 29-01]: Create cachedQuery wrapper for future Server Component use
+- [Phase 29-01]: Use dynamic require for React.cache access in React 18
 - [Phase 26-01]: Use same flex layout pattern as Security section for consistency
 - [Phase 26-01]: Position Data & Privacy section with delay 0.24 (between Report Formatting and Security)
 - [Phase 26-01]: Informational items without action buttons (read-only content)
@@ -189,19 +193,21 @@ Recent decisions affecting current work:
 - Phase 20 added: Vercel Deployment Readiness (2026-01-19) - build checks, performance, security, monitoring
 - Phases 21-26 added: v1.4 Legal Compliance (2026-01-20) - disclaimers, ToS, privacy, acknowledgments
 - Phase 27 added: Report List Style Preferences (2026-01-20) - user-configurable bullet styles
+- Phase 28 added: Production Deployment (2026-01-22) - consolidates deferred Phase 16 + go-live
+- Phase 29 added: Code Refactoring (2026-01-22) - unified backlog from Vercel/Stripe best practices and code simplification review
 
 ### Blockers/Concerns
 
-None - Phase 26 complete. All post-v1.4 enhancements complete.
+None - Phase 29 in progress. Query parallelization complete.
 
 ## Session Continuity
 
-Last session: 2026-01-20
-Stopped at: Completed 26-01-PLAN.md (Data & Privacy section in Settings)
+Last session: 2026-01-22
+Stopped at: Completed 29-01-PLAN.md (Database Query Parallelization)
 Resume file: None
 
-**Phase 26 PROGRESS (2026-01-20):**
-- Phase 26-01 (Settings Privacy): COMPLETE - Data & Privacy section added to Settings page
+**Phase 29 PROGRESS (2026-01-22):**
+- Phase 29-01 (Query Parallelization): COMPLETE - Billing/templates queries parallelized, React.cache utility created
 
 **Previous milestones:**
 - v1.4: Shipped 2026-01-20 (21-24 complete; 25-27 post-v1.4 enhancements complete)
@@ -210,4 +216,4 @@ Resume file: None
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** All phases 1-27 complete. Ready for new feature requests or production deployment.
+**Next action:** Continue with Phase 29 plans (29-02 through 29-08) or Phase 28 (Production Deployment).
