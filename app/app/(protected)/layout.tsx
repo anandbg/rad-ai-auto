@@ -6,6 +6,7 @@ import { CommandPalette, useKeyboardShortcuts } from '@/components/ui/command-pa
 import { useSessionTimeout } from '@/lib/hooks/use-session-timeout';
 import { FirstUseAcknowledgmentModal } from '@/components/legal/first-use-acknowledgment-modal';
 import { DisclaimerBanner } from '@/components/legal/disclaimer-banner';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export default function ProtectedLayout({
@@ -75,7 +76,9 @@ export default function ProtectedLayout({
         {/* Main app content */}
         <div className="flex-1 overflow-hidden">
           <AppShell>
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </AppShell>
         </div>
       </div>
