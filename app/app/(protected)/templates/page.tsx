@@ -128,31 +128,33 @@ function TemplatesPageContent() {
     const supabase = createSupabaseBrowserClient();
 
     try {
-      // Fetch personal templates
-      const { data: personalTemplates, error: personalError } = await supabase
-        .from('templates_personal')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // Fetch personal and global templates in parallel using Promise.all
+      const [personalResult, globalResult] = await Promise.all([
+        // Fetch personal templates
+        supabase
+          .from('templates_personal')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        // Fetch published global templates
+        supabase
+          .from('templates_global')
+          .select('*')
+          .eq('is_published', true)
+          .order('created_at', { ascending: false }),
+      ]);
 
-      if (personalError) {
-        console.error('Error fetching personal templates:', personalError);
+      if (personalResult.error) {
+        console.error('Error fetching personal templates:', personalResult.error);
       }
 
-      // Fetch published global templates
-      const { data: globalTemplates, error: globalError } = await supabase
-        .from('templates_global')
-        .select('*')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false });
-
-      if (globalError) {
-        console.error('Error fetching global templates:', globalError);
+      if (globalResult.error) {
+        console.error('Error fetching global templates:', globalResult.error);
       }
 
       // Format templates
       const formattedTemplates: Template[] = [
-        ...(personalTemplates || []).map(t => ({
+        ...(personalResult.data || []).map(t => ({
           id: t.id,
           name: t.name,
           modality: t.modality,
@@ -163,7 +165,7 @@ function TemplatesPageContent() {
           createdAt: t.created_at,
           updatedAt: t.updated_at,
         })),
-        ...(globalTemplates || []).map(t => ({
+        ...(globalResult.data || []).map(t => ({
           id: t.id,
           name: t.name,
           modality: t.modality,
