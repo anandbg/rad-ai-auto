@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 29 Code Refactoring - Query Parallelization
+**Current focus:** Phase 29 Code Refactoring - Stripe Hardening Complete
 
 ## Current Position
 
 Milestone: Post-v1.4 Maintenance
 Phase: 29 of 29 (Code Refactoring)
-Plan: 1 of 8 complete
+Plan: 4 of 8 complete
 Status: In progress
-Last activity: 2026-01-22 — Completed 29-01-PLAN.md (Database Query Parallelization)
+Last activity: 2026-01-22 — Completed 29-04-PLAN.md (Stripe Integration Hardening)
 
 Progress: [████████████████████████░] 98% (v1.0-v1.4 complete, phase 29 in progress)
 
@@ -79,11 +79,11 @@ Progress: [███████████████████████
 | 25-report-disclaimers | 1 | 3 min | 3 min |
 | 26-settings-privacy | 1 | 1 min | 1 min |
 | 27-report-list-style-preferences | 2 | 20 min | 10 min |
-| 29-code-refactoring | 1 | 7 min | 7 min |
+| 29-code-refactoring | 4 | 26 min | 6.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 29-01 (7 min), 27-02 (8 min), 27-01 (12 min), 26-01 (1 min), 25-01 (3 min)
-- Trend: Query parallelization complete, reducing page load times
+- Last 5 plans: 29-04 (12 min), 29-03 (5 min), 29-02 (2 min), 29-01 (7 min), 27-02 (8 min)
+- Trend: Stripe hardening complete with idempotency and error handling
 
 ## Accumulated Context
 
@@ -92,6 +92,9 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 29-04]: Let Stripe Dashboard determine payment methods (more flexible)
+- [Phase 29-04]: Record webhook events before processing (prevents race conditions)
+- [Phase 29-04]: Graceful degradation if idempotency table doesn't exist
 - [Phase 29-01]: Use Promise.all pattern for independent database queries
 - [Phase 29-01]: Create cachedQuery wrapper for future Server Component use
 - [Phase 29-01]: Use dynamic require for React.cache access in React 18
@@ -198,16 +201,22 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None - Phase 29 in progress. Query parallelization complete.
+Pre-existing ESLint build issue: imports being stripped during lint phase (jsPDF, docx).
+- TypeCheck passes
+- Build passes with NEXT_DISABLE_ESLINT=1
+- Not related to Phase 29 changes
 
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Completed 29-01-PLAN.md (Database Query Parallelization)
+Stopped at: Completed 29-04-PLAN.md (Stripe Integration Hardening)
 Resume file: None
 
 **Phase 29 PROGRESS (2026-01-22):**
 - Phase 29-01 (Query Parallelization): COMPLETE - Billing/templates queries parallelized, React.cache utility created
+- Phase 29-02 (API Response Caching): COMPLETE - SWR hooks created
+- Phase 29-03 (Hook Consolidation): COMPLETE - useMacros SWR hook created
+- Phase 29-04 (Stripe Hardening): COMPLETE - Webhook idempotency, error handling, flexible payment methods
 
 **Previous milestones:**
 - v1.4: Shipped 2026-01-20 (21-24 complete; 25-27 post-v1.4 enhancements complete)
@@ -216,4 +225,4 @@ Resume file: None
 - v1.1: Shipped 2026-01-17
 - v1.0: Shipped 2026-01-16
 
-**Next action:** Continue with Phase 29 plans (29-02 through 29-08) or Phase 28 (Production Deployment).
+**Next action:** Continue with Phase 29 plans (29-05 through 29-08) or Phase 28 (Production Deployment).
