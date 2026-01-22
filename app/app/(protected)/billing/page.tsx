@@ -108,15 +108,35 @@ export default function BillingPage() {
       const supabase = createSupabaseBrowserClient();
 
       try {
-        // Fetch subscription
-        const { data: subData } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+        // Calculate date range for current billing period
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-        if (subData) {
-          setSubscription(subData);
+        // Fetch all data in parallel using Promise.all
+        const [subResult, creditsResult, templateCountResult] = await Promise.all([
+          // Fetch subscription
+          supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', user.id)
+            .single(),
+          // Fetch credits usage this month (deductions are negative)
+          supabase
+            .from('credits_ledger')
+            .select('delta, reason, meta')
+            .eq('user_id', user.id)
+            .gte('created_at', startOfMonth)
+            .lt('delta', 0),
+          // Fetch template count
+          supabase
+            .from('templates_personal')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+        ]);
+
+        // Process subscription result
+        if (subResult.data) {
+          setSubscription(subResult.data);
         } else {
           // Default to free plan if no subscription
           setSubscription({
@@ -125,17 +145,8 @@ export default function BillingPage() {
           });
         }
 
-        // Fetch usage stats from credits_ledger
-        // Schema uses: delta (INTEGER), reason (credit_reason enum: allocation, debit, topup, refund)
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-        const { data: creditsUsed } = await supabase
-          .from('credits_ledger')
-          .select('delta, reason, meta')
-          .eq('user_id', user.id)
-          .gte('created_at', startOfMonth)
-          .lt('delta', 0); // Deductions are negative
+        // Process credits usage result
+        const creditsUsed = creditsResult.data;
 
         // Count reports by checking meta.type === 'report' or reason === 'debit' with report context
         const reportsGenerated = creditsUsed?.filter(c =>
@@ -147,16 +158,10 @@ export default function BillingPage() {
           ?.filter(c => c.reason === 'debit' && (c.meta as { type?: string })?.type === 'transcription')
           .reduce((sum, c) => sum + ((c.meta as { minutes?: number })?.minutes || Math.abs(c.delta)), 0) || 0;
 
-        // Fetch template count
-        const { count: templateCount } = await supabase
-          .from('templates_personal')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-
         setUsageStats({
           reportsGenerated,
           transcriptionMinutes,
-          templateCount: templateCount || 0,
+          templateCount: templateCountResult.count || 0,
         });
       } catch (error) {
         console.error('Error loading billing data:', error);
