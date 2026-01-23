@@ -8,6 +8,10 @@ import { checkMonthlyUsage, formatUsageHeaders } from "@/lib/usage/limits";
 import { recordUsage } from "@/lib/usage/tracker";
 import { withStreamRetry } from "@/lib/openai/retry";
 import { formatErrorResponse } from "@/lib/openai/errors";
+import { checkCostCeiling, formatCostCeilingResponse } from "@/lib/cost/ceiling";
+import { trackCost } from "@/lib/cost/tracker";
+import { checkAbusePattern } from "@/lib/abuse/detector";
+import { logAbuseAlert } from "@/lib/abuse/alerts";
 
 // Edge runtime for low-latency streaming
 export const runtime = 'edge';
@@ -133,6 +137,43 @@ export async function POST(request: Request) {
           },
         }
       );
+    }
+
+    // === COST CEILING: Check global daily cost ceiling ===
+    const costResult = await checkCostCeiling(userPlan);
+
+    if (!costResult.allowed) {
+      return formatCostCeilingResponse(costResult);
+    }
+
+    // Log warning if approaching ceiling
+    if (costResult.mode === "warning" || costResult.mode === "degraded") {
+      console.warn(`[Generate] Cost ceiling ${costResult.mode}: ${costResult.percentUsed.toFixed(1)}%`);
+    }
+
+    // === ABUSE DETECTION: Check for abnormal usage patterns ===
+    const abuseResult = await checkAbusePattern(user.id, "report");
+
+    if (!abuseResult.normal) {
+      // Log abuse alert
+      await logAbuseAlert(user.id, "report", abuseResult.hourlyCount, abuseResult.threshold, {
+        userEmail: user.email,
+        autoBlocked: abuseResult.flagged,
+      });
+
+      if (abuseResult.flagged) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Account Suspended",
+            message: "Your account has been temporarily suspended due to unusual activity. Please contact support.",
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      // Not blocked yet, but warn user
+      console.warn(`[Generate] Abuse warning for user ${user.id}: ${abuseResult.hourlyCount}/${abuseResult.threshold}`);
     }
 
     // === USAGE LIMITING: Check monthly usage limit ===
@@ -362,6 +403,11 @@ Generate a professional radiology report in Markdown format now.`;
         templateId: validation.data.templateId,
         modality: validation.data.modality,
       }).catch((err) => console.error("[Usage] Failed to record:", err));
+
+      // Track cost for global ceiling (non-blocking)
+      trackCost("report", user.id).catch((err) =>
+        console.error("[Cost] Failed to track:", err)
+      );
 
       // Return streaming response with rate limit info
       const response = result.toTextStreamResponse();
