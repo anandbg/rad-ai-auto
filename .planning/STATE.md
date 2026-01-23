@@ -253,6 +253,7 @@ Resume file: None
 **Phase 30 PROGRESS (2026-01-23):**
 - Phase 30-01 (Upstash Redis Setup): COMPLETE - Redis client with sliding window rate limiting
 - Phase 30-03 (Usage Tracking): COMPLETE - Monthly usage limit checking and recording utilities
+- Phase 30-06 (Template Generate Rate Limiting): COMPLETE - Rate limiting, retry logic, usage tracking for /api/templates/generate
 - Phase 30-08 (Per-User Abuse Detection): COMPLETE - Abuse pattern detector and alerting utilities
 
 **Previous milestones:**
