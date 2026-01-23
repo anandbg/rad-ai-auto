@@ -93,6 +93,9 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 30-05]: Check rate limit before usage limit (cheaper Redis check first)
+- [Phase 30-05]: Non-blocking usage recording via .catch() to not fail successful requests
+- [Phase 30-05]: Include rate limit headers in successful responses for client monitoring
 - [Phase 30-07]: Store costs as cents in Redis to avoid floating point precision issues
 - [Phase 30-07]: Four-tier degradation: normal (<80%), warning (80-95%), degraded (95-100%), emergency (>100%)
 - [Phase 30-07]: Pro users have priority access during degraded mode (95-100%)
