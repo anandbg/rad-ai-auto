@@ -22,7 +22,7 @@ export function parseOpenAIError(error: unknown): OpenAIErrorInfo {
     if (message.includes("429") || message.includes("rate limit") || message.includes("rate_limit")) {
       // Try to extract retry-after from message if present
       const retryMatch = message.match(/retry.?after[:\s]+(\d+)/i);
-      const retryAfter = retryMatch ? parseInt(retryMatch[1], 10) : undefined;
+      const retryAfter = retryMatch?.[1] ? parseInt(retryMatch[1], 10) : undefined;
 
       return {
         isRetryable: true,
