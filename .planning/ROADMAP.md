@@ -10,6 +10,28 @@
 - ✅ **v1.5 Report Formatting** — Phase 27 (shipped 2026-01-20) → [archive](milestones/v1.5-ROADMAP.md)
 - 🚧 **v2.0 Production Launch** — Phase 28 (in progress)
 - ✅ **v2.1 Code Quality** — Phase 29 (shipped 2026-01-22)
+- ✅ **v2.2 Capacity & Security** — Phase 30 (shipped 2026-01-23)
+
+## ✅ v2.2 Capacity & Security — Complete
+
+**Milestone Goal:** Ensure application can handle 50-75 concurrent users with proper rate limiting, API usage controls, and abuse prevention.
+
+### Phase 30: Capacity, Rate Limiting & API Security — ✓ Complete (2026-01-23)
+
+**Goal:** Implement rate limiting, cost protection, and abuse prevention for 50-75 concurrent users
+**Plans executed:** 9 (all successful)
+**Duration:** ~19 minutes total
+
+Key deliverables:
+- ✅ Upstash Redis rate limiters (tiered by plan: free/plus/pro)
+- ✅ OpenAI retry logic with exponential backoff and jitter
+- ✅ Monthly usage tracking with idempotent recording
+- ✅ Rate limiting on all AI endpoints (generate, transcribe, templates)
+- ✅ Global daily cost ceiling with graceful degradation
+- ✅ Per-user abuse detection (50+ reports/hour flagging)
+- ✅ Pro user priority during degraded mode
+
+---
 
 ## ✅ v2.1 Code Quality — Complete
 
@@ -90,6 +112,8 @@ From `.planning/phases/19-stripe-production-setup/PRODUCTION-CHECKLIST.md`:
 - Vercel verification: `.planning/phases/20-vercel-deployment-readiness/20-VERIFICATION.md`
 - Deployment guide: `app/DEPLOYMENT.md`
 
+---
+
 ## Progress Summary
 
 | Milestone | Phases | Plans | Status |
@@ -102,6 +126,7 @@ From `.planning/phases/19-stripe-production-setup/PRODUCTION-CHECKLIST.md`:
 | v1.5 Report Formatting | 27 | 2 | ✅ Shipped 2026-01-20 |
 | **v2.0 Production Launch** | **28** | **5** | 🚧 In progress |
 | **v2.1 Code Quality** | **29** | **8** | ✅ Shipped 2026-01-22 |
+| **v2.2 Capacity & Security** | **30** | **9** | ✅ Shipped 2026-01-23 |
 
 ---
 *Roadmap created: 2026-01-16*
