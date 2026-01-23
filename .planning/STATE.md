@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 
 Milestone: Post-v1.4 Maintenance
 Phase: 30 of 30 (Capacity, Rate Limiting & API Security)
-Plan: 5 of ? in progress
+Plan: 4 of ? in progress
 Status: In progress
-Last activity: 2026-01-23 — Completed 30-05-PLAN.md (Transcribe Endpoint Integration)
+Last activity: 2026-01-23 — Completed 30-04-PLAN.md (Generate Endpoint Protection)
 
 Progress: [█████████████████████████] 100% (v1.0-v1.4 complete, phase 30 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 52
+- Total plans completed: 53
 - Average duration: 6.7 min
-- Total execution time: 5.87 hours
+- Total execution time: 5.97 hours
 
 **By Phase (v1.0):**
 
@@ -80,11 +80,11 @@ Progress: [███████████████████████
 | 26-settings-privacy | 1 | 1 min | 1 min |
 | 27-report-list-style-preferences | 2 | 20 min | 10 min |
 | 29-code-refactoring | 8 | 78 min | 9.75 min |
-| 30-capacity-rate-limiting | 3 | 8 min | 2.7 min |
+| 30-capacity-rate-limiting | 4 | 14 min | 3.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 30-08 (2 min), 30-03 (2 min), 30-01 (4 min), 29-06 (5 min), 29-05 (6 min)
-- Trend: Rate limiting and abuse prevention infrastructure
+- Last 5 plans: 30-04 (6 min), 30-08 (2 min), 30-03 (2 min), 30-01 (4 min), 29-06 (5 min)
+- Trend: Rate limiting endpoint integration
 
 ## Accumulated Context
 
@@ -93,6 +93,10 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 30-04]: Check rate limit before validation (fail fast)
+- [Phase 30-04]: Use plan-based rate limiting (free: 5/min, plus: 30/min, pro: 60/min)
+- [Phase 30-04]: Record usage non-blocking with .catch() error handling
+- [Phase 30-04]: Add rate limit headers to successful responses
 - [Phase 30-05]: Check rate limit before usage limit (cheaper Redis check first)
 - [Phase 30-05]: Non-blocking usage recording via .catch() to not fail successful requests
 - [Phase 30-05]: Include rate limit headers in successful responses for client monitoring
@@ -242,7 +246,7 @@ Pre-existing ESLint build issue: imports being stripped during lint phase (jsPDF
 ## Session Continuity
 
 Last session: 2026-01-23
-Stopped at: Completed 30-08-PLAN.md (Per-User Abuse Detection)
+Stopped at: Completed 30-04-PLAN.md (Generate Endpoint Protection)
 Resume file: None
 
 **Phase 29 PROGRESS (2026-01-22):**
@@ -260,10 +264,11 @@ Resume file: None
 **Phase 30 PROGRESS (2026-01-23):**
 - Phase 30-01 (Upstash Redis Setup): COMPLETE - Redis client with sliding window rate limiting
 - Phase 30-03 (Usage Tracking): COMPLETE - Monthly usage limit checking and recording utilities
+- Phase 30-04 (Generate Endpoint Protection): COMPLETE - Rate limiting, usage tracking, retry logic for /api/generate
 - Phase 30-05 (Transcribe Endpoint Integration): COMPLETE - Rate limiting, retry logic, usage tracking for /api/transcribe
 - Phase 30-06 (Template Generate Rate Limiting): COMPLETE - Rate limiting, retry logic, usage tracking for /api/templates/generate
-- Phase 30-08 (Per-User Abuse Detection): COMPLETE - Abuse pattern detector and alerting utilities
 - Phase 30-07 (Global Cost Ceiling): COMPLETE - Daily cost tracking with tiered degradation
+- Phase 30-08 (Per-User Abuse Detection): COMPLETE - Abuse pattern detector and alerting utilities
 
 **Previous milestones:**
 - v1.4: Shipped 2026-01-20 (21-24 complete; 25-27 post-v1.4 enhancements complete)
