@@ -3,6 +3,11 @@ import { cookies } from 'next/headers';
 import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
+import { checkRateLimit } from "@/lib/ratelimit/limiters";
+import { checkMonthlyUsage, formatUsageHeaders } from "@/lib/usage/limits";
+import { recordUsage } from "@/lib/usage/tracker";
+import { withStreamRetry } from "@/lib/openai/retry";
+import { formatErrorResponse } from "@/lib/openai/errors";
 
 // Edge runtime for low-latency streaming
 export const runtime = 'edge';
@@ -93,6 +98,64 @@ export async function POST(request: Request) {
           message: 'Authentication required. Please sign in to access this resource.',
         }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // === RATE LIMITING: Check per-minute rate limit ===
+    // Get user's subscription plan for rate limiting
+    const { data: subscription } = await supabase
+      .from("subscriptions")
+      .select("plan, status")
+      .eq("user_id", user.id)
+      .single();
+
+    const isActiveSubscription = subscription?.status === "active" || subscription?.status === "trialing";
+    const userPlan = (isActiveSubscription && subscription?.plan) || "free";
+
+    const rateLimitResult = await checkRateLimit(user.id, userPlan, "generate");
+
+    if (!rateLimitResult.success) {
+      const retryAfterSeconds = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Rate Limit Exceeded",
+          message: `Too many requests. Please wait ${retryAfterSeconds} seconds before trying again.`,
+          retryAfter: retryAfterSeconds,
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(retryAfterSeconds),
+            "X-RateLimit-Remaining": String(rateLimitResult.remaining),
+            "X-RateLimit-Limit": String(rateLimitResult.limit),
+          },
+        }
+      );
+    }
+
+    // === USAGE LIMITING: Check monthly usage limit ===
+    const usageResult = await checkMonthlyUsage(user.id, "reports");
+
+    if (!usageResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Monthly Limit Reached",
+          message: `You've used ${usageResult.currentUsage} of ${usageResult.limit} reports this month. ` +
+            `Your limit resets on ${usageResult.resetDate.toLocaleDateString()}.`,
+          currentUsage: usageResult.currentUsage,
+          limit: usageResult.limit,
+          resetDate: usageResult.resetDate.toISOString(),
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            ...formatUsageHeaders(usageResult),
+          },
+        }
       );
     }
 
@@ -281,17 +344,50 @@ MANDATORY ANTI-HALLUCINATION CHECKLIST:
 
 Generate a professional radiology report in Markdown format now.`;
 
-    // Generate report using GPT-4o with streaming
-    const result = streamText({
-      model: openai('gpt-4o'),
-      system: systemPrompt,
-      prompt: userPrompt,
-      temperature: 0.2, // Low temperature for deterministic, consistent medical reports
-      maxOutputTokens: 2000,
-    });
+    // Generate report using GPT-4o with streaming and retry
+    try {
+      const result = await withStreamRetry(
+        async () => streamText({
+          model: openai('gpt-4o'),
+          system: systemPrompt,
+          prompt: userPrompt,
+          temperature: 0.2, // Low temperature for deterministic, consistent medical reports
+          maxOutputTokens: 2000,
+        }),
+        { operationName: "generate-report" }
+      );
 
-    // Return streaming response
-    return result.toTextStreamResponse();
+      // Record successful usage (non-blocking)
+      recordUsage(user.id, "report", {
+        templateId: validation.data.templateId,
+        modality: validation.data.modality,
+      }).catch((err) => console.error("[Usage] Failed to record:", err));
+
+      // Return streaming response with rate limit info
+      const response = result.toTextStreamResponse();
+
+      // Add rate limit headers to successful response
+      const headers = new Headers(response.headers);
+      headers.set("X-RateLimit-Remaining", String(rateLimitResult.remaining - 1));
+      headers.set("X-RateLimit-Limit", String(rateLimitResult.limit));
+
+      return new Response(response.body, {
+        status: response.status,
+        headers,
+      });
+    } catch (error) {
+      // Handle OpenAI errors after retries exhausted
+      console.error("[Generate] OpenAI error after retries:", error);
+      const errorResponse = formatErrorResponse(error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: errorResponse.error,
+          message: errorResponse.message,
+        }),
+        { status: errorResponse.statusCode, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
   } catch (error) {
     // Log detailed error server-side
