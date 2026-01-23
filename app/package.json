@@ -34,6 +34,8 @@
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.79.0",
     "@tailwindcss/typography": "^0.5.19",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.1",
     "@vercel/analytics": "^1.6.1",
     "ai": "^6.0.39",
     "clsx": "^2.1.1",
