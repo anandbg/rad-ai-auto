@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-20)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 29 Code Refactoring - Complete
+**Current focus:** Phase 30 Capacity, Rate Limiting & API Security
 
 ## Current Position
 
 Milestone: Post-v1.4 Maintenance
-Phase: 29 of 29 (Code Refactoring)
-Plan: 8 of 8 complete
-Status: Phase complete
-Last activity: 2026-01-22 — Completed 29-06-PLAN.md (Large Component Split)
+Phase: 30 of 30 (Capacity, Rate Limiting & API Security)
+Plan: 3 of ? in progress
+Status: In progress
+Last activity: 2026-01-23 — Completed 30-03-PLAN.md (Usage Tracking)
 
-Progress: [█████████████████████████] 100% (v1.0-v1.4 complete, phase 29 complete)
+Progress: [█████████████████████████] 100% (v1.0-v1.4 complete, phase 30 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 49
-- Average duration: 7.0 min
-- Total execution time: 5.73 hours
+- Total plans completed: 51
+- Average duration: 6.8 min
+- Total execution time: 5.83 hours
 
 **By Phase (v1.0):**
 
@@ -80,10 +80,11 @@ Progress: [███████████████████████
 | 26-settings-privacy | 1 | 1 min | 1 min |
 | 27-report-list-style-preferences | 2 | 20 min | 10 min |
 | 29-code-refactoring | 8 | 78 min | 9.75 min |
+| 30-capacity-rate-limiting | 2 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 29-06 (5 min), 29-05 (6 min), 29-08 (3 min), 29-02 (25 min), 29-07 (13 min)
-- Trend: Component split and code organization
+- Last 5 plans: 30-03 (2 min), 30-01 (4 min), 29-06 (5 min), 29-05 (6 min), 29-08 (3 min)
+- Trend: Rate limiting infrastructure setup
 
 ## Accumulated Context
 
@@ -92,6 +93,14 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 30-03]: Fail-open pattern for usage checks (don't block users on DB errors)
+- [Phase 30-03]: Support both auto-generated and pre-provided idempotency keys
+- [Phase 30-03]: Use calendar month for free users, subscription period for paid users
+- [Phase 30-03]: Filter credits_ledger by meta->>type for usage type counting
+- [Phase 30-01]: Sliding window algorithm for rate limiting (prevents burst attacks at interval boundaries)
+- [Phase 30-01]: Fail-open pattern: service continues if Redis unavailable
+- [Phase 30-01]: 1 second timeout prevents request blocking on slow Redis
+- [Phase 30-01]: Per-endpoint per-plan limiters for granular control
 - [Phase 29-06]: Component extraction pattern: Extract large components into separate files with explicit props interfaces
 - [Phase 29-06]: Export Template interface from report-tab for shared use in report-workspace
 - [Phase 29-06]: Detection utilities barrel export via index.ts for clean imports
@@ -211,6 +220,7 @@ Recent decisions affecting current work:
 - Phase 27 added: Report List Style Preferences (2026-01-20) - user-configurable bullet styles
 - Phase 28 added: Production Deployment (2026-01-22) - consolidates deferred Phase 16 + go-live
 - Phase 29 added: Code Refactoring (2026-01-22) - unified backlog from Vercel/Stripe best practices and code simplification review
+- Phase 30 added: Capacity, Rate Limiting & API Security (2026-01-23) - OpenAI rate limits, concurrent user handling, abuse prevention
 
 ### Blockers/Concerns
 
@@ -221,8 +231,8 @@ Pre-existing ESLint build issue: imports being stripped during lint phase (jsPDF
 
 ## Session Continuity
 
-Last session: 2026-01-22
-Stopped at: Completed 29-06-PLAN.md (Large Component Split)
+Last session: 2026-01-23
+Stopped at: Completed 30-03-PLAN.md (Usage Tracking)
 Resume file: None
 
 **Phase 29 PROGRESS (2026-01-22):**
@@ -236,6 +246,10 @@ Resume file: None
 - Phase 29-08 (Query Optimization & Pagination): COMPLETE - Templates/macros APIs paginated, draft storage utility created
 
 **Phase 29 COMPLETE** - All 8 plans executed successfully.
+
+**Phase 30 PROGRESS (2026-01-23):**
+- Phase 30-01 (Upstash Redis Setup): COMPLETE - Redis client with sliding window rate limiting
+- Phase 30-03 (Usage Tracking): COMPLETE - Monthly usage limit checking and recording utilities
 
 **Previous milestones:**
 - v1.4: Shipped 2026-01-20 (21-24 complete; 25-27 post-v1.4 enhancements complete)
