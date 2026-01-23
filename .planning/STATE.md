@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 
 Milestone: Post-v1.4 Maintenance
 Phase: 30 of 30 (Capacity, Rate Limiting & API Security)
-Plan: 3 of ? in progress
+Plan: 8 of ? in progress
 Status: In progress
-Last activity: 2026-01-23 — Completed 30-03-PLAN.md (Usage Tracking)
+Last activity: 2026-01-23 — Completed 30-08-PLAN.md (Per-User Abuse Detection)
 
 Progress: [█████████████████████████] 100% (v1.0-v1.4 complete, phase 30 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 51
-- Average duration: 6.8 min
-- Total execution time: 5.83 hours
+- Total plans completed: 52
+- Average duration: 6.7 min
+- Total execution time: 5.87 hours
 
 **By Phase (v1.0):**
 
@@ -80,11 +80,11 @@ Progress: [███████████████████████
 | 26-settings-privacy | 1 | 1 min | 1 min |
 | 27-report-list-style-preferences | 2 | 20 min | 10 min |
 | 29-code-refactoring | 8 | 78 min | 9.75 min |
-| 30-capacity-rate-limiting | 2 | 6 min | 3 min |
+| 30-capacity-rate-limiting | 3 | 8 min | 2.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 30-03 (2 min), 30-01 (4 min), 29-06 (5 min), 29-05 (6 min), 29-08 (3 min)
-- Trend: Rate limiting infrastructure setup
+- Last 5 plans: 30-08 (2 min), 30-03 (2 min), 30-01 (4 min), 29-06 (5 min), 29-05 (6 min)
+- Trend: Rate limiting and abuse prevention infrastructure
 
 ## Accumulated Context
 
@@ -93,6 +93,9 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 30-08]: Fail-open pattern for abuse detection (don't block if Redis unavailable)
+- [Phase 30-08]: 2-hour TTL on hourly count keys for reporting window
+- [Phase 30-08]: Severity levels based on 2x threshold (critical if count >= 2x threshold)
 - [Phase 30-03]: Fail-open pattern for usage checks (don't block users on DB errors)
 - [Phase 30-03]: Support both auto-generated and pre-provided idempotency keys
 - [Phase 30-03]: Use calendar month for free users, subscription period for paid users
@@ -232,7 +235,7 @@ Pre-existing ESLint build issue: imports being stripped during lint phase (jsPDF
 ## Session Continuity
 
 Last session: 2026-01-23
-Stopped at: Completed 30-03-PLAN.md (Usage Tracking)
+Stopped at: Completed 30-08-PLAN.md (Per-User Abuse Detection)
 Resume file: None
 
 **Phase 29 PROGRESS (2026-01-22):**
@@ -250,6 +253,7 @@ Resume file: None
 **Phase 30 PROGRESS (2026-01-23):**
 - Phase 30-01 (Upstash Redis Setup): COMPLETE - Redis client with sliding window rate limiting
 - Phase 30-03 (Usage Tracking): COMPLETE - Monthly usage limit checking and recording utilities
+- Phase 30-08 (Per-User Abuse Detection): COMPLETE - Abuse pattern detector and alerting utilities
 
 **Previous milestones:**
 - v1.4: Shipped 2026-01-20 (21-24 complete; 25-27 post-v1.4 enhancements complete)
