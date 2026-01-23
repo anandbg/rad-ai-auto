@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-01-20)
 
 Milestone: Post-v1.4 Maintenance
 Phase: 30 of 30 (Capacity, Rate Limiting & API Security)
-Plan: 8 of ? in progress
+Plan: 5 of ? in progress
 Status: In progress
-Last activity: 2026-01-23 — Completed 30-08-PLAN.md (Per-User Abuse Detection)
+Last activity: 2026-01-23 — Completed 30-05-PLAN.md (Transcribe Endpoint Integration)
 
 Progress: [█████████████████████████] 100% (v1.0-v1.4 complete, phase 30 in progress)
 
@@ -93,6 +93,10 @@ Progress: [███████████████████████
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [Phase 30-07]: Store costs as cents in Redis to avoid floating point precision issues
+- [Phase 30-07]: Four-tier degradation: normal (<80%), warning (80-95%), degraded (95-100%), emergency (>100%)
+- [Phase 30-07]: Pro users have priority access during degraded mode (95-100%)
+- [Phase 30-07]: Use UTC daily key for consistent reset at midnight
 - [Phase 30-08]: Fail-open pattern for abuse detection (don't block if Redis unavailable)
 - [Phase 30-08]: 2-hour TTL on hourly count keys for reporting window
 - [Phase 30-08]: Severity levels based on 2x threshold (critical if count >= 2x threshold)
@@ -253,8 +257,10 @@ Resume file: None
 **Phase 30 PROGRESS (2026-01-23):**
 - Phase 30-01 (Upstash Redis Setup): COMPLETE - Redis client with sliding window rate limiting
 - Phase 30-03 (Usage Tracking): COMPLETE - Monthly usage limit checking and recording utilities
+- Phase 30-05 (Transcribe Endpoint Integration): COMPLETE - Rate limiting, retry logic, usage tracking for /api/transcribe
 - Phase 30-06 (Template Generate Rate Limiting): COMPLETE - Rate limiting, retry logic, usage tracking for /api/templates/generate
 - Phase 30-08 (Per-User Abuse Detection): COMPLETE - Abuse pattern detector and alerting utilities
+- Phase 30-07 (Global Cost Ceiling): COMPLETE - Daily cost tracking with tiered degradation
 
 **Previous milestones:**
 - v1.4: Shipped 2026-01-20 (21-24 complete; 25-27 post-v1.4 enhancements complete)
