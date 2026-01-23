@@ -3,6 +3,12 @@ import { cookies } from 'next/headers';
 import { generateText, Output } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { aiGeneratedTemplateSchema } from '@/lib/validation/template-schema';
+import { checkRateLimit } from '@/lib/ratelimit/limiters';
+import { checkMonthlyUsage, formatUsageHeaders } from '@/lib/usage/limits';
+import { recordUsage } from '@/lib/usage/tracker';
+import { withRetry } from '@/lib/openai/retry';
+import { formatErrorResponse } from '@/lib/openai/errors';
+import type { SubscriptionPlan } from '@/types/database';
 
 // Edge runtime for low-latency AI generation
 export const runtime = 'edge';
@@ -77,6 +83,24 @@ Template syntax rules:
 `;
 
 /**
+ * Prompt for structuring existing template text
+ */
+const STRUCTURE_EXISTING_GUIDANCE = `
+You are a radiology report template parser. Your task is to:
+1. Parse the provided raw template text into structured sections
+2. Identify the modality and body part from the content
+3. Create a proper template name based on the content
+4. Convert checklists and instructions into the template syntax:
+   - [placeholder] for variable data
+   - (instructions) for conditional guidance or checklists
+   - "verbatim text" for phrases that should always be included
+5. Preserve all section headers and their content
+6. Keep any specific instructions mentioned in the template
+
+Be thorough and preserve all the information from the original template.
+`;
+
+/**
  * POST /api/templates/generate
  *
  * Generates a complete radiology report template using AI structured output.
@@ -99,6 +123,65 @@ export async function POST(request: Request) {
       );
     }
 
+    // === RATE LIMITING: Check per-minute rate limit ===
+    const supabaseForSub = await createEdgeSupabaseClient();
+    const { data: subscription } = await supabaseForSub
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('user_id', user.id)
+      .single();
+
+    const isActiveSubscription = subscription?.status === 'active' || subscription?.status === 'trialing';
+    const userPlan: SubscriptionPlan = (isActiveSubscription && subscription?.plan) || 'free';
+
+    const rateLimitResult = await checkRateLimit(user.id, userPlan, 'template');
+
+    if (!rateLimitResult.success) {
+      const retryAfterSeconds = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Rate Limit Exceeded',
+          message: `Too many requests. Please wait ${retryAfterSeconds} seconds before trying again.`,
+          retryAfter: retryAfterSeconds,
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': String(retryAfterSeconds),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Limit': String(rateLimitResult.limit),
+          },
+        }
+      );
+    }
+
+    // === USAGE LIMITING: Check monthly usage limit ===
+    // Note: Template generation counts towards report limits
+    const usageResult = await checkMonthlyUsage(user.id, 'reports');
+
+    if (!usageResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Monthly Limit Reached',
+          message: `You've used ${usageResult.currentUsage} of ${usageResult.limit} AI generations this month. ` +
+            `Your limit resets on ${usageResult.resetDate.toLocaleDateString()}.`,
+          currentUsage: usageResult.currentUsage,
+          limit: usageResult.limit,
+          resetDate: usageResult.resetDate.toISOString(),
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            ...formatUsageHeaders(usageResult),
+          },
+        }
+      );
+    }
+
     // Parse and validate request body
     let body;
     try {
@@ -114,15 +197,37 @@ export async function POST(request: Request) {
       );
     }
 
-    const { description, modality, bodyPart } = body;
+    const { mode = 'describe', description, rawTemplate, modality, bodyPart } = body;
 
-    // Validate required fields
-    if (!description || typeof description !== 'string' || description.trim().length === 0) {
+    // Validate based on mode
+    if (mode === 'describe') {
+      if (!description || typeof description !== 'string' || description.trim().length === 0) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Validation Error',
+            message: 'Description is required',
+          }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } else if (mode === 'structure') {
+      if (!rawTemplate || typeof rawTemplate !== 'string' || rawTemplate.trim().length === 0) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Validation Error',
+            message: 'Template text is required',
+          }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
       return new Response(
         JSON.stringify({
           success: false,
           error: 'Validation Error',
-          message: 'Description is required',
+          message: 'Invalid mode. Use "describe" or "structure".',
         }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
@@ -141,40 +246,98 @@ export async function POST(request: Request) {
       );
     }
 
-    // Build system prompt with template syntax guidance
-    const systemPrompt = `You are a radiology report template expert. Create structured templates for radiologists.
+    // Build system and user prompts based on mode
+    let systemPrompt: string;
+    let userPrompt: string;
+
+    if (mode === 'structure') {
+      // Structure existing template mode
+      systemPrompt = `You are a radiology report template parser and structurer.
+
+${STRUCTURE_EXISTING_GUIDANCE}
+
+${TEMPLATE_SYNTAX_GUIDANCE}`;
+
+      userPrompt = `Parse and structure the following raw template text into a properly formatted radiology report template:
+
+---RAW TEMPLATE START---
+${rawTemplate}
+---RAW TEMPLATE END---
+
+${modality ? `Modality hint: ${modality}` : 'Auto-detect the modality from the content.'}
+${bodyPart ? `Body part hint: ${bodyPart}` : 'Auto-detect the body part from the content.'}
+
+Important:
+1. Extract a clear template name from the content (e.g., "MRI Lumbar Spine Protocol")
+2. Identify all section headers and their content
+3. Convert any checklists to (checklist items) format
+4. Preserve special instructions as [placeholders] or (instructions)
+5. Keep any "verbatim text" that should always appear in reports`;
+    } else {
+      // Describe new template mode (default)
+      systemPrompt = `You are a radiology report template expert. Create structured templates for radiologists.
 
 ${TEMPLATE_SYNTAX_GUIDANCE}
 
 Consider the standard structure for the modality and include all essential sections.`;
 
-    // Build user prompt
-    const userPrompt = `Create a radiology report template for ${modality || 'the specified'} imaging of ${bodyPart || 'the specified body part'}.
+      userPrompt = `Create a radiology report template for ${modality || 'the specified'} imaging of ${bodyPart || 'the specified body part'}.
 
 User requirements: ${description}
 
 Generate a professional template with appropriate sections for this exam type.`;
+    }
 
-    // Generate template using GPT-4o with structured output
-    const result = await generateText({
-      model: openai('gpt-4o'),
-      system: systemPrompt,
-      prompt: userPrompt,
-      output: Output.object({ schema: aiGeneratedTemplateSchema }),
-      temperature: 0.3, // Deterministic output for consistency
-    });
+    // Generate template using GPT-4o with structured output and retry
+    try {
+      const result = await withRetry(
+        async () => generateText({
+          model: openai('gpt-4o'),
+          system: systemPrompt,
+          prompt: userPrompt,
+          output: Output.object({ schema: aiGeneratedTemplateSchema }),
+          temperature: 0.3, // Deterministic output for consistency
+        }),
+        { maxRetries: 3, operationName: 'template-generate' }
+      );
 
-    // Extract the validated output
-    const output = result.output;
+      // Extract the validated output
+      const output = result.output;
 
-    // Return the validated template
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: output,
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+      // Record successful usage (non-blocking)
+      recordUsage(user.id, 'template', {
+        mode,
+        modality: modality || output?.modality,
+        bodyPart: bodyPart || output?.bodyPart,
+      }).catch((err) => console.error('[Usage] Failed to record:', err));
+
+      // Return the validated template with rate limit info
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: output,
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining - 1),
+            'X-RateLimit-Limit': String(rateLimitResult.limit),
+          },
+        }
+      );
+    } catch (error) {
+      console.error('[Template Generate] OpenAI error after retries:', error);
+      const errorResponse = formatErrorResponse(error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: errorResponse.error,
+          message: errorResponse.message,
+        }),
+        { status: errorResponse.statusCode, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
   } catch (error) {
     // Log detailed error server-side
