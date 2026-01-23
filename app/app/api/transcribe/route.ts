@@ -1,5 +1,11 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { checkRateLimit } from "@/lib/ratelimit/limiters";
+import { checkMonthlyUsage, formatUsageHeaders } from "@/lib/usage/limits";
+import { recordUsage } from "@/lib/usage/tracker";
+import { withRetry } from "@/lib/openai/retry";
+import { formatErrorResponse } from "@/lib/openai/errors";
+import type { SubscriptionPlan } from "@/types/database";
 
 // Node.js runtime required for FormData file parsing
 export const runtime = 'nodejs';
@@ -129,6 +135,63 @@ export async function POST(request: Request) {
       );
     }
 
+    // === RATE LIMITING: Check per-minute rate limit ===
+    const { data: subscription } = await supabase
+      .from("subscriptions")
+      .select("plan, status")
+      .eq("user_id", user.id)
+      .single();
+
+    const isActiveSubscription = subscription?.status === "active" || subscription?.status === "trialing";
+    const userPlan: SubscriptionPlan = (isActiveSubscription && subscription?.plan) || "free";
+
+    const rateLimitResult = await checkRateLimit(user.id, userPlan, "transcribe");
+
+    if (!rateLimitResult.success) {
+      const retryAfterSeconds = Math.ceil((rateLimitResult.reset - Date.now()) / 1000);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Rate Limit Exceeded",
+          message: `Too many requests. Please wait ${retryAfterSeconds} seconds before trying again.`,
+          retryAfter: retryAfterSeconds,
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(retryAfterSeconds),
+            "X-RateLimit-Remaining": String(rateLimitResult.remaining),
+            "X-RateLimit-Limit": String(rateLimitResult.limit),
+          },
+        }
+      );
+    }
+
+    // === USAGE LIMITING: Check monthly usage limit ===
+    const usageResult = await checkMonthlyUsage(user.id, "transcriptions");
+
+    if (!usageResult.allowed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Monthly Limit Reached",
+          message: `You've used ${usageResult.currentUsage} of ${usageResult.limit} transcriptions this month. ` +
+            `Your limit resets on ${usageResult.resetDate.toLocaleDateString()}.`,
+          currentUsage: usageResult.currentUsage,
+          limit: usageResult.limit,
+          resetDate: usageResult.resetDate.toISOString(),
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            ...formatUsageHeaders(usageResult),
+          },
+        }
+      );
+    }
+
     // Check for OpenAI API key
     if (!process.env.OPENAI_API_KEY) {
       console.error('OPENAI_API_KEY is not configured');
@@ -196,37 +259,71 @@ export async function POST(request: Request) {
       );
     }
 
-    // Call OpenAI Whisper API directly to avoid AI SDK media type detection issues
-    const openaiFormData = new FormData();
-    openaiFormData.append('model', 'whisper-1');
-    openaiFormData.append('file', audioFile, audioFile.name);
+    // Call OpenAI Whisper API with retry logic
+    try {
+      const result = await withRetry(
+        async () => {
+          const openaiFormData = new FormData();
+          openaiFormData.append('model', 'whisper-1');
+          openaiFormData.append('file', audioFile, audioFile.name);
 
-    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: openaiFormData,
-    });
+          const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            },
+            body: openaiFormData,
+          });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('OpenAI API error:', response.status, errorData);
-      throw new Error(errorData?.error?.message || `OpenAI API error: ${response.status}`);
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const error = new Error(errorData?.error?.message || `OpenAI API error: ${response.status}`);
+            // Add status to error for retry detection
+            (error as Error & { status: number }).status = response.status;
+            throw error;
+          }
+
+          return response.json();
+        },
+        { maxRetries: 3, operationName: "transcribe" }
+      );
+
+      const processingTime = (Date.now() - startTime) / 1000;
+
+      // Record successful usage (non-blocking)
+      recordUsage(user.id, "transcription", {
+        durationMs: processingTime * 1000,
+        fileSize: audioFile.size,
+        fileName: audioFile.name,
+      }).catch((err) => console.error("[Usage] Failed to record:", err));
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          transcript: result.text || '',
+          duration: processingTime,
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "X-RateLimit-Remaining": String(rateLimitResult.remaining - 1),
+            "X-RateLimit-Limit": String(rateLimitResult.limit),
+          },
+        }
+      );
+    } catch (error) {
+      console.error("[Transcribe] OpenAI error after retries:", error);
+      const errorResponse = formatErrorResponse(error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: errorResponse.error,
+          message: errorResponse.message,
+        }),
+        { status: errorResponse.statusCode, headers: { "Content-Type": "application/json" } }
+      );
     }
-
-    const result = await response.json();
-
-    const processingTime = (Date.now() - startTime) / 1000;
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        transcript: result.text || '',
-        duration: processingTime,
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     // Log detailed error server-side
