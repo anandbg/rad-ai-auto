@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { getModel } from '@/lib/ai/registry';
 import { z } from 'zod';
 import { checkRateLimit } from "@/lib/ratelimit/limiters";
 import { checkMonthlyUsage, formatUsageHeaders } from "@/lib/usage/limits";
@@ -85,7 +85,7 @@ async function createEdgeSupabaseClient() {
 /**
  * POST /api/generate
  *
- * Streams a GPT-4o generated radiology report based on clinical findings and template.
+ * Streams an AI-generated radiology report based on clinical findings and template.
  * Uses Server-Sent Events (SSE) for real-time streaming to the client.
  */
 export async function POST(request: Request) {
@@ -234,19 +234,6 @@ export async function POST(request: Request) {
 
     const { findings, templateName, modality, bodyPart, templateContent } = validation.data;
 
-    // Check for OpenAI API key
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY is not configured');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Configuration Error',
-          message: 'AI service is not configured. Please contact support.',
-        }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Build system prompt for radiology report generation
     // Aligned with .planning/reference/ai-prompts-reference.md Section 2
     const systemPrompt = `You are an expert radiologist with 20+ years of experience. Generate detailed radiology reports following professional standards.
@@ -389,7 +376,7 @@ Generate a professional radiology report in Markdown format now.`;
     try {
       const result = await withStreamRetry(
         async () => streamText({
-          model: openai('gpt-4o'),
+          model: getModel('generate'),
           system: systemPrompt,
           prompt: userPrompt,
           temperature: 0.2, // Low temperature for deterministic, consistent medical reports

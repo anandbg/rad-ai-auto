@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { generateText, Output } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { getModel } from '@/lib/ai/registry';
 import { aiGeneratedTemplateSchema } from '@/lib/validation/template-schema';
 import { checkRateLimit } from '@/lib/ratelimit/limiters';
 import { checkMonthlyUsage, formatUsageHeaders } from '@/lib/usage/limits';
@@ -107,7 +107,7 @@ Be thorough and preserve all the information from the original template.
 /**
  * POST /api/templates/generate
  *
- * Generates a complete radiology report template using AI structured output.
+ * Generates a complete radiology report template using AI-powered structured output.
  * Uses Vercel AI SDK Output.object() to guarantee schema compliance.
  */
 export async function POST(request: Request) {
@@ -274,19 +274,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check for OpenAI API key
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY is not configured');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Configuration Error',
-          message: 'AI service is not configured. Please contact support.',
-        }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Build system and user prompts based on mode
     let systemPrompt: string;
     let userPrompt: string;
@@ -333,7 +320,7 @@ Generate a professional template with appropriate sections for this exam type.`;
     try {
       const result = await withRetry(
         async () => generateText({
-          model: openai('gpt-4o'),
+          model: getModel('template'),
           system: systemPrompt,
           prompt: userPrompt,
           output: Output.object({ schema: aiGeneratedTemplateSchema }),
