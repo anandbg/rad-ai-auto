@@ -145,7 +145,7 @@ Cost-optimized AI infrastructure. Replace OpenAI with Groq for ~93% cost reducti
 
 ### Report Generation Migration
 
-- [ ] **GEN-01**: Report generation uses Groq Llama 4 Scout instead of GPT-4o, producing radiology reports at ~96% lower cost
+- [x] **GEN-01**: Report generation uses Groq Llama 4 Scout instead of GPT-4o, producing radiology reports at ~96% lower cost
 - [ ] **GEN-02**: System prompt is adapted for open-source models with explicit reasoning chains, under 2K tokens, maintaining anti-hallucination rules
 - [ ] **GEN-03**: Quality validation baseline exists with 20+ test cases across modalities (MRI, CT, X-ray, ultrasound) comparing Llama 4 output against GPT-4o baseline
 
@@ -282,7 +282,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 | FMT-08 | Phase 27 | Complete |
 | INFRA-01 | Phase 31 | Complete |
 | INFRA-02 | Phase 31 | Complete |
-| GEN-01 | Phase 32 | Pending |
+| GEN-01 | Phase 32 | Complete |
 | GEN-02 | Phase 32 | Pending |
 | GEN-03 | Phase 32 | Pending |
 | TRANS-01 | Phase 33 | Pending |

@@ -45,9 +45,9 @@ Plans:
   2. System prompt is under 2K tokens with explicit reasoning chains and anti-hallucination rules adapted for open-source models
   3. A quality validation suite of 20+ test cases across MRI, CT, X-ray, and ultrasound modalities exists, comparing Llama 4 output against GPT-4o baseline reports
   4. SSE streaming continues to work for report generation with the new provider
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
-- [ ] 32-01-PLAN.md — Register Groq provider in AI SDK registry
+- [x] 32-01-PLAN.md — Register Groq provider in AI SDK registry
 - [ ] 32-02-PLAN.md — Create 25 test fixtures and quality validation functions
 - [ ] 32-03-PLAN.md — Adapt system prompt for Llama 4 Scout and switch defaults to Groq
 
@@ -76,7 +76,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 31. Provider Abstraction Layer | v3.0 | 2/2 | Complete    | 2026-04-05 |
-| 32. LLM Migration & Quality Validation | v3.0 | 0/3 | Not started | - |
+| 32. LLM Migration & Quality Validation | v3.0 | 1/3 | In Progress|  |
 | 33. Transcription Migration | v3.0 | 0/? | Not started | - |
 | 34. Reliability & Cost Tracking | v3.0 | 0/? | Not started | - |
 
