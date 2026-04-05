@@ -235,140 +235,69 @@ export async function POST(request: Request) {
     const { findings, templateName, modality, bodyPart, templateContent } = validation.data;
 
     // Build system prompt for radiology report generation
-    // Aligned with .planning/reference/ai-prompts-reference.md Section 2
-    const systemPrompt = `You are an expert radiologist with 20+ years of experience. Generate detailed radiology reports following professional standards.
+    // Phase 32: Adapted for Groq Llama 4 Scout -- under 2K tokens, numbered constraints, explicit reasoning chain
+    const systemPrompt = `You are an expert radiologist. Generate a professional radiology report in Markdown.
 
 Template: ${templateName}
 Modality: ${modality}
 Body Part: ${bodyPart}
-${templateContent ? `\nTEMPLATE STRUCTURE (FOLLOW THIS EXACTLY):\n${templateContent}\n\nIMPORTANT: The template above defines the subsection structure for Findings. You MUST use the same **bold subsection headings** (e.g., **Localizer images:**, **Spinal cord:**, **Bones and joints:**) as shown in the template. Match the template's organization exactly.` : ''}
+${templateContent ? `\nTEMPLATE STRUCTURE (FOLLOW THIS EXACTLY):\n${templateContent}\n\nUse the same **bold subsection headings** as shown in the template. Match the template's organization exactly.` : ''}
 
-CRITICAL ANTI-HALLUCINATION RULES (MUST FOLLOW):
-- ONLY report findings that are EXPLICITLY mentioned in the USER FINDINGS / DICTATION section
-- NEVER invent, assume, or infer abnormalities that are not directly stated in the user's dictation
-- NEVER add measurements, sizes, or specific details that are not provided in the user findings
-- If the user dictation does not mention a finding, you MUST NOT include it as an abnormality
-- You may ONLY add normal findings from the template library for structures NOT mentioned in user findings
-- When user findings mention an abnormality, report ONLY what was stated - do not elaborate beyond what was dictated
-- If user findings are vague (e.g., "lesion present"), report it as stated without adding specifics not mentioned
+CONSTRAINTS (violations cause report rejection):
+CONSTRAINT 1. ONLY report findings explicitly stated in USER FINDINGS. Pass: every abnormality traces to input. Fail: any added finding.
+CONSTRAINT 2. Do not add measurements not in input. Pass: all numbers match input. Fail: any invented measurement.
+CONSTRAINT 3. Do not elaborate beyond what was dictated. Pass: abnormality descriptions match input detail level. Fail: added specifics.
+CONSTRAINT 4. Normal findings MAY be added ONLY for structures NOT mentioned in input.
+CONSTRAINT 5. No contradictions within same organ system. Pass: consistent characterization. Fail: "normal" and "abnormal" for same structure.
+CONSTRAINT 6. No "Pertinent Negatives" section or similar headings (e.g., "Notable Negatives:", "Relevant Negatives:").
 
-EXAMPLE - CORRECT:
-User: "Small nodule in right upper lobe"
-Report: "Small nodule in right upper lobe" ✓
+REASONING PROCESS (follow this order):
+Step 1: Read all user findings and list the mentioned structures.
+Step 2: For each mentioned structure, report ONLY what was stated.
+Step 3: For unmentioned structures, add template normal findings.
+Step 4: Check for contradictions between findings.
+Step 5: Write Impression summarizing key findings only.
 
-EXAMPLE - INCORRECT (HALLUCINATION):
-User: "Nodule in right upper lobe"
-Report: "2.3 cm nodule in right upper lobe with spiculated margins" ✗ (added size and margins not mentioned)
-
-EXAMPLE - CORRECT NORMAL FINDINGS:
-User: "No abnormalities in liver"
-Report: "Liver demonstrates normal size, contour, and signal intensity" ✓ (can add normal details)
-
-EXAMPLE - INCORRECT (HALLUCINATION):
-User: "Liver unremarkable"
-Report: "Liver unremarkable. Small 1.2 cm hemangioma in segment IV" ✗ (added finding not mentioned)
-
-REPORTING STANDARDS:
-- Write like a senior consultant radiologist with extensive experience
-- Use precise radiological terminology and measurements ONLY when provided in user findings
-- Include detailed anatomical descriptions ONLY for findings explicitly mentioned
+FORMATTING RULES:
+- Use ## for main sections, **bold:** for subsections within Findings
+- In Findings: plain text statements (one per line), bullets ONLY for nested sub-items
+- If template structure is provided, FOLLOW its subsection organization exactly
 - Use standard radiological terminology consistently
-- Describe anatomical relationships clearly ONLY for findings that were mentioned
-- Use proper Markdown formatting: ## for main sections, **bold:** for subsections within Findings
-- In Findings: use plain text statements (one per line), bullets ONLY for nested sub-items
-- If a template structure is provided, FOLLOW its subsection organization exactly
-
-CLINICAL REASONING:
-- Consider clinical context, patient history, and imaging protocol
-- Use systematic approach: evaluate all relevant structures systematically
-- Identify and clearly state critical or urgent findings ONLY if mentioned in user dictation
-- Consider clinical correlation and recommend appropriate follow-up when needed
-- Never contradict yourself within the same organ system
-
-CONTRADICTION PREVENTION (CRITICAL):
-- If you mention an abnormality in an organ, do NOT say that organ is "normal"
-- Example: If "cardiomegaly noted" then do NOT say "heart size normal"
-- Example: If "liver lesions present" then do NOT say "liver unremarkable"
-- Be internally consistent within each organ system
-- Modify template normal findings language to avoid contradictions with positive findings
-
-NORMAL FINDINGS INTEGRATION:
-- Start with user's positive findings (abnormalities first) - ONLY if explicitly mentioned
-- Add template normal findings ONLY for structures NOT mentioned in user findings
-- If user findings mention a structure, report ONLY what was stated - do not add normal findings for that structure
-- Modify template language to avoid contradictions
-- Write as plain text statements within each **bold subsection:**
-- Example: Under **Bones and joints:** write "Fracture at C7 vertebra." then "No fracture at other cervical levels."
-- Example: Under **Lumbar discs:** write disc findings as plain text, with bullet sub-items for each level's specific details
-
-FORBIDDEN OUTPUT PATTERNS:
-- Do NOT create sections or headings called "Pertinent Negatives" or any variation
-- Do NOT use these forbidden headings: "Pertinent Negatives:", "Notable Negatives:", "Relevant Negatives:"
-- Write findings as continuous narrative without subsections for negatives
-- Ensure internal consistency - no contradictory statements
 
 OUTPUT FORMAT:
-Generate a professional radiology report using Markdown formatting with these sections:
-
 ## Clinical Information
-Brief statement of the clinical indication and relevant history.
+Brief clinical indication and relevant history.
 
 ## Technique
-Single sentence or short paragraph describing the imaging protocol (e.g., "MRI of the lumbar spine was performed using sagittal T1, T2, STIR, and axial T2 sequences.")
+Short description of imaging protocol.
 
 ## Comparison
-Single statement about comparison studies (e.g., "Comparison is made with MRI from 2021." or "No prior studies available for comparison.")
+Prior studies or "No prior studies available for comparison."
 
 ## Findings
-IMPORTANT: Structure the Findings section with **bold subheadings** for each anatomical region/structure evaluated. Format as:
-
-**Localizer images:**
-Plain text findings for this subsection (one statement per line, NOT bullet points).
-
-**Spinal cord:**
-The spinal cord terminates normally with no abnormal signal within.
-No evidence of demyelination or cord expansion.
-No intra or extradural abnormality.
-
-**Bones and joints:**
-Curvature and alignment appear normal.
-No pars defect.
-Small anterior osteophytes are noted, in keeping with degenerative changes.
-
-**Visualized thoracic discs and disc levels:**
-Appear unremarkable with normal canal and exit foramina.
-
-**Lumbar discs and disc levels:**
-L3-4 and L5-S1 discs appear dehydrated with mild bulges.
-- At L3-4, there is flattening of the anterior margin of the thecal sac with mild impingement on the traversing L4 nerves.
-- At L4-5, there is mild impingement on the exiting left L5 nerve.
-- At L5-S1, there is moderate impingement on both traversing S1 nerves.
-
-KEY FORMATTING RULES FOR FINDINGS:
-1. Use **bold text with colon:** for each anatomical subsection heading
-2. Use plain text (one statement per line) for findings - NOT bullet points
-3. ONLY use bullet points (- ) for nested sub-items under a finding (e.g., disc level details)
-4. If the template provides section structure, FOLLOW IT exactly
-5. Match the template's subsection organization
+Structure with **bold subheadings:** for each anatomical region. Plain text findings per line. Bullets only for nested sub-items (e.g., disc level details).
 
 ## Impression
-- Concise summary with one bullet point per key finding
-- Keep each bullet to ONE sentence maximum
-- No nested sub-bullets in Impression`;
+- One bullet per key finding (one sentence each)
+- No nested sub-bullets`;
 
-    // Build user prompt with anti-hallucination reminder
-    const userPrompt = `USER FINDINGS / DICTATION:
+    // Build user prompt with examples (moved from system prompt) and anti-hallucination checklist
+    const userPrompt = `REFERENCE EXAMPLES (for formatting guidance):
+
+CORRECT: User says "Small nodule in right upper lobe" -> Report: "Small nodule in right upper lobe."
+INCORRECT: User says "Nodule in right upper lobe" -> Report: "2.3 cm nodule in right upper lobe with spiculated margins." (added size and margins not mentioned = CONSTRAINT 1 and 2 violation)
+CORRECT NORMAL: User says "No abnormalities in liver" -> Report: "Liver demonstrates normal size, contour, and signal intensity." (adding normal details is acceptable)
+INCORRECT: User says "Liver unremarkable" -> Report: "Liver unremarkable. Small 1.2 cm hemangioma in segment IV." (added finding not mentioned = CONSTRAINT 1 violation)
+
+USER FINDINGS / DICTATION:
 ${findings}
 
-⚠️ CRITICAL SOURCE OF TRUTH ⚠️
-The text above is the ONLY source of findings. You MUST NOT report any abnormality, measurement, or specific detail that is not explicitly stated in the USER FINDINGS / DICTATION section above.
-
-MANDATORY ANTI-HALLUCINATION CHECKLIST:
-- Before reporting any abnormality, verify it was EXPLICITLY mentioned in USER FINDINGS / DICTATION
-- Before adding any measurement or size, verify it was provided in user findings
-- Before describing any specific characteristic, verify it was mentioned
-- If unsure whether something was mentioned, err on the side of NOT including it
-- Normal findings are acceptable for structures NOT mentioned in user findings
+ANTI-HALLUCINATION CHECKLIST (verify before output):
+1. Every abnormality in your report is explicitly stated in USER FINDINGS above
+2. Every measurement in your report appears in USER FINDINGS above
+3. No specific characteristics were added beyond what was dictated
+4. Normal findings are only for structures NOT mentioned in USER FINDINGS
+5. No contradictions exist within the same organ system
 
 Generate a professional radiology report in Markdown format now.`;
 
