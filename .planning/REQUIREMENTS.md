@@ -257,7 +257,6 @@ Which phases cover which requirements. Updated by create-roadmap.
 | V1.1-AI-01 | Phase 13 | Complete |
 | V1.1-EX-01 | Phase 14 | Pending |
 | V1.1-EX-02 | Phase 14 | Pending |
-
 | LEGAL-01 | Phase 21 | Complete |
 | LEGAL-02 | Phase 21 | Complete |
 | GATE-01 | Phase 22 | Complete |
@@ -281,15 +280,24 @@ Which phases cover which requirements. Updated by create-roadmap.
 | FMT-06 | Phase 27 | Complete |
 | FMT-07 | Phase 27 | Complete |
 | FMT-08 | Phase 27 | Complete |
+| INFRA-01 | Phase 31 | Pending |
+| INFRA-02 | Phase 31 | Pending |
+| GEN-01 | Phase 32 | Pending |
+| GEN-02 | Phase 32 | Pending |
+| GEN-03 | Phase 32 | Pending |
+| TRANS-01 | Phase 33 | Pending |
+| REL-01 | Phase 34 | Pending |
+| COST-01 | Phase 34 | Pending |
 
 **Coverage:**
 - v1 requirements: 30 total (all complete)
 - v1.1 requirements: 5 total (3 complete, 2 pending)
 - v1.4 requirements: 15 total (14 complete, 1 pending)
 - v1.5 requirements: 8 total (8 complete)
-- Mapped to phases: 58 ✓
+- v3.0 requirements: 8 total (0 complete, 8 pending)
+- Mapped to phases: 66
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-04-05 after v3.0 cost-optimized AI requirements defined*
+*Last updated: 2026-04-05 after v3.0 roadmap created (Phases 31-34)*
