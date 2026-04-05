@@ -1,16 +1,16 @@
 # AI Radiologist - Production Integration
 
-## Current Milestone: v1.4 Legal Compliance
+## Current Milestone: v2.0 Cost-Optimized AI Infrastructure
 
-**Goal:** Research and implement all legal requirements for global commercial launch of an AI radiology decision-support tool, including disclaimers, terms of service, and privacy-preserving architecture.
+**Goal:** Replace OpenAI with near-zero-cost self-hosted or alternative AI models for report generation and transcription, while maintaining output quality and scaling to 200 concurrent users.
 
 **Target features:**
-- Research global compliance requirements for AI decision-support tools (US, EU, major markets)
-- Implement Terms of Service, Privacy Policy, and AI usage disclaimers
-- Add in-app consent flows and acknowledgment mechanisms
-- Ensure data architecture enforces no-PHI-storage policy (reports/transcriptions ephemeral)
-- Add appropriate liability disclaimers and "not medical advice" guardrails
-- Document compliance posture for commercial launch
+- Replace GPT-4o report generation with cost-optimized model (Gemma 4, Llama 3, Mistral, etc.) via Cloudflare Workers AI, Replicate, Together AI, or similar
+- Replace Whisper transcription with cost-optimized speech-to-text (Workers AI Whisper, Deepgram, open-source alternatives)
+- Scale rate limiting and infrastructure from 50-75 to 200 simultaneous users
+- Model output quality validation — ensure replacements match current GPT-4o radiology report quality
+- Fallback/failover strategy if primary model degrades
+- Cost monitoring and tracking to verify savings
 
 ## What This Is
 
@@ -50,13 +50,13 @@ A radiologist can sign up, generate a real AI report from voice/text input, and 
 
 ### Active
 
-- [ ] Research global AI decision-support compliance (HIPAA exemptions, GDPR, MDR, FDA guidance)
-- [ ] Draft Terms of Service with appropriate liability limitations
-- [ ] Draft Privacy Policy documenting no-PHI-storage architecture
-- [ ] Implement AI disclaimer banners and consent acknowledgments
-- [ ] Add "Decision Support Only" disclaimers throughout the app
-- [ ] Verify ephemeral data handling (transcriptions auto-delete, reports not persisted)
-- [ ] Document compliance posture for investors/partners
+- [ ] Replace GPT-4o with cost-optimized model for radiology report generation
+- [ ] Replace Whisper with cost-optimized speech-to-text for transcription
+- [ ] Research and select optimal model hosting (Cloudflare Workers AI, Replicate, Together AI, self-hosted, etc.)
+- [ ] Scale concurrent user capacity from 75 to 200 simultaneous users
+- [ ] Implement model quality validation (compare output with GPT-4o baseline)
+- [ ] Add fallback/failover when primary model degrades
+- [ ] Implement cost monitoring and tracking
 
 ### Out of Scope
 
@@ -104,5 +104,22 @@ A radiologist can sign up, generate a real AI report from voice/text input, and 
 | Stripe test mode first | Safe development, easy to flip to production | — Pending |
 | Full user journey priority | End-to-end flow proves architecture works | — Pending |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-01-20 after milestone v1.4 started*
+*Last updated: 2026-04-05 after milestone v2.0 started*

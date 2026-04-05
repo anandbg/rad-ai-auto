@@ -2,20 +2,18 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-20)
+See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Phase 30 Capacity, Rate Limiting & API Security
+**Current focus:** Milestone v2.0 — Cost-Optimized AI Infrastructure
 
 ## Current Position
 
-Milestone: Post-v1.4 Maintenance
-Phase: 30 of 30 (Capacity, Rate Limiting & API Security)
-Plan: 9 of 9 complete
-Status: Phase complete
-Last activity: 2026-01-23 — Completed 30-09-PLAN.md (Cost Ceiling & Abuse Integration)
-
-Progress: [█████████████████████████] 100% (v1.0-v1.4 complete, phase 30 in progress)
+Milestone: v2.0 Cost-Optimized AI Infrastructure
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-05 — Milestone v2.0 started
 
 ## Performance Metrics
 
