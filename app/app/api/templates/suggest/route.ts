@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { getModel } from '@/lib/ai/registry';
 import { z } from 'zod';
 
 // Edge runtime for low-latency streaming
@@ -276,7 +276,7 @@ export async function POST(request: Request) {
 
     // Generate suggestions using GPT-4o with streaming
     const result = streamText({
-      model: openai('gpt-4o'),
+      model: getModel('template'),
       system: systemPrompt,
       prompt: userPrompt,
       temperature: 0.3, // Slightly higher than reports for creativity in suggestions
