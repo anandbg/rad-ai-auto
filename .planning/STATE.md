@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A radiologist can sign up, generate a real AI report from voice/text input, and export it as a PDF.
-**Current focus:** Milestone v2.0 — Cost-Optimized AI Infrastructure
+**Current focus:** Milestone v3.0 — Cost-Optimized AI Infrastructure
 
 ## Current Position
 
-Milestone: v2.0 Cost-Optimized AI Infrastructure
+Milestone: v3.0 Cost-Optimized AI Infrastructure
 Phase: Not started (defining requirements)
 Plan: —
 Status: Defining requirements
-Last activity: 2026-04-05 — Milestone v2.0 started
+Last activity: 2026-04-05 — Milestone v3.0 started
 
 ## Performance Metrics
 

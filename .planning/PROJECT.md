@@ -1,6 +1,6 @@
 # AI Radiologist - Production Integration
 
-## Current Milestone: v2.0 Cost-Optimized AI Infrastructure
+## Current Milestone: v3.0 Cost-Optimized AI Infrastructure
 
 **Goal:** Replace OpenAI with near-zero-cost self-hosted or alternative AI models for report generation and transcription, while maintaining output quality and scaling to 200 concurrent users.
 
@@ -122,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after milestone v2.0 started*
+*Last updated: 2026-04-05 after milestone v3.0 started*
