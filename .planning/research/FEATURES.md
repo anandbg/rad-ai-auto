@@ -1,546 +1,293 @@
-# Legal Compliance Features Research
+# Feature Landscape: Cost-Optimized AI Infrastructure Migration
 
-**Researched:** 2026-01-20
-**Domain:** AI Medical Decision-Support Legal Compliance
-**Confidence:** HIGH (verified against FDA, EU MDR, GDPR, TGA official sources and recent regulatory updates)
+**Domain:** AI model migration and cost optimization for medical report generation
+**Researched:** 2026-04-05
+**Confidence:** HIGH (verified against codebase, official docs, Groq migration guide, and ecosystem research)
 
-## Executive Summary
+## Context: What Already Exists
 
-AI Radiologist operates as a **clinical decision-support tool** (not a diagnostic tool), which places it in a favorable regulatory category - the FDA's 21st Century Cures Act explicitly excludes certain CDS tools from medical device oversight when they support (not replace) clinical decision-making with transparent recommendations that clinicians independently review. The app's ephemeral data model (no PHI storage) further reduces compliance burden since HIPAA's strictest requirements apply primarily to entities that "create, receive, maintain, or transmit" PHI.
+The v1.0 codebase has substantial infrastructure that this migration builds on:
 
-For global commercial launch, the critical compliance features are: (1) clear "not medical advice" disclaimers, (2) AI use disclosure, (3) explicit terms/privacy policy acceptance, and (4) transparent data handling communication. Trust-building differentiators include deletion confirmation UX, granular consent controls, and tiered transparency about AI involvement. The key anti-feature is avoiding any form of persistent patient data storage, which would trigger significantly more onerous HIPAA Business Associate and EU MDR requirements.
+- **Report generation** via `streamText()` from Vercel AI SDK with `@ai-sdk/openai` provider (GPT-4o, temp 0.2)
+- **Transcription** via direct `fetch()` to OpenAI Whisper API (`whisper-1`) with FormData upload
+- **Cost tracking** via Redis with hardcoded per-operation estimates ($0.05/report, $0.06/transcription)
+- **Rate limiting**, monthly usage limits, cost ceilings, and abuse detection -- all working
+- **Retry logic** with exponential backoff for both streaming (`withStreamRetry`) and non-streaming (`withRetry`) calls
+- **100+ line radiology system prompt** with anti-hallucination rules, template structure enforcement, and contradiction prevention
 
-## Regulatory Classification Context
-
-### Why This Matters for Feature Selection
-
-| Classification | Regulatory Burden | AI Radiologist Status |
-|----------------|-------------------|----------------------|
-| **Diagnostic SaMD** | FDA 510(k)/De Novo, EU MDR Class IIa+, full QMS | NOT this - we don't diagnose |
-| **Clinical Decision Support (Non-Device)** | Minimal federal regulation, state disclosure laws | THIS - supports radiologist judgment |
-| **Health/Wellness App** | FTC oversight only | NOT this - involves clinical workflow |
-
-**AI Radiologist qualifies as Non-Device CDS because it:**
-1. Does NOT acquire/process medical images directly (radiologist inputs findings)
-2. Provides recommendations radiologists independently evaluate
-3. Does NOT make autonomous clinical decisions
-4. Provides transparent basis for recommendations (template + AI generation)
-
-**Source:** [FDA CDS FAQs](https://www.fda.gov/medical-devices/software-medical-device-samd/clinical-decision-support-software-frequently-asked-questions-faqs)
+This migration swaps providers while preserving all existing guardrails.
 
 ---
 
-## Table Stakes Features (Must Have Before Launch)
+## Table Stakes (Migration Fails Without These)
 
-### 1. "Not Medical Advice" Disclaimer System
+Features users and the system expect. Missing = migration is broken or unsafe.
 
-**Requirement:** Clear, prominent disclaimers that the tool does not provide medical advice and does not replace professional judgment.
+| # | Feature | Why Expected | Complexity | Notes |
+|---|---------|--------------|------------|-------|
+| T1 | **Environment-based model configuration** | Must switch models via env vars without code changes, deploy-time switchable | LOW | Config object mapping `MODEL_PROVIDER`, `MODEL_NAME`, `TRANSCRIPTION_PROVIDER` to provider instances. Foundation for everything else |
+| T2 | **Provider abstraction layer** | Cannot swap models without decoupling provider from route handlers | MEDIUM | Already partially abstracted via AI SDK `streamText()`. Need to replace hardcoded `openai('gpt-4o')` with configurable model reference. Vercel AI Gateway handles this natively with `models` field for fallback ordering |
+| T3 | **Alternative LLM for report generation** | Core cost reduction goal -- GPT-4o at ~$0.02/report is the primary expense | HIGH | Primary: Groq Llama 4 Scout ($0.0007/report, 96% cheaper). Fallback: Together AI Llama 4 Maverick ($0.0018/report). Must maintain radiology-grade output with anti-hallucination prompts |
+| T4 | **Alternative transcription provider** | Whisper API at $0.006/min is secondary cost driver | MEDIUM | Groq Whisper v3 Turbo: $0.04/hr (89% cheaper than OpenAI $0.36/hr), 228x realtime speed. Same Whisper model family = compatible output format. OpenAI-compatible API means minimal code changes |
+| T5 | **Prompt adaptation for target models** | Prompts engineered for GPT-4o will NOT work identically on open-source models | HIGH | Groq migration guide confirms: open models lack GPT's implicit reasoning, need explicit step-by-step instructions. Must keep system prompt under 2K tokens (current is ~2.5K -- needs trimming). Temperature 0.2 is already ideal for open models. The 100+ line radiology prompt needs: more explicit formatting instructions, explicit reasoning chains, and iterative output testing against GPT-4o baseline |
+| T6 | **Quality validation baseline** | Cannot ship degraded medical reports without knowing they degraded | HIGH | Create test suite of findings-to-report pairs validated against GPT-4o baseline BEFORE switching. Minimum 20 cases across modalities (MRI, CT, X-ray, ultrasound). Evaluate: section structure compliance, anti-hallucination adherence, medical terminology accuracy, internal consistency |
+| T7 | **Fallback to premium model** | If cheap model produces low-quality output or is unavailable, must not break user workflow | MEDIUM | Vercel AI Gateway supports model fallbacks natively -- specify fallback models via `models` field, tried in order until success. Any error (context limits, provider outage, capability mismatch) triggers fallback. Billing only for the model that succeeds. Chain: Groq Scout -> Together Maverick -> OpenAI GPT-4o |
+| T8 | **Actual cost tracking (not estimates)** | Current tracker uses hardcoded `COST_ESTIMATES` in `tracker.ts`. Need real token/neuron usage for accurate cost comparison | MEDIUM | AI SDK `streamText()` returns `usage` with `promptTokens` and `completionTokens`. Calculate actual cost from provider pricing. Replace static $0.05/$0.06 estimates with per-request actuals. Essential to verify savings are real |
 
-**Implementation:**
-
-| Location | Format | Content |
-|----------|--------|---------|
-| Login/Signup | Checkbox acknowledgment | "I understand this tool assists with documentation and does not provide medical advice" |
-| Report Generation UI | Persistent banner | "AI-ASSISTED DOCUMENTATION - Review all content before clinical use" |
-| Generated Reports | Footer on every report | "Generated using AI assistance. Not a substitute for professional medical judgment." |
-| Terms of Service | Dedicated section | Full legal disclaimer with liability limitation |
-
-**Legal Basis:**
-- California AB 3030 (effective Jan 2025): Requires AI disclosure for clinical communications
-- Texas SB 1188 (effective Sept 2025): Requires AI-generated records review by licensed practitioners
-- General liability protection best practice
-
-**Confidence:** HIGH - verified against [California AB 3030](https://www.afslaw.com/perspectives/alerts/california-requires-disclaimers-health-care-providers-ai-generated-patient) and [Texas regulations](https://www.fenwick.com/insights/publications/the-new-regulatory-reality-for-ai-in-healthcare-how-certain-states-are-reshaping-compliance)
-
----
-
-### 2. AI Use Disclosure
-
-**Requirement:** Inform users clearly when AI is involved in content generation.
-
-**Implementation:**
-
-| Touchpoint | Disclosure |
-|------------|------------|
-| Transcription output | "Transcribed using AI (OpenAI Whisper)" |
-| Report generation | "Report generated using AI (GPT-4o) based on your input" |
-| Template suggestions | "AI-suggested templates" badge |
-| First use onboarding | Explanation of AI role in workflow |
-
-**Legal Basis:**
-- FDA 2025 guidance: Clear statement that device uses AI with plain-language description
-- U.S. Blueprint for AI Bill of Rights: Right to notice and explanation
-- State laws (CA, TX, PA, IL) requiring AI disclosure in healthcare
-
-**Confidence:** HIGH - verified against [FDA AI guidance](https://www.ballardspahr.com/insights/alerts-and-articles/2025/08/fda-issues-guidance-on-ai-for-medical-devices)
-
----
-
-### 3. Terms of Service with Healthcare-Specific Provisions
-
-**Requirement:** Legally binding Terms of Service with healthcare-appropriate language.
-
-**Implementation:**
-
-Must Include:
-- [ ] No doctor-patient relationship established
-- [ ] User responsibility for clinical accuracy
-- [ ] AI limitations and potential for errors
-- [ ] Prohibited uses (autonomous diagnosis, patient-facing without review)
-- [ ] Limitation of liability
-- [ ] Indemnification clause
-- [ ] Governing law and dispute resolution
-
-**Acceptance Mechanism:**
-- Clickwrap agreement (checkbox + "I Accept" button)
-- Scroll-through requirement for first acceptance
-- Re-acceptance required for material changes
-- Audit trail of acceptance (timestamp, IP, version)
-
-**Legal Basis:**
-- [Feldman v. Google](https://www.sirion.ai/library/contract-management/end-user-license-agreement-eula/) - clickwrap agreements enforceable when user must actively consent
-- Healthcare EULA requirements per [Jackson LLP guidance](https://jacksonllp.com/eula-for-healthcare-platforms-and-websites/)
-
-**Confidence:** HIGH
-
----
-
-### 4. Privacy Policy (Multi-Jurisdictional)
-
-**Requirement:** Comprehensive privacy policy covering US, EU, and international requirements.
-
-**Implementation:**
-
-| Section | Content |
-|---------|---------|
-| Data Collection | What we collect (account info, usage data, voice for transcription) |
-| Data Use | How we use it (service delivery, not training, not selling) |
-| Data Retention | Ephemeral model - transcriptions/reports not stored server-side |
-| Data Sharing | Third parties (OpenAI API, Supabase, Stripe) with purposes |
-| User Rights | Access, deletion, portability (GDPR/CCPA) |
-| Security Measures | Encryption, access controls |
-| International Transfers | Where data may be processed |
-| Contact | DPO/privacy contact information |
-
-**Multi-jurisdictional Requirements:**
-- GDPR (EU): Explicit consent for health data, right to erasure, 72-hour breach notification
-- CCPA/CPRA (California): Right to know, delete, opt-out of sale
-- 2025 State Laws (DE, IA, NH, NJ, TN, MN, MD, KY): Various consumer rights
-
-**Confidence:** HIGH - verified against [GDPR healthcare requirements](https://www.dpo-consulting.com/blog/gdpr-healthcare) and [2025 state privacy laws](https://secureprivacy.ai/blog/saas-privacy-compliance-requirements-2025-guide)
-
----
-
-### 5. Explicit Consent Flow (First Use)
-
-**Requirement:** Active consent to terms, privacy policy, and AI use before accessing the application.
-
-**Implementation:**
+### Table Stakes Dependency Chain
 
 ```
-First Login Flow:
-1. Welcome screen explaining the tool
-2. Terms of Service (scrollable, required read)
-   [ ] I have read and agree to the Terms of Service
-3. Privacy Policy summary with link to full
-   [ ] I have read and agree to the Privacy Policy
-4. AI Disclosure acknowledgment
-   [ ] I understand this tool uses AI and I am responsible for reviewing all AI-generated content
-5. [Continue to Application] button (disabled until all checked)
+T1 (env config) is foundation
+    |
+    v
+T2 (provider abstraction) -- decouple model from routes
+    |
+    +---> T3 (alt LLM) -----------> T5 (prompt adaptation) --> T6 (quality validation)
+    |                                                                |
+    +---> T4 (alt transcription)                                     v
+    |                                                           T7 (fallback routing)
+    +---> T8 (actual cost tracking) [parallel, independent]
 ```
 
-**Storage:**
-- Record consent timestamp, version accepted, IP address
-- Store in user profile for audit purposes
+---
 
-**Re-consent Triggers:**
-- Material changes to Terms or Privacy Policy
-- New AI capabilities introduced
-- Regulatory requirement changes
+## Differentiators (Competitive Advantage)
 
-**Confidence:** HIGH - verified against [healthcare consent best practices](https://formsort.com/article/user-consent-in-saas-healthcare-and-fintech/)
+Features that set the product apart. Not expected, but valued.
+
+| # | Feature | Value Proposition | Complexity | Notes |
+|---|---------|-------------------|------------|-------|
+| D1 | **Intelligent model routing by task complexity** | Route simple reports (single-finding, common modality) to cheapest model; complex multi-system reports to premium model | HIGH | Research shows 85% cost reduction while maintaining 95% of GPT-4 quality. Classify by: finding count, modality complexity, template depth. Start simple: "under 100 words of findings = cheap model, else premium." Industry data shows 37% of enterprises use 5+ models with routing in 2026 |
+| D2 | **A/B quality comparison dashboard (admin)** | Admin can see side-by-side output quality between models, track quality metrics over time | MEDIUM | Generate same report with both models, store comparison scores. Use automated metrics (structural compliance, section presence, term consistency) plus optional manual radiologist rating. 91% of production models degrade over time -- continuous monitoring is essential |
+| D3 | **Canary deployment for new models** | Route 5-10% of traffic to new model, compare quality metrics before full rollover | MEDIUM | Standard pattern: canary group gets new model, control group stays on current. Monitor error rates, latency, and quality scores. Vercel AI Gateway supports provider routing natively |
+| D4 | **Per-user cost analytics** | Show each user their AI cost footprint, help admins identify cost outliers | LOW | Already have `trackCost()` with userId. Surface in admin dashboard with daily/weekly/monthly breakdowns. Low effort, high visibility |
+| D5 | **Cost alerting with notifications** | Proactive alerts when daily spend exceeds thresholds, before ceiling kicks in | LOW | Already have cost ceiling checks in `ceiling.ts`. Add notification layer: 50% warning, 75% alert, 90% critical. Use existing abuse alert pattern as template |
+| D6 | **Model performance telemetry** | Track latency, token usage, error rates per model per endpoint for data-driven decisions | MEDIUM | Log structured metrics: model name, latency_ms, input_tokens, output_tokens, error_type, fallback_triggered. Feed into admin dashboard. Required foundation for D1 (intelligent routing) and D2 (A/B dashboard) |
+| D7 | **Graceful degradation with user notification** | When primary model is unavailable, degrade to fallback with clear user messaging | LOW | Users should know when getting backup-quality output. Banner: "Using alternative AI model -- report quality may vary." Builds trust. Low effort since fallback mechanism (T7) already handles the routing |
 
 ---
 
-### 6. Cookie/Analytics Consent Banner
+## Anti-Features (Deliberately NOT Build)
 
-**Requirement:** GDPR-compliant cookie consent for EU users; CCPA notice for CA users.
+Features to explicitly NOT build. Each has been requested or considered and rejected for cause.
 
-**Implementation:**
-
-| Cookie Type | Consent Required | Default |
-|-------------|-----------------|---------|
-| Strictly Necessary | No | Enabled |
-| Analytics (GA4) | Yes (EU), Notice (US) | Disabled until consent |
-| Marketing | Yes | Disabled (we don't use) |
-
-**Banner Requirements:**
-- Equal prominence for Accept/Reject options
-- Granular consent options (not just "Accept All")
-- Persistent preference storage
-- Easy withdrawal mechanism
-
-**Variation by Region:**
-- EU: Prior consent required, block scripts until opt-in
-- US: Can use analytics with opt-out option (varies by state)
-- Configure GA4 Consent Mode for privacy-compliant tracking
-
-**Confidence:** MEDIUM - requirements vary by jurisdiction, see [GDPR cookie requirements 2025](https://secureprivacy.ai/blog/gdpr-cookie-consent-requirements-2025)
+| # | Anti-Feature | Why Avoid | What to Do Instead |
+|---|--------------|-----------|-------------------|
+| A1 | **Self-hosted LLM inference (vLLM, Ollama on GPU VPS)** | Breakeven at 5-10M tokens/month; project estimates ~500K. GPU servers $200-500/mo minimum. Requires ML ops, monitoring, scaling, on-call. Defeats purpose for small team | Use managed inference APIs (Groq, Together AI) that handle infrastructure at pennies per request. Reconsider only if volume exceeds 10M tokens/month or HIPAA requires data sovereignty |
+| A2 | **Fine-tuned radiology-specific model** | Requires curated medical training data (compliance minefield), ongoing retraining, validation against medical standards. 3-6 month project on its own | Use strong general models with carefully engineered prompts. Published RSNA research shows Llama-3-70B achieves satisfactory clinical accuracy for radiology without fine-tuning |
+| A3 | **Real-time model marketplace / user-selectable models** | Creates UX confusion for radiologists who want the tool to "just work." Multiplies prompt engineering surface area. Quality assurance nightmare across N models | Curate 2-3 validated models internally, route automatically based on task complexity |
+| A4 | **Custom prompt editor for end users** | Radiology prompts contain critical anti-hallucination rules and formatting constraints. User modifications risk generating medically unsafe reports | Keep prompts locked down. Template customization (already exists) is the user-facing control surface |
+| A5 | **Multi-provider load balancing for cost arbitrage (5+ providers)** | Massive complexity: different APIs, billing, failure modes, quality profiles. Diminishing returns after switching off GPT-4o | Pick ONE primary cheap provider (Groq), ONE fallback (Together AI), ONE emergency (OpenAI). Three is manageable. Five is a nightmare |
+| A6 | **Offline/local model inference in browser** | Requires powerful local GPU, complex setup. Radiology prompt + Llama 70B needs 40GB+ VRAM. Not viable for browser-based SaaS | Keep everything server-side via managed APIs |
+| A7 | **Automated prompt optimization / PromptBridge-style transfer** | Research-stage tooling. Automated prompt transfer frameworks exist (PromptBridge, OpenAI Optimizer) but are not production-ready for safety-critical medical prompts | Manual prompt adaptation with iterative testing against quality baseline. Medical accuracy cannot be left to automated optimization |
 
 ---
 
-### 7. Data Handling Transparency
+## Feature Dependencies
 
-**Requirement:** Clear communication about what happens to user data, especially voice recordings and generated reports.
-
-**Implementation:**
-
-| Data Type | What We Tell Users |
-|-----------|-------------------|
-| Voice recordings | "Processed by OpenAI Whisper API, not stored after transcription" |
-| Generated reports | "Generated in your browser, not stored on our servers" |
-| Templates | "Stored in your account, encrypted at rest" |
-| Account data | "Stored securely in Supabase with encryption" |
-
-**In-App Messaging:**
-- Tooltip on voice button: "Audio sent to OpenAI for transcription, then deleted"
-- Post-generation: "This report exists only in your browser until you save/export it"
-- Settings page: Full data handling explanation
-
-**Confidence:** HIGH
-
----
-
-### 8. Breach Notification Readiness
-
-**Requirement:** Process to notify users and authorities of data breaches within required timeframes.
-
-**Implementation:**
-
-| Jurisdiction | Timeframe | Authority |
-|--------------|-----------|-----------|
-| GDPR (EU) | 72 hours | Supervisory authority |
-| HIPAA (US) | 60 days | HHS (if applicable) |
-| State laws | Varies (24h-60d) | State AG |
-
-**Features Needed:**
-- Email notification capability to all users
-- Incident response procedure documented
-- Contact information for authorities maintained
-- Template notification messages prepared
-
-**Confidence:** HIGH
-
----
-
-## Differentiating Features (Trust Building)
-
-These features exceed minimum compliance requirements but build user trust and competitive advantage.
-
-### 9. Explicit Data Deletion Confirmation
-
-**What:** When users delete their account or data, provide clear confirmation of what was deleted.
-
-**Implementation:**
-- "Delete My Account" flow with explicit confirmation
-- Post-deletion email: "Your account and all associated data have been permanently deleted"
-- No "soft delete" - actual data removal
-- Audit log for compliance (anonymized)
-
-**Why It Differentiates:** Many apps soft-delete or retain data. Explicit deletion builds trust.
-
-**Confidence:** MEDIUM - best practice, not legally required in most cases
-
----
-
-### 10. Granular Consent Controls
-
-**What:** Allow users to separately consent to different data processing activities.
-
-**Implementation:**
 ```
-Settings > Privacy Preferences:
-[ ] Allow anonymous usage analytics (helps improve the product)
-[ ] Allow crash reporting (helps fix bugs)
-[ ] Allow AI model improvement feedback (optional)
+[T1: Env-based config]
+    |
+    v
+[T2: Provider abstraction]
+    |
+    +---> [T3: Alternative LLM] ---> [T5: Prompt adaptation] ---> [T6: Quality validation]
+    |                                                                    |
+    +---> [T4: Alternative transcription]                                v
+    |                                                              [T7: Fallback routing]
+    +---> [T8: Actual cost tracking]                                     |
+                |                                                        v
+                v                                              [D1: Intelligent routing]
+          [D4: Per-user cost analytics]                                  |
+                |                                                        v
+                v                                              [D3: Canary deployment]
+          [D5: Cost alerting]                                            |
+                                                                         v
+                                                               [D2: A/B quality dashboard]
+
+[D6: Model telemetry] --enhances--> [D1, D2, D3]
+[D7: Graceful degradation] --enhances--> [T7: Fallback routing]
 ```
 
-**Why It Differentiates:** Goes beyond "all or nothing" consent, demonstrates respect for user autonomy.
+### Critical Path
 
-**Confidence:** MEDIUM - GDPR best practice but not strictly required for all processing
+**T1 -> T2 -> T3 -> T5 -> T6 -> T7** is the critical path. Everything else can run in parallel or be deferred.
 
----
+### Dependency Notes
 
-### 11. Tiered AI Transparency
-
-**What:** Different levels of AI disclosure based on user preference and context.
-
-**Implementation:**
-
-| Level | Description | Target User |
-|-------|-------------|-------------|
-| Minimal | Badge indicating AI assistance | Experienced users who want clean UI |
-| Standard | Brief explanation with each AI output | Default |
-| Detailed | Full explanation of what AI did and why | Users wanting maximum transparency |
-
-**Settings:** User can choose preferred transparency level.
-
-**Why It Differentiates:** Respects that some users want more/less information about AI involvement.
-
-**Confidence:** MEDIUM - emerging best practice per [FDA transparency principles](https://www.fda.gov/medical-devices/software-medical-device-samd/transparency-machine-learning-enabled-medical-devices-guiding-principles)
+- **T1 requires nothing:** Pure config, do first
+- **T2 requires T1:** Abstraction layer reads from config
+- **T5 requires T3:** Cannot adapt prompts until target model is selected and running
+- **T6 requires T5:** Quality validation needs adapted prompts on target model
+- **T7 requires T6:** Fallback thresholds come from quality validation data
+- **T8 is independent:** Can upgrade cost tracking in parallel with model work
+- **D6 is independent:** Can add telemetry in parallel, but most valuable after T7
 
 ---
 
-### 12. Session-Based Processing Indicator
+## MVP Recommendation
 
-**What:** Visual indicator that data is being processed ephemerally, not stored.
+### Phase 1: Core Migration (v3.0 MVP)
 
-**Implementation:**
-- "Session Only" badge on transcription/generation interfaces
-- Tooltip: "Your data is processed for this session only and not stored on our servers"
-- Different from "Saved" indicator for templates/settings
+Minimum to claim "cost-optimized" -- the migration works, quality is validated, fallback exists.
 
-**Why It Differentiates:** Proactively communicates privacy-by-design, builds trust.
+1. **T1: Environment-based model config** -- foundation for everything
+2. **T2: Provider abstraction** -- decouple model from routes
+3. **T3: Alternative LLM integration** -- the actual cost reduction
+4. **T4: Alternative transcription** -- secondary cost reduction
+5. **T5: Prompt adaptation** -- make it work on new model
+6. **T6: Quality validation baseline** -- prove it is safe to ship
+7. **T7: Fallback to premium model** -- safety net
+8. **T8: Actual cost tracking** -- verify savings are real
 
-**Confidence:** MEDIUM
+### Phase 2: Operational Excellence (v3.1)
 
----
+Once basic migration is running and quality is confirmed.
 
-### 13. Export Your Data
+- **D4: Per-user cost analytics** -- trigger: need visibility into cost distribution
+- **D5: Cost alerting** -- trigger: daily cost exceeds expected range
+- **D6: Model performance telemetry** -- trigger: need data for routing decisions
+- **D7: Graceful degradation UX** -- trigger: fallback events are happening
 
-**What:** Allow users to download all their stored data (GDPR data portability right).
+### Phase 3: Intelligent Optimization (v3.2+)
 
-**Implementation:**
-- Settings > Privacy > Download My Data
-- Export includes: profile, templates, macros, preferences
-- Format: JSON + human-readable summary
-- Available within 30 days of request (GDPR requirement)
+Requires production data to build correctly.
 
-**Why It Differentiates:** Demonstrates transparency, required for GDPR compliance.
-
-**Confidence:** HIGH for GDPR compliance, MEDIUM for US requirements
-
----
-
-### 14. AI Confidence Indicators (Future)
-
-**What:** Show confidence levels for AI-generated content where appropriate.
-
-**Implementation:**
-- For template suggestions: "High match", "Partial match" indicators
-- For transcription: Flag uncertain portions for review
-- For report generation: Highlight sections requiring human review
-
-**Why It Differentiates:** Helps radiologists prioritize review effort, demonstrates responsible AI.
-
-**Confidence:** LOW - emerging best practice, not required, technical complexity
+- **D1: Intelligent model routing** -- defer: needs telemetry data on task complexity vs model performance
+- **D2: A/B quality dashboard** -- defer: needs routing infrastructure and quality metrics pipeline
+- **D3: Canary deployment** -- defer: needs routing + telemetry + dashboard to be useful
 
 ---
 
-## Anti-Features (Deliberately Avoid)
+## Feature Prioritization Matrix
 
-Features to explicitly NOT build to maintain favorable regulatory status and reduce legal risk.
+| Feature | User Value | Implementation Cost | Risk if Skipped | Priority |
+|---------|------------|---------------------|-----------------|----------|
+| T1: Env-based config | LOW (invisible) | LOW | Blocks everything | P0 |
+| T2: Provider abstraction | LOW (invisible) | MEDIUM | Cannot swap models | P0 |
+| T3: Alternative LLM | HIGH (cost savings) | HIGH | No migration | P0 |
+| T4: Alternative transcription | MEDIUM (cost savings) | MEDIUM | Partial migration | P0 |
+| T5: Prompt adaptation | HIGH (quality) | HIGH | Degraded reports | P0 |
+| T6: Quality validation | HIGH (safety) | HIGH | Ship unsafe | P0 |
+| T7: Fallback routing | HIGH (reliability) | MEDIUM | Outages break users | P1 |
+| T8: Actual cost tracking | MEDIUM (visibility) | MEDIUM | Cannot verify savings | P1 |
+| D4: Per-user analytics | MEDIUM (admin insight) | LOW | Blind to cost patterns | P2 |
+| D5: Cost alerting | MEDIUM (ops safety) | LOW | Surprise bills | P2 |
+| D6: Model telemetry | LOW (engineering) | MEDIUM | No data for optimization | P2 |
+| D7: Graceful degradation UX | MEDIUM (user trust) | LOW | Confused users on fallback | P2 |
+| D1: Intelligent routing | HIGH (cost + quality) | HIGH | Overpay for simple tasks | P3 |
+| D2: A/B dashboard | MEDIUM (quality ops) | MEDIUM | Manual quality checks | P3 |
+| D3: Canary deployment | MEDIUM (safe rollout) | MEDIUM | Risky model switches | P3 |
 
-### A1. NO Patient Data Storage
-
-**What NOT to Build:** Any persistent storage of patient-specific information (names, MRNs, dates of birth, etc.)
-
-**Why:**
-- Triggers HIPAA Business Associate requirements
-- Requires signed BAAs with all healthcare clients
-- Requires HIPAA compliance program (expensive, complex)
-- Increases breach liability significantly
-
-**Instead:** Ephemeral processing only. Reports generated in browser, not stored server-side.
-
-**Confidence:** HIGH - this is the single most important architectural decision for compliance simplicity
-
----
-
-### A2. NO Autonomous Diagnosis
-
-**What NOT to Build:** Any feature that makes diagnostic determinations without radiologist review.
-
-**Why:**
-- Would classify tool as SaMD requiring FDA 510(k) or De Novo
-- Would require EU MDR certification as medical device
-- Would require TGA ARTG listing in Australia
-- Dramatically increases liability
-
-**Instead:** Always position as "decision support" - radiologist reviews and approves all output.
-
-**Confidence:** HIGH - verified against [FDA CDS exclusion criteria](https://www.fda.gov/medical-devices/software-medical-device-samd/clinical-decision-support-software-frequently-asked-questions-faqs)
+**Priority key:**
+- P0: Must have -- migration does not work without this
+- P1: Should have -- migration works but is fragile without this
+- P2: Valuable -- operational excellence, add within weeks of launch
+- P3: Strategic -- requires production data, plan for v3.2+
 
 ---
 
-### A3. NO Direct Patient Communication
+## Prompt Migration: Specific Concerns for This Codebase
 
-**What NOT to Build:** Features that send AI-generated content directly to patients without clinician review.
+The current radiology system prompt (~120 lines, ~2.5K tokens) is the highest-risk element of this migration.
 
-**Why:**
-- California AB 3030 specifically regulates AI patient communications
-- Removes the clinician intermediary that provides legal protection
-- Increases liability for AI errors
+### What Must Change
 
-**Instead:** All output goes to radiologist for review before any patient communication.
+| Concern | GPT-4o Behavior | Open Model Behavior | Required Change |
+|---------|----------------|---------------------|-----------------|
+| Implicit reasoning | GPT-4o handles nuance without explicit instruction | Open models need explicit step-by-step chains | Add explicit reasoning instructions for contradiction prevention |
+| System prompt length | GPT-4o handles long system prompts well | Open models degrade above ~2K tokens in system prompt | Trim current prompt, move examples to few-shot or user prompt |
+| Formatting compliance | GPT-4o reliably follows Markdown formatting | Open models may drift from format spec | Add explicit format validation post-generation, stronger format anchoring |
+| Anti-hallucination | GPT-4o responds well to "NEVER" / "CRITICAL" directives | Open models need more structured constraint framing | Convert rule lists to numbered constraints with explicit pass/fail criteria |
+| Temperature sensitivity | 0.2 works well at GPT-4o | Groq recommends starting at 0.2-0.4 for medical, then tuning | Start at 0.2 (matching current), test 0.1-0.3 range during validation |
 
-**Confidence:** HIGH
+### What Does NOT Change
 
----
-
-### A4. NO Medical Image Processing
-
-**What NOT to Build:** Features that directly analyze/process DICOM images or other medical imaging data.
-
-**Why:**
-- Would remove CDS exclusion (FDA requires CDS not "acquire, process, or analyze medical images")
-- Would require full SaMD regulatory pathway
-- Would require clinical validation studies
-
-**Instead:** Radiologist interprets images and provides findings as text input to AI.
-
-**Confidence:** HIGH - this is explicit in FDA CDS criteria
+- Section structure (Clinical Information, Technique, Comparison, Findings, Impression)
+- Anti-hallucination rules (core safety requirement)
+- Template structure enforcement
+- User prompt format (findings + checklist)
+- Output validation with Zod schemas
 
 ---
 
-### A5. NO Training on User Data
+## Cost Savings Estimates
 
-**What NOT to Build:** Using user-generated content to train or improve AI models without explicit consent.
+| Operation | Current (OpenAI) | Target (Groq Primary) | Savings |
+|-----------|------------------|-----------------------|---------|
+| Report generation | ~$0.020/report (GPT-4o) | ~$0.0007/report (Llama 4 Scout) | 96% |
+| Transcription | $0.006/min (Whisper API) | ~$0.0007/min (Groq Whisper v3 Turbo) | 88% |
+| Template suggestions | ~$0.015/suggestion (GPT-4o) | ~$0.0004/suggestion (Scout) | 97% |
+| Monthly estimate (200 users) | ~$2,400-4,200/month | ~$100-350/month | 90-95% |
 
-**Why:**
-- FTC has ordered companies to delete AI models trained on improperly obtained data
-- GDPR requires explicit consent for new purposes
-- Erodes trust if discovered
-
-**Instead:** Use OpenAI API with zero-retention endpoint; no model training on user data.
-
-**Confidence:** HIGH - verified against [FTC enforcement actions](https://www.dreamleap.com/can-i-use-open-ai-chatgpt-for-healthcare-financial-or-regulated-industries)
+**Note:** These are estimates. T8 (actual cost tracking) exists specifically to validate these projections with real data.
 
 ---
 
-### A6. NO Biometric Storage
+## Medical Domain Quality Concerns
 
-**What NOT to Build:** Storing voice prints or other biometric identifiers.
+This is not a generic chatbot migration. Medical report generation has specific quality requirements.
 
-**Why:**
-- Illinois BIPA requires explicit consent and creates private right of action
-- Texas, Washington have similar biometric laws
-- High liability for breaches
+### Quality Gates That Must Pass Before Cutover
 
-**Instead:** Voice processed for transcription only, no voice profile created/stored.
+| Gate | Metric | Threshold | How to Test |
+|------|--------|-----------|-------------|
+| Structure compliance | Report has all 5 required sections | 100% (zero tolerance) | Automated: parse output for ## headings |
+| Anti-hallucination | No findings added that were not in input | 100% (zero tolerance) | Manual: compare output findings against input for 20 test cases |
+| Terminology accuracy | Medical terms spelled correctly, used appropriately | >98% | Manual: radiologist review of 10 representative reports |
+| Internal consistency | No contradictions within same organ system | 100% (zero tolerance) | Automated: flag when "normal" and "abnormal" co-occur for same structure |
+| Template adherence | Bold subsection headings match template structure | >95% | Automated: compare output subsections against template definition |
+| Impression quality | Concise, covers key findings, no hallucinations | >90% subjective quality | Manual: radiologist rating on 5-point scale |
 
-**Confidence:** HIGH
+### When to Abort Migration
 
----
-
-## Implementation Priority for v1.4 Milestone
-
-### Phase 1: Launch Blockers (Must Complete)
-
-| Priority | Feature | Complexity | Why Critical |
-|----------|---------|------------|--------------|
-| P0 | Terms of Service | Medium | Legal requirement |
-| P0 | Privacy Policy | Medium | Legal requirement |
-| P0 | First-use consent flow | Medium | Gates access to app |
-| P0 | "Not medical advice" disclaimers | Low | Liability protection |
-| P0 | AI use disclosure | Low | State law compliance |
-
-### Phase 2: Pre-Launch (Should Complete)
-
-| Priority | Feature | Complexity | Why Important |
-|----------|---------|------------|---------------|
-| P1 | Cookie consent banner | Medium | GDPR compliance for EU users |
-| P1 | Data handling transparency | Low | Trust building |
-| P1 | Breach notification process | Low | Regulatory requirement |
-
-### Phase 3: Post-Launch Enhancement (Can Add Later)
-
-| Priority | Feature | Complexity | Why Later OK |
-|----------|---------|------------|--------------|
-| P2 | Explicit deletion confirmation | Low | Trust, not legally required |
-| P2 | Granular consent controls | Medium | Beyond minimum compliance |
-| P2 | Export your data | Medium | GDPR right, 30-day window |
-| P3 | Tiered AI transparency | Medium | Nice-to-have UX |
-| P3 | AI confidence indicators | High | Future enhancement |
+- Anti-hallucination compliance drops below 95% after prompt adaptation
+- Structure compliance below 90% across test cases
+- Radiologist rates output quality below 3/5 on average
+- Latency exceeds 10s TTFT (time to first token) on any provider
 
 ---
 
-## International Market Considerations
+## Existing Infrastructure Compatibility
 
-### United States
-- **Federal:** No FDA clearance needed if CDS criteria maintained
-- **State:** California (AB 3030), Texas (SB 1188, TRAIGA), others emerging
-- **Action:** Include AI disclosure, maintain clinician-in-the-loop
-
-### European Union
-- **MDR:** Likely exempt if truly decision support (not processing images/signals)
-- **GDPR:** Explicit consent for health data, data portability, breach notification
-- **AI Act:** Additional requirements by 2027 for high-risk AI (medical is in scope)
-- **Action:** Cookie consent, privacy policy, consent mechanism
-
-### Australia
-- **TGA:** CDSS exemption available if: (a) supports HCP recommendations, (b) doesn't process images/signals, (c) doesn't replace clinical judgment
-- **Action:** File notice of supply within 30 days of Australian launch
-- **Source:** [TGA CDSS guidance](https://www.tga.gov.au/resources/guidance/understanding-clinical-decision-support-software)
-
-### United Kingdom
-- **MHRA:** Similar to TGA, follows IMDRF guidance
-- **UK GDPR:** Similar to EU GDPR post-Brexit
-- **Action:** Same as EU approach
-
-### Canada
-- **Health Canada:** CDS exemptions similar to FDA
-- **PIPEDA:** Privacy requirements for commercial activities
-- **Action:** Privacy policy covering Canadian users
-
----
-
-## Open Questions for Legal Review
-
-1. **BAA with OpenAI:** Do we need a BAA with OpenAI even if we're not storing PHI? (Likely no if data is truly ephemeral, but legal should confirm)
-
-2. **Terms acceptance for existing users:** If we launch consent flow, do existing users need to re-accept before using the app?
-
-3. **EU MDR classification:** Should we get formal legal opinion confirming exemption from MDR as medical device?
-
-4. **California AB 3030 scope:** Does this apply to B2B SaaS sold to healthcare providers, or only direct patient communications?
-
-5. **Breach notification scope:** What constitutes a "breach" for our ephemeral data model where we don't store reports?
+| Existing System | Compatible? | Changes Needed |
+|-----------------|-------------|----------------|
+| Rate limiting (Upstash Redis) | YES | No changes -- operates on request level, model-agnostic |
+| Monthly usage tracking | YES | No changes -- tracks operation counts, not provider details |
+| Cost ceiling (`ceiling.ts`) | YES | Update thresholds (costs will be ~10x lower per operation) |
+| Abuse detection (`detector.ts`) | YES | No changes -- tracks patterns, not provider details |
+| Cost tracker (`tracker.ts`) | PARTIAL | Replace `COST_ESTIMATES` with actual token-based calculation |
+| Retry logic (`retry.ts`) | PARTIAL | Verify retry patterns work with Groq/Together error codes |
+| Error formatting (`errors.ts`) | PARTIAL | Add Groq/Together error code mapping alongside OpenAI codes |
+| SSE streaming to frontend | YES | All providers support OpenAI-compatible SSE via AI SDK |
 
 ---
 
 ## Sources
 
-### Primary (HIGH Confidence)
-- [FDA CDS Software FAQs](https://www.fda.gov/medical-devices/software-medical-device-samd/clinical-decision-support-software-frequently-asked-questions-faqs)
-- [FDA Transparency for ML Medical Devices](https://www.fda.gov/medical-devices/software-medical-device-samd/transparency-machine-learning-enabled-medical-devices-guiding-principles)
-- [TGA CDSS Guidance](https://www.tga.gov.au/resources/guidance/understanding-clinical-decision-support-software)
-- [TGA AI Medical Device Software](https://www.tga.gov.au/products/medical-devices/software-and-artificial-intelligence/manufacturing/artificial-intelligence-ai-and-medical-device-software)
-- [HIPAA Journal - AI and HIPAA](https://www.hipaajournal.com/hipaa-healthcare-data-and-artificial-intelligence/)
+### HIGH Confidence
+- Codebase analysis: `app/app/api/generate/route.ts` (452 lines), `app/app/api/transcribe/route.ts` (388 lines), `app/lib/cost/tracker.ts` (94 lines)
+- [Groq Model Migration Guide](https://console.groq.com/docs/prompting/model-migration) -- explicit prompt adaptation recommendations
+- [Vercel AI Gateway Fallbacks](https://vercel.com/changelog/model-fallbacks-now-available-in-vercel-ai-gateway) -- native multi-model fallback support
+- [Vercel AI SDK Provider Management](https://ai-sdk.dev/docs/ai-sdk-core/provider-management) -- provider abstraction patterns
+- [Groq Pricing](https://groq.com/pricing) -- verified 2026-04-05
 
-### Secondary (MEDIUM Confidence)
-- [California AB 3030 Analysis](https://www.afslaw.com/perspectives/alerts/california-requires-disclaimers-health-care-providers-ai-generated-patient)
-- [State AI Healthcare Regulations](https://www.fenwick.com/insights/publications/the-new-regulatory-reality-for-ai-in-healthcare-how-certain-states-are-reshaping-compliance)
-- [GDPR Healthcare Guide](https://www.dpo-consulting.com/blog/gdpr-healthcare)
-- [SaaS Privacy Compliance 2025](https://secureprivacy.ai/blog/saas-privacy-compliance-requirements-2025-guide)
-- [Healthcare Consent Best Practices](https://formsort.com/article/user-consent-in-saas-healthcare-and-fintech/)
-- [EU MDR AI Software Guide](https://decomplix.com/ai-medical-device-software-eu-mdr-ivdr/)
-- [GDPR Cookie Requirements 2025](https://secureprivacy.ai/blog/gdpr-cookie-consent-requirements-2025)
+### MEDIUM Confidence
+- [LLM Routing in Production (LogRocket)](https://blog.logrocket.com/llm-routing-right-model-for-requests/) -- routing patterns and best practices
+- [Multi-provider LLM Orchestration 2026 Guide](https://dev.to/ash_dubai/multi-provider-llm-orchestration-in-production-a-2026-guide-1g10) -- architecture patterns
+- [Intelligent LLM Routing: 85% Cost Reduction (Swfte AI)](https://www.swfte.com/blog/intelligent-llm-routing-multi-model-ai) -- cost savings benchmarks
+- [Top 5 LLM Monitoring Tools (Confident AI)](https://www.confident-ai.com/knowledge-base/top-5-llm-monitoring-tools-for-ai) -- quality regression detection
+- [Model Performance Regression Detection (Statsig)](https://www.statsig.com/perspectives/model-performance-quality-decline) -- 91% of models degrade over time
+- [Meta Llama Infrastructure Migration Guide](https://www.llama.com/docs/deployment/infrastructure-migration/) -- official Llama migration path
+- [RSNA 2026: LLMs as Radiology Proofreaders](https://www.rsna.org/news/2026/february/llms-act-as-radiology-proofreaders) -- Llama-3-70B radiology validation
 
-### Tertiary (LOW Confidence - Needs Validation)
-- [AI Radiology Product IUS Study](https://insightsimaging.springeropen.com/articles/10.1186/s13244-024-01616-9) - Academic analysis, useful for competitive context
-- [Healthcare AI Transparency PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC9189302/) - Academic perspective on transparency requirements
+### LOW Confidence (Needs Validation)
+- Specific quality parity between Llama 4 Scout and GPT-4o for structured radiology reports -- no published medical benchmarks for Llama 4 yet
+- Groq paid tier rate limits for 200 concurrent users -- not fully documented publicly, contact sales required
+- Together AI serverless Maverick availability -- may require dedicated deployment for consistent availability
+- Prompt token reduction from 2.5K to 2K without quality loss -- needs empirical testing
 
 ---
 
-## Metadata
-
-**Confidence Breakdown:**
-- Table stakes features: HIGH - verified against official regulatory sources
-- Differentiating features: MEDIUM - based on best practices and emerging standards
-- Anti-features: HIGH - verified against regulatory exclusion criteria
-- International markets: MEDIUM - high-level guidance, recommend local legal review
-
-**Research Date:** 2026-01-20
-**Valid Until:** 2026-04-20 (3 months - regulatory landscape evolving)
-**Recommended Review:** Before each international market launch
+*Feature research for: Cost-Optimized AI Infrastructure Migration (v3.0)*
+*Researched: 2026-04-05*

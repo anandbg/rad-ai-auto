@@ -1,224 +1,176 @@
-# Legal Compliance Research Summary (Simplified)
+# Project Research Summary
 
-**Research Date:** 2026-01-20
-**Project:** AI Radiologist - v1.4 Legal Compliance Milestone
-**Approach:** Light-touch, disclaimer-based compliance
-
----
+**Project:** AI Radiologist v3.0 -- Cost-Optimized AI Infrastructure
+**Domain:** AI model migration for medical radiology report generation
+**Researched:** 2026-04-05
+**Confidence:** MEDIUM-HIGH
 
 ## Executive Summary
 
-AI Radiologist is a **drafting tool for licensed radiologists** who use it at their own risk. We are NOT:
-- A medical device
-- Storing any patient data
-- Providing medical advice
-- Selling to hospitals or institutions
+This project migrates the AI Radiologist application from OpenAI (GPT-4o + Whisper) to cost-optimized alternatives, primarily Groq with Llama 4 Scout for report generation and Groq Whisper v3 Turbo for transcription. The migration targets a 90-95% reduction in monthly AI costs (from ~$4,200/month to ~$284/month at 200 users) while preserving medical-grade report quality. The Vercel AI SDK v6 with AI Gateway provides the routing and failover infrastructure, requiring only 3 new packages and no framework changes. The existing codebase already has substantial infrastructure (rate limiting, cost ceilings, abuse detection, retry logic) that is largely provider-agnostic and carries forward unchanged.
 
-The compliance strategy is simple: **clear disclaimers everywhere, bulletproof Terms of Service, and full responsibility on the licensed professional using the tool.**
+The recommended approach is a phased migration that prioritizes safety over speed: build the provider abstraction layer first (no behavior change), then establish a quality validation framework with a golden dataset of radiologist-approved reports, then add alternative providers in shadow mode before any user-facing cutover. This ordering is critical because the two highest-risk pitfalls -- LLM hallucination rate increase and medical terminology mis-transcription -- carry direct patient safety implications. The Vercel AI Gateway provides automatic failover (Groq -> Together AI -> OpenAI), ensuring GPT-4o remains available as an emergency fallback at all times.
 
----
+The key risks are: (1) Llama 4 Scout has no published radiology-specific benchmarks, so quality parity with GPT-4o is unproven; (2) the existing 452-line system prompt was engineered for GPT-4o and will likely need significant adaptation for open models; (3) Groq's rate limits at scale (200 users) are not fully documented and require sales engagement; and (4) the hardcoded cost tracking system will be wrong by 71x after the switch, effectively disabling cost protection. All four risks have concrete mitigation strategies documented in the research.
 
-## Core Compliance Approach
+## Key Findings
 
-| What We Do | What This Means |
-|------------|-----------------|
-| Ephemeral processing only | No data storage = no HIPAA obligations |
-| Sell to individual radiologists | B2C/B2B to professionals, not institutions |
-| Provide drafting assistance | Not a medical device, not medical advice |
-| Require user acknowledgment | They accept full responsibility |
+### Recommended Stack
 
-**The user is a licensed medical professional. They are responsible for:**
-- What they input
-- Reviewing all AI output
-- The accuracy of any report they sign
-- Compliance with their own institutional/regulatory requirements
+The stack centers on Groq as the primary inference provider, with Together AI as fallback and OpenAI retained as emergency fallback -- all routed through Vercel AI Gateway. The AI SDK v6 is already installed (`ai@^6.0.39`), so only provider packages need adding. Transcription moves from OpenAI Whisper ($0.36/hr) to Groq Whisper v3 Turbo ($0.04/hr), an 89% cost reduction using the same Whisper model family.
 
----
+**Core technologies:**
+- **Groq API (Llama 4 Scout):** Primary LLM inference -- $0.0007/report (96% cheaper than GPT-4o), 460 TPS, OpenAI-compatible API
+- **Groq Whisper v3 Turbo:** Primary transcription -- $0.04/hr (89% cheaper), 228x realtime speed
+- **Vercel AI Gateway:** Multi-provider routing with failover -- zero cost, OIDC auth, BYOK key management in dashboard
+- **Together AI (Llama 4 Maverick):** Fallback LLM -- $0.0018/report, different infrastructure for true redundancy
+- **`@ai-sdk/gateway` + `@ai-sdk/groq` + `p-retry`:** Only 3 new npm packages required
 
-## What We Need
+**Critical version notes:**
+- AI SDK already at v6.0.39 -- no major upgrade needed
+- Do NOT use `@ai-sdk/togetherai` (v2/v3 spec incompatibility with AI SDK v6) -- use `@ai-sdk/openai-compatible` instead
 
-### 1. Terms of Service (Critical)
+### Expected Features
 
-Must include:
+**Must have (table stakes -- migration fails without these):**
+- T1: Environment-based model configuration (foundation for everything)
+- T2: Provider abstraction layer via AI SDK registry
+- T3: Alternative LLM for report generation (Groq Llama 4 Scout)
+- T4: Alternative transcription provider (Groq Whisper v3 Turbo)
+- T5: Prompt adaptation for target models (current prompt will NOT work identically)
+- T6: Quality validation baseline (golden dataset of 100+ radiologist-approved reports)
+- T7: Fallback to premium model via AI Gateway failover chain
+- T8: Actual cost tracking replacing hardcoded estimates
 
-```
-KEY CLAUSES:
+**Should have (operational excellence):**
+- D4: Per-user cost analytics -- low effort, high visibility
+- D5: Cost alerting with notifications -- builds on existing ceiling infrastructure
+- D6: Model performance telemetry -- foundation for intelligent routing
+- D7: Graceful degradation with user notification -- trust building
 
-1. NOT A MEDICAL DEVICE
-   "This software is a documentation drafting tool. It is not a medical
-   device, does not provide medical advice, and is not intended to
-   diagnose, treat, or replace professional medical judgment."
+**Defer (v3.2+ -- requires production data):**
+- D1: Intelligent model routing by task complexity
+- D2: A/B quality comparison dashboard
+- D3: Canary deployment for new models
 
-2. USER RESPONSIBILITY
-   "You are a licensed healthcare professional. You assume full
-   responsibility for reviewing, editing, and approving any content
-   generated by this tool before clinical use."
+### Architecture Approach
 
-3. NO PHI INPUT
-   "Do not enter patient-identifiable information. You are responsible
-   for de-identifying any content you input."
+The architecture introduces a provider registry (`lib/ai/registry.ts`) sitting between route handlers and AI providers, enabling hot-swappable model selection via environment variables. Route handlers change minimally (replacing `openai('gpt-4o')` with `getModel('generate')` -- a single-line change per route). Transcription uses a separate abstraction because `experimental_transcribe` has a different interface than text generation. The existing protection stack (auth, rate limiting, cost ceiling, abuse detection) is entirely provider-agnostic and carries forward unchanged.
 
-4. NO DATA STORAGE
-   "We do not store, retain, or have access to any content you generate.
-   All processing is ephemeral."
+**Major components:**
+1. **Provider Registry** (`lib/ai/registry.ts`) -- Central model resolution from env-driven config, ~40 lines
+2. **Transcription Abstraction** (`lib/ai/transcription.ts`) -- Provider-specific handling for Groq Whisper (primary) with OpenAI fallback, ~80 lines
+3. **Fallback Chain** (`lib/ai/fallback.ts`) -- Provider-level failover wrapping existing retry logic, ~40 lines
+4. **Cost Tracker Update** (`lib/cost/tracker.ts`) -- Provider-aware rates replacing hardcoded estimates
+5. **Config Validation** (`lib/ai/config.ts`) -- Startup validation of all required env vars
 
-5. USE AT YOUR OWN RISK
-   "This tool is provided 'as is' without warranties. You use it at your
-   own risk and accept full liability for its use in your practice."
+**Files modified:** 7 existing files (mostly single-line changes). **Files created:** 5 new files (~220 lines total). The entire migration is remarkably small in code volume.
 
-6. INDEMNIFICATION
-   "You agree to indemnify and hold harmless [Company] from any claims
-   arising from your use of this tool."
+### Critical Pitfalls
 
-7. LIMITATION OF LIABILITY
-   "In no event shall [Company] be liable for any clinical decisions,
-   patient outcomes, or professional consequences arising from use of
-   this tool."
-```
+1. **Medical hallucination increase with Llama 4 Scout (CRITICAL)** -- No published radiology benchmarks for Llama 4. Build a golden dataset of 100+ verified reports, run shadow mode for 2 weeks, implement automated hallucination detection comparing input concepts vs output concepts. Do NOT ship without radiologist sign-off.
 
-### 2. Privacy Policy (Simple)
+2. **Groq Whisper mis-transcribes medical terminology (CRITICAL)** -- Same Whisper base model inherits known hallucination-during-silence issues. Add `prompt` parameter with medical vocabulary hints (reduces errors 40-60%), implement medical terminology post-processing, trim silence from audio before sending. Keep AssemblyAI Medical Mode ($0.23/hr) as fallback.
 
-```
-KEY POINTS:
+3. **AI SDK v6 temperature parameter silently dropped (CRITICAL)** -- AI SDK v6's OpenAI provider treats unrecognized models as reasoning models, stripping the `temperature: 0.2` parameter. Use `openai.chat('gpt-4o')` explicitly. Write regression tests comparing output variance before/after.
 
-- We collect: Account info (email, name), usage metadata, payment info
-- We do NOT collect: Patient data, report content, transcription content
-- All AI processing is ephemeral - content is not stored
-- We use OpenAI for AI processing (their privacy policy applies during processing)
-- We use Stripe for payments
-- You can delete your account anytime
-```
+4. **Cost tracking becomes 71x wrong (HIGH)** -- Hardcoded `$0.05/report` vs actual `$0.0007/report` means cost ceilings never trigger. Make tracker provider-aware, lower ceiling from $20/day to $3-5/day, track actual token counts not estimates. Especially critical: fallback to OpenAI costs 30x more than Groq but would be tracked at Groq rates.
 
-### 3. In-App Disclaimers
+5. **Groq rate limits block production traffic (HIGH)** -- 30+ outages in 5 months, paid tier limits undocumented. Contact Groq sales BEFORE production. Implement provider-level (not just user-level) rate limiting. Make retry logic fallback-aware so rate-limited requests immediately escalate to Together AI instead of retrying Groq.
 
-| Location | Disclaimer |
-|----------|------------|
-| **Sign-up** | Checkbox: "I am a licensed healthcare professional and accept the Terms of Service" |
-| **First login** | Acknowledgment: "I understand this is a drafting tool and I am responsible for all clinical decisions" |
-| **Report generation** | Banner: "AI-GENERATED DRAFT - Review before clinical use" |
-| **Every generated report** | Footer: "Generated with AI assistance. Not reviewed. Not medical advice." |
-| **Export** | Reminder: "You are responsible for the accuracy of this report" |
+## Implications for Roadmap
 
-### 4. Website/Marketing
+Based on research, the migration naturally splits into 5 phases following a strict dependency chain where quality validation precedes any user-facing change.
 
-**Do say:**
-- "AI-powered report drafting tool"
-- "Save time on documentation"
-- "For licensed radiologists"
+### Phase 1: Provider Abstraction Layer
+**Rationale:** Pure refactoring with zero behavior change. Establishes the foundation for all subsequent phases. Must happen first because every other phase depends on the registry and config infrastructure.
+**Delivers:** Provider registry, env-driven model config, config validation, generalized error parsing. All routes continue using OpenAI -- no risk.
+**Addresses:** T1 (env config), T2 (provider abstraction), error parser generalization (P8), startup validation (P9)
+**Avoids:** P3 (AI SDK v6 breakage) by upgrading SDK in isolation before adding providers; P9 (env var sprawl) by establishing validation from day one
 
-**Don't say:**
-- Any accuracy percentages without methodology
-- "Diagnose" or "detect" anything
-- Comparisons to human performance
-- "HIPAA compliant" (we're not claiming compliance, we're avoiding the need for it)
+### Phase 2: Quality Validation and LLM Migration
+**Rationale:** The highest-risk phase. Prompt adaptation and quality validation MUST happen before any user sees output from the new model. This is the critical path (T3 -> T5 -> T6 -> T7).
+**Delivers:** Groq Llama 4 Scout integration, adapted prompts, golden dataset, shadow testing, fallback chain, client-side streaming throttle
+**Addresses:** T3 (alternative LLM), T5 (prompt adaptation), T6 (quality validation), T7 (fallback routing), D7 (graceful degradation UX)
+**Avoids:** P1 (hallucination) via shadow mode and golden dataset; P5 (prompt incompatibility) via model-specific prompt adapters; P7 (streaming speed) via client-side throttle; P6 (rate limits) via Groq sales engagement
 
----
+### Phase 3: Transcription Migration
+**Rationale:** Independent of Phase 2 (can technically run in parallel). Lower risk than LLM migration because it uses the same Whisper model family, but medical terminology accuracy must be validated.
+**Delivers:** Groq Whisper v3 Turbo integration, medical vocabulary hints, transcription quality validation
+**Addresses:** T4 (alternative transcription)
+**Avoids:** P2 (medical mis-transcription) via prompt parameter and post-processing layer; P11 (Edge runtime) by keeping transcription in Node.js only; P12 (audio format) via format verification
 
-## What We DON'T Need
+### Phase 4: Cost Tracking and Protection Updates
+**Rationale:** Must follow Phases 2 and 3 because cost rates depend on which providers are actually in production. But the design should be planned in Phase 1 since the tracker interface changes affect route code.
+**Delivers:** Provider-aware cost tracking with actual token counts, updated daily ceiling ($3-5), fallback cost amplifier alerts, per-user cost analytics
+**Addresses:** T8 (actual cost tracking), D4 (per-user analytics), D5 (cost alerting)
+**Avoids:** P4 (cost tracking 71x wrong) by making tracker provider-aware and tracking actual tokens
 
-| Skip This | Why |
-|-----------|-----|
-| BAAs with vendors | No PHI storage, users responsible for what they input |
-| HIPAA compliance program | Not a covered entity, not storing PHI |
-| FDA registration | Not a medical device, decision support tool |
-| SOC 2 certification | Not selling to enterprises requiring it |
-| Enterprise compliance tools | Overkill for our model |
-| Complex consent flows | Simple acknowledgment is sufficient |
+### Phase 5: Scale Optimization
+**Rationale:** Only after the full pipeline is working correctly. Optimization without correctness is premature.
+**Delivers:** Response caching for template generation, provider-level global rate limiting, load testing at 200 concurrent users, model telemetry
+**Addresses:** D6 (model telemetry), caching, scale testing
+**Avoids:** P6 (rate limits at scale) via provider-level rate limiting and request queuing
 
----
+### Phase Ordering Rationale
 
-## Implementation for v1.4
+- **Phases 1 -> 2 -> 4 is the strict critical path.** Phase 1 is foundation; Phase 2 is the core value delivery; Phase 4 validates the savings are real.
+- **Phase 3 can run in parallel with Phase 2** since transcription is independent of text generation. Both depend only on Phase 1.
+- **Phase 5 comes last** because optimization before correctness is the most common anti-pattern in this domain. The pitfalls research explicitly warns against this ordering.
+- **Quality validation is embedded in Phase 2, not a separate phase.** Separating "add the model" from "validate the model" invites the temptation to ship before validation is complete. They are one atomic unit.
 
-### Phase 1: Legal Documents
-- [ ] Draft Terms of Service with all key clauses above
-- [ ] Draft simple Privacy Policy
-- [ ] Have lawyer review (one-time cost, not ongoing compliance)
+### Research Flags
 
-### Phase 2: Website Disclaimers
-- [ ] Add Terms of Service page
-- [ ] Add Privacy Policy page
-- [ ] Add "Not Medical Advice" footer on all pages
-- [ ] Add "For Licensed Healthcare Professionals" messaging
+Phases likely needing deeper research during planning:
+- **Phase 2 (Quality Validation and LLM Migration):** Highest risk phase. Prompt adaptation for Llama 4 Scout has no established playbook for medical reports. Need empirical testing of temperature settings, prompt structures, and structured output approaches. The golden dataset methodology needs definition.
+- **Phase 3 (Transcription Migration):** Medical terminology accuracy of Groq Whisper needs production-condition testing. The `prompt` parameter effectiveness and medical post-processing dictionary scope need research.
 
-### Phase 3: In-App Acknowledgments
-- [ ] Sign-up checkbox for Terms acceptance
-- [ ] First-login acknowledgment modal
-- [ ] Persistent "AI Draft" banner on generation screens
-- [ ] Footer on all generated reports
+Phases with standard patterns (skip research-phase):
+- **Phase 1 (Provider Abstraction):** Well-documented AI SDK patterns. The registry, env config, and error parsing are standard implementations.
+- **Phase 4 (Cost Tracking):** Straightforward update to existing infrastructure. Provider-specific rates are known quantities.
+- **Phase 5 (Scale Optimization):** Standard caching and load testing patterns. Redis operations, Vercel function concurrency, and provider throughput are well-documented.
 
-### Phase 4: Marketing Review
-- [ ] Audit all website copy for prohibited claims
-- [ ] Remove any accuracy/performance claims without documentation
-- [ ] Ensure "drafting tool" positioning is clear throughout
+## Confidence Assessment
 
----
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Stack | HIGH | All pricing verified from official sources (April 2026). AI SDK compatibility confirmed. Groq/Together AI provider packages verified on npm. |
+| Features | HIGH | Feature list derived from codebase analysis + official docs. Critical path and dependencies are clear. |
+| Architecture | HIGH (core) / MEDIUM (transcription) | Provider registry is stable AI SDK API. Transcription uses `experimental_transcribe` (still experimental prefix). |
+| Pitfalls | HIGH (known risks) / LOW (Llama 4 quality) | Hallucination rates, Whisper issues, SDK breakage all well-documented. Llama 4 Scout radiology quality is the key unknown. |
 
-## Risk Acknowledgment
+**Overall confidence:** MEDIUM-HIGH
 
-This light-touch approach works because:
+### Gaps to Address
 
-1. **Licensed professionals** - Users are radiologists who understand their responsibilities
-2. **No data storage** - Nothing to breach, nothing to protect
-3. **Clear disclaimers** - Users explicitly accept responsibility
-4. **Drafting tool positioning** - We're like a fancy text editor, not a diagnostic system
+- **Llama 4 Scout radiology quality:** No published medical benchmarks. Must be validated empirically with golden dataset before cutover. This is the single biggest unknown and cannot be resolved through research alone -- it requires hands-on testing.
+- **Groq paid tier rate limits:** Not publicly documented for 200 concurrent users. Must contact Groq sales before Phase 5. Could be a blocker if limits are insufficient.
+- **Prompt token reduction:** Current system prompt is ~2.5K tokens, needs to be under ~2K for Llama models. Whether this can be done without quality loss is unknown until tested.
+- **AssemblyAI Medical Mode accuracy delta:** No head-to-head benchmark vs Groq Whisper for radiology vocabulary. May need to run comparison if Groq Whisper quality is insufficient.
+- **Together AI serverless Maverick availability:** May require dedicated deployment for consistent availability as a fallback. Needs verification.
 
-**Remaining risks we accept:**
-- If we make marketing claims we can't substantiate (mitigation: don't make claims)
-- If a user ignores disclaimers and something goes wrong (mitigation: clear Terms, indemnification)
-- If regulations change (mitigation: monitor, adapt)
+## Sources
 
----
+### Primary (HIGH confidence)
+- [Groq Pricing](https://groq.com/pricing) -- token rates, Whisper pricing
+- [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) -- authentication, BYOK, routing
+- [AI SDK Gateway Provider](https://ai-sdk.dev/providers/ai-sdk-providers/ai-gateway) -- integration patterns
+- [AI SDK v6 Migration Guide](https://ai-sdk.dev/docs/migration-guides/migration-guide-6-0) -- breaking changes
+- [Groq Speech-to-Text Docs](https://console.groq.com/docs/speech-to-text) -- Whisper API details
+- [Together AI OpenAI Compatibility](https://docs.together.ai/docs/openai-api-compatibility) -- confirmed OpenAI-compatible API
+- Codebase analysis: `app/api/generate/route.ts`, `app/api/transcribe/route.ts`, `lib/cost/tracker.ts`
 
-## Simplified Phase Structure for v1.4
+### Secondary (MEDIUM confidence)
+- [RSNA 2026: LLMs as Radiology Proofreaders](https://www.rsna.org/news/2026/february/llms-act-as-radiology-proofreaders) -- Llama-3-70B radiology validation
+- [Artificial Analysis: Llama 4 Scout Providers](https://artificialanalysis.ai/models/llama-4-scout/providers) -- latency benchmarks
+- [StatusGator: Groq Cloud Outage History](https://statusgator.com/services/groq-cloud) -- reliability data
+- [PlainScribe: Transcription Accuracy 2026](https://www.plainscribe.com/blog/transcription-accuracy-benchmark-2026) -- medical term error rates
 
-```
-Phase 1: Legal Documents (1-2 weeks)
-├── Terms of Service
-├── Privacy Policy
-└── Lawyer review
-
-Phase 2: Website & App Integration (1 week)
-├── Legal pages on website
-├── Sign-up acknowledgment
-├── In-app disclaimers
-└── Report footers
-
-Phase 3: Marketing Cleanup (few days)
-├── Audit copy for prohibited claims
-└── Ensure "drafting tool" positioning
-
-Done.
-```
+### Tertiary (LOW confidence -- needs validation)
+- Llama 4 Scout radiology-specific hallucination rates -- extrapolated from Llama 3-70B data
+- Groq paid tier rate limits for 200 concurrent users -- requires sales conversation
+- Client-side streaming throttle UX impact -- hypothesis, not tested
 
 ---
-
-## What Success Looks Like
-
-Before a user generates their first report, they will have:
-1. Agreed to Terms of Service (checkbox at signup)
-2. Acknowledged this is a drafting tool (first-login modal)
-3. Seen the "AI Draft - Review Required" banner
-4. Understood they are fully responsible
-
-Every generated report will show:
-- "AI-Generated Draft" indicator
-- "Not reviewed. Not medical advice." footer
-- Reminder that the radiologist is responsible
-
-**The message is unmistakable: This is your tool. You're responsible. Use it wisely.**
-
----
-
-## Files in This Research Folder
-
-| File | Status |
-|------|--------|
-| `SUMMARY.md` | This file - simplified approach |
-| `STACK.md` | Reference only - enterprise tooling we're NOT using |
-| `FEATURES.md` | Reference only - full feature list, use selectively |
-| `ARCHITECTURE.md` | Still relevant - confirms our ephemeral model is sound |
-| `PITFALLS.md` | Reference only - mostly for enterprise/regulated scenarios |
-
----
-
-*This approach prioritizes simplicity and user responsibility over complex compliance frameworks.*
+*Research completed: 2026-04-05*
+*Ready for roadmap: yes*

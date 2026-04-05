@@ -1,333 +1,440 @@
-# Legal Compliance Stack Research
+# Technology Stack: Cost-Optimized AI Infrastructure
 
-**Research Date:** 2026-01-20
-**Domain:** AI Medical Decision-Support Legal Compliance
-**Confidence:** MEDIUM (verified with official sources where available)
-
-## Executive Summary
-
-For AI Radiologist's v1.4 commercial launch, legal compliance tooling falls into four categories: consent management, audit logging, privacy compliance, and legal document generation. The startup-appropriate approach is to use lightweight SaaS tools (Termly for consent, native Supabase auditing) rather than enterprise platforms like OneTrust or Drata. Key insight: since AI Radiologist does NOT store PHI (ephemeral data handling), the compliance burden is significantly reduced - focus on AI usage disclosure, consent, and decision-support disclaimers rather than full HIPAA infrastructure.
-
-**Primary recommendation:** Use Termly Pro ($15/mo) for consent + policies, Supabase supa_audit for database auditing, and clear AI decision-support disclaimers. Total compliance tooling cost: under $200/year.
+**Project:** AI Radiologist v3.0
+**Researched:** 2026-04-05
+**Focus:** Replace OpenAI (GPT-4o + Whisper) with near-zero-cost alternatives
 
 ---
 
-## Consent Management Tools
+## Current Baseline Costs (OpenAI)
 
-### Recommended: Termly Pro
+| Service | Model | Pricing | Notes |
+|---------|-------|---------|-------|
+| Report Generation | GPT-4o | $2.50/M input, $10.00/M output | ~2K input + ~1.5K output per report |
+| Transcription | Whisper API | $0.006/minute ($0.36/hr) | ~2-5 min per dictation |
 
-| Attribute | Details |
-|-----------|---------|
-| **Cost** | $15/month (Pro+ plan) |
-| **Why** | Best value for startups - combines consent banner + policy generator + cookie scanner |
-| **Confidence** | HIGH - verified via [Termly official pricing](https://termly.io/) |
+**Estimated per-report cost (GPT-4o):** ~$0.020 per report (2K in + 1.5K out)
+**Estimated per-transcription cost:** ~$0.012-$0.030 per dictation (2-5 min)
 
-**Key features:**
-- Consent Management Platform with auto-blocking
-- Privacy Policy Generator with AI disclosure clauses
-- Terms of Service Generator
-- Google Consent Mode v2 compatible (important for analytics)
-- Multi-language support (global launch)
-- GDPR, CCPA/CPRA, ePrivacy compliant templates
-
-**For AI-specific compliance:** Termly's policy generator includes AI disclosure templates - critical for state laws like Utah, California, and Colorado that require AI usage disclosure in healthcare-adjacent apps.
-
-### Alternative: CookieYes
-
-| Attribute | Details |
-|-----------|---------|
-| **Cost** | $10/month (Basic) to $55/month (Ultimate) |
-| **Why** | Slightly cheaper basic tier, good support |
-| **Confidence** | MEDIUM - verified via [CookieYes pricing](https://www.cookieyes.com/blog/best-consent-management-platforms/) |
-
-**Tradeoff:** Fewer policy generators than Termly. Branding removal requires Ultimate tier ($55/mo). Choose if you only need consent banner without legal document generation.
-
-### Alternative: Osano (Free Tier)
-
-| Attribute | Details |
-|-----------|---------|
-| **Cost** | Free (up to 5,000 visitors/month) |
-| **Why** | "No Fines" pledge - pays up to $500k of penalties |
-| **Confidence** | MEDIUM - [Osano comparison](https://www.osano.com/comparison/consent-management-platform) |
-
-**Tradeoff:** Free tier very limited. Paid tier ($199/mo) expensive for a startup. Consider only if budget is zero.
+At 200 concurrent users generating ~20 reports/day each: ~4,000 reports/day = ~$80/day = ~$2,400/month on generation alone.
 
 ---
 
-## Privacy Compliance Tools
+## Recommended Stack
 
-### Audit Logging
+### Primary: Groq for Report Generation
 
-**Recommended: Supabase supa_audit Extension**
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Groq API | Current | LLM inference for report generation | Fastest inference (400-460 TPS for Scout), competitive pricing, OpenAI-compatible API |
+| Llama 4 Scout (17Bx16E) | Latest | Primary report generation model | $0.11/M in, $0.34/M out -- 96% cheaper than GPT-4o, 460+ TPS, 128K context |
+| Llama 3.3 70B Versatile | Latest | Fallback model for complex reports | $0.59/M in, $0.79/M out -- 76% cheaper than GPT-4o, higher quality ceiling |
 
-| Attribute | Details |
-|-----------|---------|
-| **Cost** | Free (included in Supabase) |
-| **Why** | Already using Supabase; trigger-based auditing requires no external service |
-| **Confidence** | HIGH - verified via [Supabase supa_audit docs](https://supabase.com/docs/guides/database/extensions/pgaudit) |
+**Why Groq over alternatives:**
+- **Speed:** 400-460 tokens/second output speed for Llama 4 Scout, 0.59s time-to-first-token -- critical for streaming radiology reports. Users see text appear near-instantly.
+- **Cost:** Llama 4 Scout at $0.11/$0.34 per M tokens is 96% cheaper than GPT-4o ($2.50/$10.00).
+- **OpenAI-compatible API:** Drop-in replacement via AI SDK provider, minimal code changes.
+- **Reliability:** Managed service, no cold starts, no GPU management.
+- **Batch API:** 50% discount for non-urgent processing (batch quality checks, template suggestions).
 
-**Implementation:**
-```sql
--- Enable supa_audit extension
-create extension if not exists supa_audit cascade;
+**Confidence:** HIGH -- pricing verified from official Groq pricing page (groq.com/pricing), speed benchmarks from Artificial Analysis, April 2026.
 
--- Enable auditing on sensitive tables
-select audit.enable_tracking('public.profiles'::regclass);
-select audit.enable_tracking('public.templates'::regclass);
-select audit.enable_tracking('public.reports'::regclass);
-```
+### Secondary: Together AI as Fallback Provider
 
-**What it provides:**
-- Automatic INSERT/UPDATE/DELETE tracking
-- User attribution (who made changes)
-- JSONB diffs of what changed
-- Query via `audit.record_version` table
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Together AI API | Current | Fallback LLM provider | 0.28s TTFT, broad model catalog, Llama 4 Maverick available |
+| Llama 4 Maverick | Latest | High-quality fallback | $0.27/M in, $0.85/M out -- GPT-4o class quality at 90% less cost |
+| Llama 3.3 70B | Latest | Secondary fallback | $0.88/M in+out -- proven quality for medical text |
 
-**HIPAA Note:** While AI Radiologist doesn't store PHI, having audit trails for user data and template modifications demonstrates security hygiene - valuable for enterprise sales and any future SOC 2 considerations.
+**Why Together AI as fallback (not primary):**
+- Slightly higher latency than Groq (0.28s vs 0.20s TTFT)
+- Llama 4 Maverick available -- higher quality ceiling for complex cases
+- Different infrastructure = true redundancy (not just model failover)
 
-**Alternative: PGAudit Extension**
+**Confidence:** MEDIUM -- Together AI Maverick pricing verified from official page. Serverless availability for Maverick may require dedicated deployment for high throughput.
 
-| Attribute | Details |
-|-----------|---------|
-| **Cost** | Free |
-| **Why** | Session-level logging to Postgres log files |
-| **Confidence** | HIGH - [PGAudit Supabase docs](https://supabase.com/docs/guides/database/extensions/pgaudit) |
+### Transcription: Groq Whisper Large v3 Turbo
 
-**When to use:** If you need log-file based auditing for a SOC 2 audit later. More complex to configure; supa_audit is simpler for application-level auditing.
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Groq Whisper Large v3 Turbo | Latest | Voice transcription | $0.04/hour -- 89% cheaper than OpenAI Whisper ($0.36/hr), 228x realtime speed |
 
-### Data Deletion (GDPR/CCPA Right to Erasure)
+**Why Groq Whisper over alternatives:**
 
-**Recommended: Self-Implemented Deletion API**
+| Provider | Model | Price/Hour | Speed | Medical Accuracy | Notes |
+|----------|-------|-----------|-------|-----------------|-------|
+| **Groq** | **Whisper v3 Turbo** | **$0.04** | **228x realtime** | **Good (Whisper base)** | **Recommended primary** |
+| Groq | Distil-Whisper | $0.02 | Faster | Lower accuracy | Too low accuracy for medical terms |
+| Groq | Whisper Large v3 | $0.111 | 217x realtime | Best (Whisper family) | Use if Turbo accuracy insufficient |
+| OpenAI | Whisper API | $0.36 | Batch only | Good | Current baseline |
+| Cloudflare | Whisper v3 Turbo | ~$0.03 | Unknown | Good (same model) | Adds another provider |
+| Deepgram | Nova-3 | $0.258 (batch) | 1hr in 20s | Good general | 6x more expensive |
+| AssemblyAI | Universal-3 Pro | $0.15+ | Fast | Best (Medical Mode) | Best medical accuracy |
 
-| Attribute | Details |
-|-----------|---------|
-| **Cost** | Development time only |
-| **Why** | Simple for apps without complex data relationships |
-| **Confidence** | HIGH - standard pattern |
+**Decision:** Use Groq Whisper v3 Turbo as primary (same provider = one billing relationship, 228x realtime speed, $0.04/hr). Minimum billing is 10 seconds per request.
 
-**Implementation approach:**
+**Important caveat:** AssemblyAI has a dedicated Medical Mode with superior accuracy for clinical terminology. If transcription accuracy issues arise with medical terms (medications, procedures, anatomical terms), switch to AssemblyAI ($0.15/hr base + $0.08/hr PII redaction = $0.23/hr). Still 36% cheaper than OpenAI.
+
+**Confidence:** HIGH -- pricing verified from official Groq pricing page, April 2026.
+
+### Multi-Provider Routing: Vercel AI SDK + AI Gateway
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `ai` (Vercel AI SDK) | ^6.0.39 (already installed) | Unified LLM interface | Built-in gateway support, streaming, provider routing |
+| `@ai-sdk/gateway` | ^1.0 | AI Gateway provider types | Provider options type definitions for routing config |
+| `@ai-sdk/groq` | ^3.0 | Groq provider | Direct Groq access for transcription (not routed through gateway) |
+
+**Critical finding: No major SDK upgrade needed.** The project already has `ai@^6.0.39` and `@ai-sdk/openai@^3.0.12`. Only new provider packages need to be added.
+
+**Why Vercel AI Gateway:**
+- Already on Vercel -- zero additional infrastructure
+- OIDC authentication is automatic on deployed Vercel functions, no key management needed
+- Provider routing with automatic failover and retries built in
+- Zero markup on token pricing -- same cost as going direct to provider
+- **HIPAA routing option:** Set `hipaaCompliant: true` to route only to BAA-signed providers (requires Vercel Pro @ $350/mo add-on)
+
+**Authentication model (important):**
+
+The AI Gateway acts as a proxy. The application authenticates to the gateway via OIDC, and the gateway authenticates to providers via BYOK credentials configured in the Vercel Dashboard. No provider API keys are stored in the application.
+
+1. **OIDC (recommended -- both local and production):** Vercel automatically generates OIDC tokens associated with the project. On deployed Vercel functions, this is automatic with zero configuration. For local dev, run `vercel link` then `vercel env pull` to get the OIDC token. The token is valid for 12 hours; re-run `vercel env pull` to refresh.
+
+2. **API Key (fallback for CI/non-Vercel environments):** Create an API key in the Vercel Dashboard (AI Gateway > API Keys), save as `AI_GATEWAY_API_KEY`. The AI SDK reads this env var automatically when a plain string model ID is used. Requires manual rotation.
+
+**Provider keys are configured via BYOK in the Vercel Dashboard** (AI Gateway > Bring Your Own Key), NOT as application environment variables. This means Groq, Together AI, and OpenAI API keys are stored in Vercel's dashboard, not in the app. The gateway uses them transparently. If BYOK credentials fail, the gateway falls back to its own system credentials.
+
+**Setup pattern for report generation (via gateway):**
 ```typescript
-// app/api/user/delete-account/route.ts
-// DELETE request triggers cascade deletion:
-// 1. Delete user templates
-// 2. Delete user macros
-// 3. Delete user preferences
-// 4. Delete user reports (already ephemeral)
-// 5. Delete Supabase Auth user
-// 6. Cancel Stripe subscription
+import { generateText } from 'ai';
+import type { GatewayProviderOptions } from '@ai-sdk/gateway';
+
+// Plain string model ID routes through AI Gateway automatically
+// Auth: OIDC on Vercel (automatic), or via vercel env pull locally
+const { text } = await generateText({
+  model: 'groq/llama-4-scout-17b-16e-instruct',
+  prompt: systemPrompt + userInput,
+  providerOptions: {
+    gateway: {
+      // Failover: try Groq first, then Together AI, then OpenAI
+      order: ['groq', 'together', 'openai'],
+      // Alternative models to try if primary model fails
+      models: [
+        'together/llama-4-maverick',
+        'openai/gpt-5.4',
+      ],
+    } satisfies GatewayProviderOptions,
+  },
+});
 ```
 
-**Key requirement:** Must respond to deletion requests within 30 days (GDPR) or 45 days (CCPA). Implement email confirmation workflow.
+**Setup pattern for transcription (direct Groq provider):**
 
-**2025 Enforcement context:** The European Data Protection Board launched coordinated enforcement on right to erasure in March 2025. Regulators are actively checking compliance. Source: [Greenberg Traurig enforcement update](https://www.gtlaw-dataprivacydish.com/2025/03/enforcement-update-regulatory-attention-focused-on-deletion-requests/).
+Transcription uses `@ai-sdk/groq` directly because audio transcription is not yet routed through the AI Gateway. The Groq API key for transcription is passed via request-scoped BYOK or configured as an env var for this specific use case only.
+
+```typescript
+import { groq } from '@ai-sdk/groq';
+import { experimental_transcribe as transcribe } from 'ai';
+
+// Transcription uses @ai-sdk/groq directly (GROQ_API_KEY env var)
+// This is the only provider key needed in the app -- all LLM calls go through gateway
+const result = await transcribe({
+  model: groq.transcription('whisper-large-v3-turbo'),
+  audio: audioFile,
+});
+```
+
+**Confidence:** HIGH -- verified from official Vercel AI Gateway docs (vercel.com/docs/ai-gateway/authentication-and-byok), AI SDK docs (ai-sdk.dev), April 2026.
 
 ---
 
-## Legal Document Management
+## Cost Comparison Matrix
 
-### Recommended: Termly Policy Generators
+### Report Generation (per 1M tokens)
 
-Since Termly Pro already recommended for consent, use their policy generators:
+| Provider | Model | Input $/M | Output $/M | Per-Report Cost (2K in + 1.5K out) | vs GPT-4o |
+|----------|-------|-----------|------------|-------------------------------------|-----------|
+| OpenAI | GPT-4o | $2.50 | $10.00 | $0.0200 | baseline |
+| **Groq** | **Llama 4 Scout** | **$0.11** | **$0.34** | **$0.0007** | **-96%** |
+| DeepInfra | Llama 4 Scout | $0.08 | $0.30 | $0.0006 | -97% |
+| Groq | Llama 3.3 70B | $0.59 | $0.79 | $0.0024 | -88% |
+| Together AI | Llama 4 Maverick | $0.27 | $0.85 | $0.0018 | -91% |
+| DeepInfra | Llama 4 Maverick | $0.15 | $0.60 | $0.0012 | -94% |
+| Together AI | Llama 3.3 70B | $0.88 | $0.88 | $0.0031 | -85% |
+| Fireworks AI | Llama 4 Maverick | ~$0.55 blended | - | ~$0.0019 | -90% |
+| Cerebras | Llama 3.1 70B | $0.60 blended | - | $0.0021 | -90% |
 
-| Document | Generator Available | Notes |
-|----------|---------------------|-------|
-| Privacy Policy | Yes | AI disclosure clauses built-in |
-| Terms of Service | Yes | |
-| Cookie Policy | Yes | Auto-generated from cookie scan |
-| EULA | Yes | For app-specific terms |
-| Disclaimer | Yes | **Critical for decision-support** |
+**Note on DeepInfra:** Cheapest per-token but lacks an official AI SDK provider package. Would require custom OpenAI-compatible client wrapper. Groq is recommended because the AI SDK has a first-party `@ai-sdk/groq` provider with full streaming and transcription support -- the integration quality is worth the marginal price premium ($0.0001/report).
 
-**AI Decision-Support Disclaimer requirements (2025-2026):**
+### Transcription (per hour of audio)
 
-Per state-level regulations (Utah, Colorado, California) and FDA guidance:
+| Provider | Model | $/Hour | vs OpenAI Whisper |
+|----------|-------|--------|-------------------|
+| OpenAI | Whisper API | $0.36 | baseline |
+| Groq | Distil-Whisper | $0.02 | -94% |
+| Cloudflare | Whisper v3 Turbo | ~$0.03 | -92% |
+| **Groq** | **Whisper v3 Turbo** | **$0.04** | **-89%** |
+| Groq | Whisper Large v3 | $0.111 | -69% |
+| AssemblyAI | Universal-3 Pro | $0.15 | -58% |
+| Deepgram | Nova-3 (batch) | $0.258 | -28% |
 
-1. **Disclosure that AI is used** - Plain language statement
-2. **AI does not replace physician judgment** - Decision-support disclaimer
-3. **No diagnostic claims** - Reports are drafts requiring physician review
-4. **Data processing transparency** - How AI processes inputs
+### Monthly Cost Projection (200 users, ~4,000 reports/day, ~2,000 transcriptions/day)
 
-**Example disclaimer text:**
-```
-This application uses artificial intelligence to assist in drafting
-radiology reports. AI-generated content is a draft only and must be
-reviewed, edited, and approved by a licensed physician before use.
-This tool does not diagnose, treat, or replace medical judgment.
-The radiologist remains solely responsible for all clinical decisions.
-```
-
-### Alternative: iubenda
-
-| Attribute | Details |
-|-----------|---------|
-| **Cost** | $3.49/month (basic) to $99/month (enterprise) |
-| **Why** | Auto-updates when laws change; 150k+ clients |
-| **Confidence** | MEDIUM - [iubenda pricing](https://www.iubenda.com/en/pricing/) |
-
-**When to use:** If you want automatic policy updates without manual maintenance. More expensive than Termly for similar features.
-
-### Alternative: GetTerms
-
-| Attribute | Details |
-|-----------|---------|
-| **Cost** | Free tier available |
-| **Why** | Simple generator, GDPR/CCPA/PIPEDA ready |
-| **Confidence** | MEDIUM - [GetTerms](https://getterms.io/) |
-
-**When to use:** Budget-conscious alternative if Termly is too expensive.
+| Scenario | Reports/mo | Transcriptions/mo | Monthly Cost | Savings vs Current |
+|----------|-----------|-------------------|-------------|-------------------|
+| Current (GPT-4o + Whisper) | 120K | 60K (~5K hrs) | ~$4,200 | -- |
+| **Recommended (Groq Scout + Groq Whisper)** | 120K | 60K (~5K hrs) | **~$284** | **-93%** |
+| Fallback mix (20% Together Maverick) | 120K | 60K | ~$350 | -92% |
+| Conservative (Groq 70B + Groq Whisper) | 120K | 60K | ~$488 | -88% |
 
 ---
 
-## OpenAI Compliance Configuration
+## Alternatives Considered
 
-**Critical for HIPAA-adjacent apps using OpenAI:**
-
-### BAA Status
-
-| Product | BAA Available | Notes |
-|---------|---------------|-------|
-| OpenAI API | Yes | Email baa@openai.com |
-| ChatGPT Enterprise | Yes | Sales-managed only |
-| ChatGPT Plus/Pro/Team | NO | Never HIPAA compliant |
-| Azure OpenAI | Yes | BAA included in Microsoft DPA |
-
-**Confidence:** HIGH - verified via [OpenAI BAA documentation](https://help.openai.com/en/articles/8660679-how-can-i-get-a-business-associate-agreement-baa-with-openai)
-
-**Recommended approach for AI Radiologist:**
-
-Since AI Radiologist does NOT store PHI and uses ephemeral data handling:
-1. **Do NOT send PHI to OpenAI** - Only transcription text and template context
-2. **Enable zero data retention** - API config `{"store": false}`
-3. **Consider Azure OpenAI** - If enterprise clients require BAA (BAA included by default)
-4. **Document data flow** - Privacy policy should state AI providers do not receive patient identifiers
-
-**Timeline note:** Getting a BAA from OpenAI can take 1+ month. Plan ahead if needed.
-
----
-
-## Recommendations for AI Radiologist v1.4
-
-### Must Have (Launch Blockers)
-
-| Tool | Cost | Priority | Implementation |
-|------|------|----------|----------------|
-| **Termly Pro** | $15/mo | P0 | Consent banner + Privacy Policy + Terms |
-| **AI Disclaimer** | $0 | P0 | Decision-support disclaimer in UI |
-| **supa_audit** | $0 | P0 | Enable on profiles, templates tables |
-| **Deletion API** | Dev time | P0 | Right to erasure endpoint |
-
-**Total recurring cost:** $15/month ($180/year)
-
-### Should Have (Pre-Enterprise Sales)
-
-| Tool | Cost | Priority | Implementation |
-|------|------|----------|----------------|
-| **PGAudit logging** | $0 | P1 | For SOC 2 readiness later |
-| **Cookie scanner** | Included | P1 | Termly auto-scan |
-| **DSAR workflow** | Dev time | P1 | Data Subject Access Requests |
-
-### Nice to Have (Scale Triggers)
-
-| Tool | Cost | Priority | When |
-|------|------|----------|------|
-| **Drata/Vanta** | $10k+/yr | P2 | When SOC 2 required for enterprise deals |
-| **Azure OpenAI** | Variable | P2 | When enterprise clients require BAA |
-| **OneTrust** | $50k+/yr | P3 | Never - enterprise overkill |
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| LLM Inference | Groq | DeepInfra | Marginally cheaper ($0.0006 vs $0.0007/report) but no first-party AI SDK provider; not worth custom integration for $12/mo savings |
+| LLM Inference | Groq | Cerebras | Fastest raw throughput (2,500 TPS for Maverick) but limited model selection, no Llama 4 Scout pricing published, less mature ecosystem |
+| LLM Inference | Groq | Cloudflare Workers AI | Opaque neuron pricing, limited model selection, no Llama 4 Maverick |
+| LLM Inference | Groq | Fireworks AI | Higher pricing (~$0.55 blended vs $0.17 on Groq), no clear advantage for our use case |
+| LLM Inference | Groq | Replicate | 16-60s cold starts unacceptable for interactive use, unpredictable GPU-second billing |
+| LLM Fallback | Together AI | DeepInfra | Together AI has first-party AI SDK support, Maverick available, proven infrastructure |
+| Transcription | Groq Whisper | Deepgram Nova-3 | 6x more expensive ($0.258/hr vs $0.04/hr) for marginal accuracy difference |
+| Transcription | Groq Whisper | Cloudflare Whisper | Same price tier (~$0.03/hr), but adds another provider/billing relationship |
+| Multi-provider | Vercel AI Gateway | Custom router | Gateway is free, built-in, maintained by Vercel -- no reason to build custom |
 
 ---
 
 ## What NOT to Use
 
-### Enterprise Overkill
+### Self-Hosted Ollama/VPS -- NOT Recommended
 
-| Tool | Why Not |
-|------|---------|
-| **OneTrust** | $50k+/year, designed for Fortune 500, massive overkill for startup |
-| **Drata/Vanta** | $10k+/year before audit fees; premature until enterprise deals require SOC 2 |
-| **TrustArc** | Enterprise pricing, complex implementation |
-| **BigID** | Data discovery tool for massive enterprises |
+| Reason | Detail |
+|--------|--------|
+| Breakeven at 5-10M tokens/month | We project ~500K tokens/month -- far below breakeven |
+| Infrastructure burden | GPU VPS ($200-500/mo minimum), Kubernetes, monitoring, on-call |
+| Scaling complexity | 200 concurrent users needs load balancing, multiple GPU instances |
+| Idle cost waste | Variable workload = paying for 60-70% idle GPU time |
+| No advantage at our scale | API providers are cheaper below 5M tokens/month |
 
-**When these make sense:** If AI Radiologist lands an enterprise hospital contract requiring SOC 2 Type II certification, budget $30k-50k total (Vanta/Drata + audit fees) at that time. Do not invest preemptively.
+**When to reconsider:** If monthly token volume exceeds 10M tokens AND/OR HIPAA compliance requires data sovereignty.
 
-### Overcomplicated Approaches
+### GPT-4o-mini as "Cost Optimization" -- NOT Recommended
 
-| Approach | Why Not |
-|----------|---------|
-| **Full HIPAA infrastructure** | AI Radiologist doesn't store PHI - ephemeral handling avoids this |
-| **HITRUST certification** | $100k+ and 6+ months; only if targeting large health systems |
-| **Custom audit logging service** | supa_audit handles this for free |
-| **Third-party DSAR automation** | At startup scale, manual + API is sufficient |
+| Reason | Detail |
+|--------|--------|
+| Still more expensive | $0.15/$0.60 per M tokens vs Groq Scout at $0.11/$0.34 |
+| Vendor lock-in | Stays in OpenAI ecosystem, no redundancy gained |
+| Less capable than Llama 4 Scout | Scout outperforms on LMSYS benchmarks |
 
-### Outdated/Risky
+### Replicate -- NOT Recommended
 
-| Tool | Why Not |
-|------|---------|
-| **ChatGPT for policies** | Termly explicitly warns against this - legal risk |
-| **Generic policy templates** | Miss AI disclosure requirements mandated in 2025 |
-| **Cookie consent without scanner** | Miss tracking technologies, compliance gaps |
+| Reason | Detail |
+|--------|--------|
+| Cold starts | 16-60+ seconds for custom models -- unacceptable for interactive report generation |
+| Unpredictable costs | GPU-second billing makes cost forecasting difficult |
+| Not cost-competitive | Per-second GPU billing more expensive than per-token at our volume |
+
+### Cloudflare Workers AI -- NOT Recommended as Primary
+
+| Reason | Detail |
+|--------|--------|
+| Limited model selection | No Llama 4 Maverick, opaque neuron pricing |
+| Latency concerns for large models | Edge inference fast for small models, but 70B+ have variable latency |
+| No meaningful Whisper savings | $0.03/hr vs Groq $0.04/hr -- not worth adding another provider |
 
 ---
 
-## Regulatory Context (2025-2026)
+## Model Quality for Medical Text
 
-### Federal
+### Key Findings
 
-- **HIPAA Security Rule update (Jan 2025):** First major update in 20 years. AI systems processing PHI face stricter requirements - but AI Radiologist avoids PHI.
-- **FDA AI guidance:** Clinical decision support tools where physicians independently review recommendations are excluded from medical device oversight under 21st Century Cures Act.
+**Llama 3-70B has been validated for radiology:**
+- 2026 RSNA research shows LLM-generated radiology reports with Llama-3-70B achieve Flesch reading ease scores of 44 +/- 6 (vs original reports at 17 +/- 13)
+- Open-weight models show "strong potential for real-world clinical use" per published research
+- Human oversight still required (already in our design -- "AI-GENERATED DRAFT" disclaimers)
 
-### State Laws (Critical for US Launch)
+**Llama 4 Scout/Maverick expected to be better:**
+- Llama 4 Maverick outperforms GPT-4o on LMSYS Chatbot Arena (ELO 1417)
+- MoE architecture activates only 17B parameters but draws from larger expert pool
+- No specific radiology benchmarks published yet for Llama 4
 
-| State | Effective | Requirement |
-|-------|-----------|-------------|
-| **Colorado AI Act** | June 30, 2026 | Disclosure, impact assessments, 3-year record keeping |
-| **Utah AI** | May 2025 | AI disclosure in regulated sectors, $2,500/violation |
-| **California** | 2025 | Training data disclosure, watermarking, health communication disclaimers |
-| **Pennsylvania** | Proposed Nov 2025 | Disclaimers for AI in clinical communications |
+**Risk mitigation strategy:**
+1. Run A/B quality validation comparing Groq Llama output vs GPT-4o baseline before full cutover
+2. Use OpenAI GPT-5.4 as emergency fallback via Vercel AI Gateway (model: `openai/gpt-5.4`)
+3. Keep temperature at 0.2 (same as current) for deterministic medical outputs
+4. Validate output structure matches existing section format (Findings, Impressions, Recommendations)
 
-**Source:** [Manatt Health AI Policy Tracker](https://www.manatt.com/insights/newsletters/health-highlights/manatt-health-health-ai-policy-tracker)
+**Confidence:** MEDIUM -- Llama 3 radiology validation is HIGH confidence (published RSNA research). Llama 4 quality for medical text specifically is LOW confidence (no published medical benchmarks yet).
 
-### International (Global Launch)
+---
 
-| Region | Framework | Key Requirement |
-|--------|-----------|-----------------|
-| **EU** | GDPR + AI Act | High-risk AI classification for medical, strict transparency |
-| **UK** | UK GDPR | Similar to EU, separate enforcement |
-| **Canada** | PIPEDA | Privacy impact assessments |
-| **Australia** | Privacy Act | APP requirements |
+## Streaming Support
+
+All recommended providers support SSE streaming, critical for the existing report generation UI.
+
+| Provider | Streaming | Protocol | AI SDK Support |
+|----------|-----------|----------|----------------|
+| Groq | Yes | OpenAI-compatible SSE | Via AI Gateway (string model ID) or direct `@ai-sdk/groq` |
+| Together AI | Yes | OpenAI-compatible SSE | Via AI Gateway |
+| OpenAI (fallback) | Yes | Native SSE | Via AI Gateway (model: `openai/gpt-5.4`) |
+
+---
+
+## Supporting Libraries
+
+| Library | Version | Purpose | Status |
+|---------|---------|---------|--------|
+| `ai` | ^6.0.39 | Vercel AI SDK with gateway support | Already installed |
+| `@ai-sdk/openai` | ^3.0.12 | OpenAI provider (can be removed -- gateway handles OpenAI routing) | Already installed, optional now |
+| `@ai-sdk/gateway` | ^1.0 | Gateway provider options types for routing config | **NEW -- install** |
+| `@ai-sdk/groq` | ^3.0 | Groq provider for direct transcription access | **NEW -- install** |
+| `zod` | ^3.23 | Schema validation for model outputs | Already installed |
+| `p-retry` | ^6.2 | Retry with exponential backoff for transcription calls | **NEW -- install** |
+
+**Only 3 new packages needed.** No framework upgrades, no infrastructure changes to existing stack.
+
+---
+
+## Infrastructure Changes
+
+### What Changes
+
+| Component | Current | New | Migration Effort |
+|-----------|---------|-----|-----------------|
+| LLM Provider | OpenAI GPT-4o (direct via `@ai-sdk/openai`) | Groq Llama 4 Scout via AI Gateway | Low -- swap model string, adjust prompts |
+| Transcription | OpenAI Whisper (direct) | Groq Whisper v3 Turbo via `@ai-sdk/groq` | Low -- same Whisper model family |
+| Provider routing | Single provider (OpenAI) | AI Gateway with failover chain | Medium -- new provider config + BYOK dashboard setup |
+| Auth model | Direct provider API keys in `.env.local` | OIDC via `vercel env pull` (auto on Vercel) + BYOK in dashboard for provider keys | Medium -- new auth pattern, removes provider keys from app |
+| Cost monitoring | None | AI Gateway dashboards + custom Supabase tracking | Medium -- new feature |
+
+### What Does NOT Change
+
+- Next.js 14 App Router architecture
+- Supabase PostgreSQL with RLS
+- Stripe billing (subscriptions + credits)
+- Upstash Redis rate limiting (Phase 30 infrastructure)
+- SSE streaming to frontend (all providers support it)
+- Edge runtime for AI routes
+- Report generation system prompts (prompt content stays, model changes)
+- PDF/DOCX export pipeline
+- Frontend components (model swap is entirely backend)
+
+---
+
+## Scaling to 200 Concurrent Users
+
+### Provider Rate Limits
+
+| Provider | Free Tier | Paid Tier | Sufficient for 200 users? |
+|----------|-----------|-----------|--------------------------|
+| Groq (Scout) | 30 RPM, 1K RPD, 30K TPM | ~10x higher (contact sales for exact limits) | Need paid (Developer) tier |
+| Groq (Whisper) | 20 RPM, 2K RPD | Higher on Developer tier | Need paid tier |
+| Together AI | Varies by model | 600 RPM | Yes for fallback role |
+| OpenAI | Varies by tier | Tier 3+ recommended | Yes (emergency fallback only) |
+
+### Architecture for Scale
+
+The existing Upstash Redis rate limiting (Phase 30) handles user-level throttling. For provider-level capacity:
+
+1. **Request queuing:** Use existing Redis to queue requests when approaching provider rate limits
+2. **Provider rotation:** AI Gateway automatically retries with next provider on failure
+3. **Backpressure:** Return 429 to users when all providers saturated (existing rate limit infrastructure)
+4. **Concurrent request pooling:** Limit to ~50 concurrent LLM requests across all users (most users idle at any moment)
+
+**Confidence:** MEDIUM -- Groq Developer tier rate limits not fully documented publicly. Contact Groq sales for 200-user concurrent guarantee. Together AI 600 RPM is sufficient for fallback.
+
+---
+
+## Environment Variables
+
+All LLM provider keys (Groq, Together AI, OpenAI) are configured in the **Vercel Dashboard via BYOK** -- they are NOT application environment variables. The gateway handles provider authentication transparently.
+
+```bash
+# Application env vars (.env.local)
+GROQ_API_KEY=gsk_...                    # Only needed for direct transcription calls via @ai-sdk/groq
+
+# Vercel Dashboard BYOK configuration (NOT in .env.local -- configure in dashboard)
+# Vercel Dashboard > AI Gateway > Bring Your Own Key:
+# - Groq API key (for gateway-routed LLM calls)
+# - Together AI API key (for gateway-routed fallback calls)
+# - OpenAI API key (for gateway-routed emergency fallback via openai/gpt-5.4)
+```
+
+**Local development auth setup (OIDC -- recommended):**
+```bash
+# Step 1: Link local project to Vercel (one-time)
+vercel link
+
+# Step 2: Pull OIDC token + env vars (repeat every 12 hours)
+vercel env pull
+
+# That's it. The AI SDK automatically uses the OIDC token from the pulled env.
+# No AI_GATEWAY_API_KEY needed when using OIDC.
+```
+
+**Alternative for CI/non-Vercel environments:**
+```bash
+# Create key at: Vercel Dashboard > AI Gateway > API Keys
+# Set in CI environment:
+AI_GATEWAY_API_KEY=aigw_...
+```
+
+---
+
+## Installation
+
+```bash
+# New provider packages (3 packages)
+pnpm install @ai-sdk/gateway @ai-sdk/groq p-retry
+
+# No upgrades needed -- ai@^6.0.39 and @ai-sdk/openai@^3.0.12 already installed
+```
+
+---
+
+## HIPAA Compliance Path (Future)
+
+The Vercel AI Gateway supports HIPAA-compliant routing (`hipaaCompliant: true`), which restricts requests to providers with signed BAAs. This requires:
+
+1. Vercel Pro plan with HIPAA add-on ($350/mo)
+2. When `hipaaCompliant: true`, BYOK credentials are skipped -- only Vercel system credentials with BAA-signed providers are used
+3. Only providers with Vercel BAAs are eligible
+
+This is out-of-scope for v3.0 but represents a clean upgrade path when HIPAA compliance is required, without changing the application architecture.
 
 ---
 
 ## Sources
 
-### Primary (HIGH Confidence)
-- [Supabase supa_audit documentation](https://github.com/supabase/supa_audit)
-- [Supabase PGAudit documentation](https://supabase.com/docs/guides/database/extensions/pgaudit)
-- [OpenAI BAA documentation](https://help.openai.com/en/articles/8660679-how-can-i-get-a-business-associate-agreement-baa-with-openai)
-- [Termly official site](https://termly.io/)
+### Official Documentation (HIGH confidence)
+- [Groq Pricing](https://groq.com/pricing) -- verified 2026-04-05
+- [Groq Rate Limits](https://console.groq.com/docs/rate-limits) -- verified 2026-04-05
+- [Groq Whisper v3 Turbo Blog](https://groq.com/blog/whisper-large-v3-turbo-now-available-on-groq-combining-speed-quality-for-speech-recognition) -- verified 2026-04-05
+- [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) -- verified 2026-04-05
+- [Vercel AI Gateway Authentication](https://vercel.com/docs/ai-gateway/authentication-and-byok/authentication) -- verified 2026-04-05
+- [Vercel AI Gateway BYOK](https://vercel.com/docs/ai-gateway/authentication-and-byok/byok) -- verified 2026-04-05
+- [AI SDK Gateway Provider](https://ai-sdk.dev/providers/ai-sdk-providers/ai-gateway) -- verified 2026-04-05
+- [AI SDK Groq Provider](https://ai-sdk.dev/providers/ai-sdk-providers/groq) -- verified 2026-04-05
+- [Together AI Pricing](https://www.together.ai/pricing) -- verified 2026-04-05
+- [DeepInfra Pricing](https://deepinfra.com/pricing) -- verified 2026-04-05
+- [Cerebras Pricing](https://www.cerebras.ai/pricing) -- verified 2026-04-05
+- [Fireworks AI Pricing](https://fireworks.ai/pricing) -- verified 2026-04-05
+- [Deepgram Pricing](https://deepgram.com/pricing) -- verified 2026-04-05
+- [AssemblyAI Pricing](https://www.assemblyai.com/pricing) -- verified 2026-04-05
+- [OpenAI Pricing](https://developers.openai.com/api/docs/pricing) -- verified 2026-04-05
+- [Vercel HIPAA Compliance](https://vercel.com/kb/guide/hipaa-compliance-guide-vercel) -- verified 2026-04-05
+- [@ai-sdk/gateway npm](https://www.npmjs.com/package/@ai-sdk/gateway) -- verified 2026-04-05
+- [@ai-sdk/groq npm](https://www.npmjs.com/package/@ai-sdk/groq) -- v3.0.24, verified 2026-04-05
 
-### Secondary (MEDIUM Confidence)
-- [HIPAA audit log requirements - Keragon](https://www.keragon.com/hipaa/hipaa-explained/hipaa-audit-log-requirements)
-- [Drata vs Vanta comparison - ComplyJet](https://www.complyjet.com/blog/vanta-vs-drata-2025)
-- [CookieYes CMP comparison](https://www.cookieyes.com/blog/best-consent-management-platforms/)
-- [GDPR right to erasure enforcement - Greenberg Traurig](https://www.gtlaw-dataprivacydish.com/2025/03/enforcement-update-regulatory-attention-focused-on-deletion-requests/)
+### Research and Benchmarks (MEDIUM confidence)
+- [RSNA 2026: LLMs as Radiology Proofreaders](https://www.rsna.org/news/2026/february/llms-act-as-radiology-proofreaders) -- Llama-3-70B radiology validation
+- [Artificial Analysis: Llama 4 Scout Providers](https://artificialanalysis.ai/models/llama-4-scout/providers) -- latency/speed benchmarks
+- [Artificial Analysis: Llama 4 Maverick Providers](https://artificialanalysis.ai/models/llama-4-maverick/providers) -- latency benchmarks
+- [Llama 4 Maverick Benchmarks](https://llm-stats.com/models/llama-4-maverick) -- ELO scores
+- [LLM API Pricing Comparison 2026](https://featherless.ai/blog/llm-api-pricing-comparison-2026-complete-guide-inference-costs) -- cross-provider pricing
 
-### Tertiary (LOW Confidence - Needs Validation)
-- State AI law specifics (verify with legal counsel before launch)
-- OpenAI BAA timeline estimates (anecdotal from community forums)
-
----
-
-## Confidence Assessment
-
-| Area | Level | Reason |
-|------|-------|--------|
-| Consent Management Tools | HIGH | Official pricing pages verified |
-| Supabase Auditing | HIGH | Official documentation |
-| OpenAI BAA | HIGH | Official help center |
-| State AI Laws | MEDIUM | Policy trackers, but laws evolving |
-| Cost Estimates | MEDIUM | Pricing may vary, verify at purchase |
-| FDA Disclaimer Requirements | MEDIUM | Guidance documents, not regulations |
-
----
-
-*Research conducted: 2026-01-20*
-*Valid until: 2026-04-20 (re-verify state laws before launch)*
+### Community/Analysis (LOW confidence -- needs validation)
+- [Self-Hosted LLM Cost Guide 2026](https://blog.premai.io/self-hosted-llm-guide-setup-tools-cost-comparison-2026/) -- breakeven analysis
+- [Groq API Free Tier Limits 2026](https://www.grizzlypeaksoftware.com/articles/p/groq-api-free-tier-limits-in-2026-what-you-actually-get-uwysd6mb) -- rate limit details
