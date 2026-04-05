@@ -20,6 +20,7 @@
     "analyze": "ANALYZE=true pnpm build"
   },
   "dependencies": {
+    "@ai-sdk/groq": "^3.0.33",
     "@ai-sdk/openai": "^3.0.12",
     "@ai-sdk/openai-compatible": "^2.0.38",
     "@dnd-kit/core": "^6.3.1",
