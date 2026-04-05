@@ -1,6 +1,28 @@
 /**
  * Quality validation functions for AI-generated radiology reports.
  *
+ * **What the 25 fixtures represent:**
+ * 5 modality groups x 5 cases each: MRI brain, CT chest, X-ray chest,
+ * ultrasound abdomen, and mixed/edge cases. Each fixture provides input
+ * findings, expected section structure, expected subheadings, and key
+ * medical concepts for hallucination detection.
+ *
+ * **How to run live validation (when GROQ_API_KEY is available):**
+ * 1. Load fixtures via loadAllFixtures() from ./test-fixtures
+ * 2. For each fixture, call the generate API or construct prompt + call Groq directly
+ * 3. Pass each response through runFullValidation(report, fixture)
+ * 4. Use runBatchValidation() for aggregate statistics
+ *
+ * **Pass/fail thresholds:**
+ * - Structure compliance: 100% (all 5 sections present in every report)
+ * - Anti-hallucination: 100% clean (no suspected hallucinations)
+ * - Template/subheading adherence: >95% of expected subheadings found
+ * - Impression format: informational (does not block overall pass)
+ *
+ * **Abort criteria:**
+ * If anti-hallucination drops below 95% across the batch, abort the migration
+ * and revert to OpenAI GPT-4o (set AI_GENERATE_MODEL=openai:gpt-4o).
+ *
  * Validates report output against test fixture expectations for:
  * - Structural compliance (all 5 required sections present)
  * - Subheading/template adherence (bold subsection headings match expected)
@@ -358,5 +380,134 @@ export function runFullValidation(
     subheadings,
     hallucination,
     impressionFormat,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Prompt structure validation
+// ---------------------------------------------------------------------------
+
+export interface PromptStructureResult {
+  /** Whether the prompt passes all structural checks */
+  valid: boolean;
+  /** Approximate token count (words * 1.3) */
+  tokenEstimate: number;
+  /** Whether numbered CONSTRAINT rules are present */
+  hasConstraints: boolean;
+  /** Whether REASONING PROCESS steps are present */
+  hasReasoningSteps: boolean;
+  /** Whether emphatic NEVER/CRITICAL directives remain (should be false) */
+  hasEmphatics: boolean;
+}
+
+/**
+ * Validate that a system prompt is structured for open-source model compatibility.
+ *
+ * Checks:
+ * 1. Contains numbered CONSTRAINT rules (CONSTRAINT 1, CONSTRAINT 2, etc.)
+ * 2. Contains REASONING PROCESS with numbered Steps
+ * 3. Does NOT contain emphatic "NEVER" or "CRITICAL" directives
+ * 4. Token count estimate is under 2K (~1500 words max)
+ *
+ * @param systemPrompt - The system prompt string to validate
+ * @returns Prompt structure validation result
+ */
+export function validatePromptStructure(systemPrompt: string): PromptStructureResult {
+  const words = systemPrompt.split(/\s+/).filter((w) => w.length > 0).length;
+  const tokenEstimate = Math.ceil(words * 1.3);
+
+  const hasConstraints = /CONSTRAINT\s+\d+/i.test(systemPrompt);
+  const hasReasoningSteps = /REASONING PROCESS/i.test(systemPrompt) && /Step\s+\d+/i.test(systemPrompt);
+
+  // Check for emphatic directives that should have been converted to constraints
+  const hasEmphatics =
+    /\bNEVER\b/.test(systemPrompt) || /\bCRITICAL\b/.test(systemPrompt);
+
+  const valid =
+    hasConstraints &&
+    hasReasoningSteps &&
+    !hasEmphatics &&
+    tokenEstimate < 2000;
+
+  return {
+    valid,
+    tokenEstimate,
+    hasConstraints,
+    hasReasoningSteps,
+    hasEmphatics,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Batch validation
+// ---------------------------------------------------------------------------
+
+export interface BatchResult {
+  /** Total number of reports validated */
+  total: number;
+  /** Number of reports that passed all checks */
+  passed: number;
+  /** Number of reports that failed at least one check */
+  failed: number;
+  /** Per-check pass rates (0-100) */
+  passRates: {
+    structure: number;
+    antiHallucination: number;
+    subheadingAdherence: number;
+    impressionFormat: number;
+  };
+  /** Individual results per report (indexed by fixture ID) */
+  results: Record<string, ValidationReport>;
+}
+
+/**
+ * Run full validation on a batch of report-fixture pairs and return aggregate statistics.
+ *
+ * Use this after generating reports from all 25 fixtures (via live Groq API or saved outputs)
+ * to get aggregate pass/fail rates for migration quality assessment.
+ *
+ * Thresholds for migration approval:
+ * - Structure: 100%
+ * - Anti-hallucination: 100% (abort if below 95%)
+ * - Subheading adherence: >95%
+ *
+ * @param reports - Array of {report, fixture} pairs to validate
+ * @returns Aggregate batch validation result
+ */
+export function runBatchValidation(
+  reports: ReadonlyArray<{ readonly report: string; readonly fixture: TestFixture }>
+): BatchResult {
+  const results: Record<string, ValidationReport> = {};
+  let structurePass = 0;
+  let hallucinationPass = 0;
+  let subheadingPass = 0;
+  let impressionPass = 0;
+  let overallPass = 0;
+
+  for (const { report, fixture } of reports) {
+    const result = runFullValidation(report, fixture);
+    results[fixture.id] = result;
+
+    if (result.structure.valid) structurePass++;
+    if (result.hallucination.clean) hallucinationPass++;
+    if (result.subheadings.adherencePercent > 95) subheadingPass++;
+    if (result.impressionFormat.valid) impressionPass++;
+    if (result.pass) overallPass++;
+  }
+
+  const total = reports.length;
+  const pct = (n: number) => (total === 0 ? 100 : Math.round((n / total) * 100));
+
+  return {
+    total,
+    passed: overallPass,
+    failed: total - overallPass,
+    passRates: {
+      structure: pct(structurePass),
+      antiHallucination: pct(hallucinationPass),
+      subheadingAdherence: pct(subheadingPass),
+      impressionFormat: pct(impressionPass),
+    },
+    results,
   };
 }
