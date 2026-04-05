@@ -134,6 +134,33 @@ Report formatting customization. Users can personalize how list items appear in 
 - [x] **FMT-07**: List style renders correctly in PDF export
 - [x] **FMT-08**: List style renders correctly in Word export
 
+## v3.0 Requirements
+
+Cost-optimized AI infrastructure. Replace OpenAI with Groq for ~93% cost reduction while maintaining medical report quality.
+
+### Provider Infrastructure
+
+- [ ] **INFRA-01**: System reads AI model provider and model name from environment variables, enabling deploy-time switching without code changes
+- [ ] **INFRA-02**: Provider abstraction layer decouples model selection from API route handlers, so swapping models requires zero route changes
+
+### Report Generation Migration
+
+- [ ] **GEN-01**: Report generation uses Groq Llama 4 Scout instead of GPT-4o, producing radiology reports at ~96% lower cost
+- [ ] **GEN-02**: System prompt is adapted for open-source models with explicit reasoning chains, under 2K tokens, maintaining anti-hallucination rules
+- [ ] **GEN-03**: Quality validation baseline exists with 20+ test cases across modalities (MRI, CT, X-ray, ultrasound) comparing Llama 4 output against GPT-4o baseline
+
+### Transcription Migration
+
+- [ ] **TRANS-01**: Voice transcription uses Groq Whisper v3 Turbo instead of OpenAI Whisper, with medical vocabulary hints for radiology terminology
+
+### Reliability
+
+- [ ] **REL-01**: Fallback chain automatically routes to OpenAI GPT-4o when Groq is unavailable or returns errors, with no user action required
+
+### Cost Management
+
+- [ ] **COST-01**: Cost tracking uses actual token counts from provider responses instead of hardcoded estimates, with per-provider pricing
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -178,6 +205,16 @@ Explicitly excluded. Documented to prevent scope creep.
 | Accuracy/performance claims | Never make claims without documented methodology |
 | Complex GDPR compliance | Disclaimer-based approach instead |
 | Cookie consent banner | Minimal analytics, overkill for startup |
+| Self-hosted LLM inference | Breakeven at 5-10M tokens/month; project estimates ~500K |
+| Fine-tuned radiology model | Requires curated medical training data, 3-6 month project |
+| User-selectable models | Creates UX confusion, multiplies QA surface area |
+| Custom prompt editor | Risks medically unsafe reports if users modify anti-hallucination rules |
+| Multi-provider load balancing (5+) | Diminishing returns; 3 providers (Groq, Together AI, OpenAI) is manageable |
+| Intelligent model routing | Requires production traffic data; defer to v3.1+ |
+| A/B quality dashboard | Requires routing + telemetry infrastructure; defer to v3.2+ |
+| Canary deployment | Requires routing + dashboard; defer to v3.2+ |
+| Cloudflare Workers AI | Extra hop from Vercel adds latency; Groq is cheaper and simpler |
+| Gemma 4 | No medical benchmarks; Llama has RSNA validation backing |
 
 ## Traceability
 
@@ -255,4 +292,4 @@ Which phases cover which requirements. Updated by create-roadmap.
 
 ---
 *Requirements defined: 2026-01-16*
-*Last updated: 2026-01-20 after v1.5 list style requirements defined*
+*Last updated: 2026-04-05 after v3.0 cost-optimized AI requirements defined*
