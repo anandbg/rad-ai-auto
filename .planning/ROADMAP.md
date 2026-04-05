@@ -16,7 +16,7 @@
 ## Phases
 
 - [x] **Phase 31: Provider Abstraction Layer** - Environment-driven model config and provider registry with zero behavior change (completed 2026-04-05)
-- [ ] **Phase 32: LLM Migration & Quality Validation** - Replace GPT-4o with Groq Llama 4 Scout, adapt prompts, validate output quality
+- [x] **Phase 32: LLM Migration & Quality Validation** - Replace GPT-4o with Groq Llama 4 Scout, adapt prompts, validate output quality (completed 2026-04-05)
 - [ ] **Phase 33: Transcription Migration** - Replace OpenAI Whisper with Groq Whisper v3 Turbo with medical vocabulary hints
 - [ ] **Phase 34: Reliability & Cost Tracking** - Automatic fallback chain and provider-aware cost tracking with real token counts
 
@@ -45,11 +45,11 @@ Plans:
   2. System prompt is under 2K tokens with explicit reasoning chains and anti-hallucination rules adapted for open-source models
   3. A quality validation suite of 20+ test cases across MRI, CT, X-ray, and ultrasound modalities exists, comparing Llama 4 output against GPT-4o baseline reports
   4. SSE streaming continues to work for report generation with the new provider
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 32-01-PLAN.md — Register Groq provider in AI SDK registry
 - [x] 32-02-PLAN.md — Create 25 test fixtures and quality validation functions
-- [ ] 32-03-PLAN.md — Adapt system prompt for Llama 4 Scout and switch defaults to Groq
+- [x] 32-03-PLAN.md — Adapt system prompt for Llama 4 Scout and switch defaults to Groq
 
 ### Phase 33: Transcription Migration
 **Goal**: Voice transcription uses Groq Whisper v3 Turbo at ~89% lower cost with accurate medical terminology
@@ -76,7 +76,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 31. Provider Abstraction Layer | v3.0 | 2/2 | Complete    | 2026-04-05 |
-| 32. LLM Migration & Quality Validation | v3.0 | 2/3 | In Progress|  |
+| 32. LLM Migration & Quality Validation | v3.0 | 3/3 | Complete   | 2026-04-05 |
 | 33. Transcription Migration | v3.0 | 0/? | Not started | - |
 | 34. Reliability & Cost Tracking | v3.0 | 0/? | Not started | - |
 
