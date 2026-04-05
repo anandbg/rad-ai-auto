@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Cost-Optimized AI Infrastructure
 status: verifying
-stopped_at: Completed 32-03-PLAN.md
-last_updated: "2026-04-05T20:55:14.665Z"
+stopped_at: Completed 33-01-PLAN.md
+last_updated: "2026-04-05T21:04:05.966Z"
 last_activity: 2026-04-05
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Replace OpenAI with Groq for ~93% AI cost reduction while maintaining medical report quality
-**Current focus:** Phase 32 — llm-migration-quality-validation
+**Current focus:** Phase 33 — transcription-migration
 
 ## Current Position
 
 Milestone: v3.0 Cost-Optimized AI Infrastructure
-Phase: 33
-Plan: Not started
+Phase: 33 (transcription-migration) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-04-05
 
@@ -66,6 +66,8 @@ Recent decisions affecting current work:
 - [Phase 32]: Anti-hallucination validation uses heuristic concept-matching plus phantom measurement detection
 - [Phase 32]: System prompt reduced from ~2.5K to ~400 tokens with numbered constraints and explicit reasoning chain for Llama 4 Scout
 - [Phase 32]: All text generation defaults switched to Groq Llama 4 Scout (~96% cost reduction), transcription unchanged
+- [Phase 33]: Groq Whisper v3 Turbo as default transcription (~89% cost reduction), OpenAI retained as env-switchable fallback
+- [Phase 33]: Medical vocabulary hints (40 radiology terms, 461 chars) sent via Whisper prompt parameter to both providers
 
 ### Pending Todos
 
@@ -85,8 +87,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T20:51:37.475Z
-Stopped at: Completed 32-03-PLAN.md
+Last session: 2026-04-05T21:04:05.963Z
+Stopped at: Completed 33-01-PLAN.md
 Resume file: None
 
 **Previous milestones:** v1.0-v2.2 completed 54 plans across 30 phases. See MILESTONES.md for full history.

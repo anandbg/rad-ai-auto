@@ -17,7 +17,7 @@
 
 - [x] **Phase 31: Provider Abstraction Layer** - Environment-driven model config and provider registry with zero behavior change (completed 2026-04-05)
 - [x] **Phase 32: LLM Migration & Quality Validation** - Replace GPT-4o with Groq Llama 4 Scout, adapt prompts, validate output quality (completed 2026-04-05)
-- [ ] **Phase 33: Transcription Migration** - Replace OpenAI Whisper with Groq Whisper v3 Turbo with medical vocabulary hints
+- [x] **Phase 33: Transcription Migration** - Replace OpenAI Whisper with Groq Whisper v3 Turbo with medical vocabulary hints (completed 2026-04-05)
 - [ ] **Phase 34: Reliability & Cost Tracking** - Automatic fallback chain and provider-aware cost tracking with real token counts
 
 ## Phase Details
@@ -59,9 +59,9 @@ Plans:
   1. Voice transcription uses Groq Whisper v3 Turbo instead of OpenAI Whisper, processing audio uploads and returning text
   2. Medical vocabulary hints are sent with transcription requests, improving accuracy for radiology terminology (e.g., "pneumothorax", "T2-weighted", "FLAIR sequence")
   3. Transcription latency and accuracy are comparable to or better than OpenAI Whisper for typical radiology dictation (30-120 second recordings)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 33-01-PLAN.md — Switch transcription to Groq Whisper v3 Turbo with medical vocabulary hints
+- [x] 33-01-PLAN.md — Switch transcription to Groq Whisper v3 Turbo with medical vocabulary hints
 
 ### Phase 34: Reliability & Cost Tracking
 **Goal**: System automatically falls back to OpenAI when Groq fails, and cost tracking reflects actual provider-specific token usage
@@ -79,7 +79,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 31. Provider Abstraction Layer | v3.0 | 2/2 | Complete    | 2026-04-05 |
 | 32. LLM Migration & Quality Validation | v3.0 | 3/3 | Complete    | 2026-04-05 |
-| 33. Transcription Migration | v3.0 | 0/1 | In progress | - |
+| 33. Transcription Migration | v3.0 | 1/1 | Complete   | 2026-04-05 |
 | 34. Reliability & Cost Tracking | v3.0 | 0/? | Not started | - |
 
 ---

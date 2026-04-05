@@ -151,7 +151,7 @@ Cost-optimized AI infrastructure. Replace OpenAI with Groq for ~93% cost reducti
 
 ### Transcription Migration
 
-- [ ] **TRANS-01**: Voice transcription uses Groq Whisper v3 Turbo instead of OpenAI Whisper, with medical vocabulary hints for radiology terminology
+- [x] **TRANS-01**: Voice transcription uses Groq Whisper v3 Turbo instead of OpenAI Whisper, with medical vocabulary hints for radiology terminology
 
 ### Reliability
 
@@ -285,7 +285,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 | GEN-01 | Phase 32 | Complete |
 | GEN-02 | Phase 32 | Complete |
 | GEN-03 | Phase 32 | Complete |
-| TRANS-01 | Phase 33 | Pending |
+| TRANS-01 | Phase 33 | Complete |
 | REL-01 | Phase 34 | Pending |
 | COST-01 | Phase 34 | Pending |
 
