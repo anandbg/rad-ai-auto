@@ -31,9 +31,9 @@
   2. Route handlers call a generic model resolver instead of importing OpenAI directly -- swapping providers requires zero route file edits
   3. Application fails fast at startup with a clear error if required AI provider environment variables are missing
   4. All existing report generation and transcription functionality works identically (OpenAI still active, no behavior change)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 31-01-PLAN.md — Provider registry and env-driven config module
+- [x] 31-01-PLAN.md — Provider registry and env-driven config module
 - [ ] 31-02-PLAN.md — Wire route handlers to use provider registry
 
 ### Phase 32: LLM Migration & Quality Validation
@@ -71,7 +71,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 31. Provider Abstraction Layer | v3.0 | 0/2 | Planning complete | - |
+| 31. Provider Abstraction Layer | v3.0 | 1/2 | In Progress|  |
 | 32. LLM Migration & Quality Validation | v3.0 | 0/? | Not started | - |
 | 33. Transcription Migration | v3.0 | 0/? | Not started | - |
 | 34. Reliability & Cost Tracking | v3.0 | 0/? | Not started | - |

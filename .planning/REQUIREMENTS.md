@@ -140,8 +140,8 @@ Cost-optimized AI infrastructure. Replace OpenAI with Groq for ~93% cost reducti
 
 ### Provider Infrastructure
 
-- [ ] **INFRA-01**: System reads AI model provider and model name from environment variables, enabling deploy-time switching without code changes
-- [ ] **INFRA-02**: Provider abstraction layer decouples model selection from API route handlers, so swapping models requires zero route changes
+- [x] **INFRA-01**: System reads AI model provider and model name from environment variables, enabling deploy-time switching without code changes
+- [x] **INFRA-02**: Provider abstraction layer decouples model selection from API route handlers, so swapping models requires zero route changes
 
 ### Report Generation Migration
 
@@ -280,8 +280,8 @@ Which phases cover which requirements. Updated by create-roadmap.
 | FMT-06 | Phase 27 | Complete |
 | FMT-07 | Phase 27 | Complete |
 | FMT-08 | Phase 27 | Complete |
-| INFRA-01 | Phase 31 | Pending |
-| INFRA-02 | Phase 31 | Pending |
+| INFRA-01 | Phase 31 | Complete |
+| INFRA-02 | Phase 31 | Complete |
 | GEN-01 | Phase 32 | Pending |
 | GEN-02 | Phase 32 | Pending |
 | GEN-03 | Phase 32 | Pending |
