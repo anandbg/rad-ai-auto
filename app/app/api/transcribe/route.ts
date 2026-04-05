@@ -10,6 +10,7 @@ import { trackCost } from "@/lib/cost/tracker";
 import { checkAbusePattern } from "@/lib/abuse/detector";
 import { logAbuseAlert } from "@/lib/abuse/alerts";
 import type { SubscriptionPlan } from "@/types/database";
+import { getTranscriptionConfig } from '@/lib/ai/config';
 
 // Node.js runtime required for FormData file parsing
 export const runtime = 'nodejs';
@@ -233,9 +234,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check for OpenAI API key
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY is not configured');
+    // Get transcription provider configuration from environment
+    const transcriptionConfig = getTranscriptionConfig();
+
+    // Validate required API key for the configured provider
+    if (transcriptionConfig.provider === 'openai' && !process.env.OPENAI_API_KEY) {
+      console.error('[Transcribe] OPENAI_API_KEY is not configured for OpenAI transcription');
       return new Response(
         JSON.stringify({
           success: false,
@@ -300,6 +304,8 @@ export async function POST(request: Request) {
       );
     }
 
+    // Provider: OpenAI Whisper (default)
+    // Future: Phase 33 will add Groq Whisper v3 Turbo branch based on transcriptionConfig.provider
     // Call OpenAI Whisper API with retry logic
     try {
       const result = await withRetry(
