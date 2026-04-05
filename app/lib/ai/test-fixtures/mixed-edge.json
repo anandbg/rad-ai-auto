@@ -1,0 +1,57 @@
+[
+  {
+    "id": "mixed-edge-001",
+    "modality": "CT",
+    "bodyPart": "Chest",
+    "templateName": "CT Chest Standard",
+    "findings": "Something seen in the left lung, possibly a density. Otherwise looks okay.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Lungs and airways:", "Pleura:", "Mediastinum:", "Heart and great vessels:", "Lymph nodes:", "Bones and soft tissues:"],
+    "inputConcepts": ["something seen", "left lung", "density"],
+    "complexity": "simple"
+  },
+  {
+    "id": "mixed-edge-002",
+    "modality": "Ultrasound",
+    "bodyPart": "Abdomen",
+    "templateName": "Ultrasound Abdomen Standard",
+    "findings": "Liver appears normal with no focal lesion. However there is a lesion in the right lobe of the liver measuring 2 cm. Remainder of the abdomen is unremarkable.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Liver:", "Gallbladder and biliary system:", "Pancreas:", "Spleen:", "Kidneys:", "Aorta:"],
+    "inputConcepts": ["liver normal", "no focal lesion", "lesion right lobe", "2 cm"],
+    "complexity": "moderate"
+  },
+  {
+    "id": "mixed-edge-003",
+    "modality": "X-ray",
+    "bodyPart": "Chest",
+    "templateName": "Chest X-ray Standard",
+    "findings": "Normal study.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Heart and mediastinum:", "Lungs:", "Pleura:", "Bones and soft tissues:"],
+    "inputConcepts": ["normal"],
+    "complexity": "simple"
+  },
+  {
+    "id": "mixed-edge-004",
+    "modality": "MRI",
+    "bodyPart": "Brain",
+    "templateName": "MRI Brain Standard",
+    "findings": "Large heterogeneously enhancing mass centered in the left temporal lobe measuring 4.5 x 3.2 x 3.8 cm with surrounding vasogenic edema extending into the left frontal and parietal lobes. Mass effect with 8 mm rightward midline shift. Compression of the left lateral ventricle with early obstructive hydrocephalus. Multiple satellite lesions in the right frontal lobe and right cerebellar hemisphere. Leptomeningeal enhancement along the left Sylvian fissure. Bilateral cavernous sinus involvement. Restricted diffusion along the medial margin of the mass. Patent major intracranial vessels. No acute hemorrhage. Mucosal thickening in the left maxillary sinus.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Brain parenchyma:", "Ventricles and CSF spaces:", "Extra-axial spaces:", "Midline structures:", "Vascular structures:"],
+    "inputConcepts": ["heterogeneously enhancing mass", "left temporal lobe", "4.5 x 3.2 x 3.8 cm", "vasogenic edema", "left frontal", "left parietal", "mass effect", "8 mm rightward midline shift", "compression left lateral ventricle", "obstructive hydrocephalus", "satellite lesions", "right frontal lobe", "right cerebellar hemisphere", "leptomeningeal enhancement", "left Sylvian fissure", "bilateral cavernous sinus", "restricted diffusion", "patent vessels", "no acute hemorrhage", "mucosal thickening", "left maxillary sinus"],
+    "complexity": "complex"
+  },
+  {
+    "id": "mixed-edge-005",
+    "modality": "CT",
+    "bodyPart": "Chest",
+    "templateName": "CT Chest Standard",
+    "findings": "Bilat PEs noted. RLL consol w/ air bronchograms. Sm R eff. CT ratio nl. LAD seen, subcarinal approx 12mm. No PTX. ET tube in place, tip 3cm above carina. NG tube tip in stomach. Degenerative changes T-spine.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Lungs and airways:", "Pleura:", "Mediastinum:", "Heart and great vessels:", "Lymph nodes:", "Bones and soft tissues:"],
+    "inputConcepts": ["bilateral pulmonary emboli", "right lower lobe consolidation", "air bronchograms", "small right effusion", "normal cardiac ratio", "lymphadenopathy", "subcarinal 12mm", "no pneumothorax", "endotracheal tube", "3cm above carina", "nasogastric tube", "degenerative changes thoracic spine"],
+    "complexity": "complex"
+  }
+]

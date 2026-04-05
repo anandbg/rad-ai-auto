@@ -1,0 +1,57 @@
+[
+  {
+    "id": "xray-chest-001",
+    "modality": "X-ray",
+    "bodyPart": "Chest",
+    "templateName": "Chest X-ray Standard",
+    "findings": "Heart size is within normal limits. The lungs are clear bilaterally. No focal consolidation, pleural effusion, or pneumothorax. The mediastinal contours are normal. No acute osseous abnormality.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Heart and mediastinum:", "Lungs:", "Pleura:", "Bones and soft tissues:"],
+    "inputConcepts": ["normal heart size", "lungs clear", "no consolidation", "no pleural effusion", "no pneumothorax", "normal mediastinal contours", "no osseous abnormality"],
+    "complexity": "simple"
+  },
+  {
+    "id": "xray-chest-002",
+    "modality": "X-ray",
+    "bodyPart": "Chest",
+    "templateName": "Chest X-ray Standard",
+    "findings": "The cardiac silhouette is enlarged with a cardiothoracic ratio exceeding 0.5. Pulmonary vascularity appears mildly prominent. No focal consolidation. No pleural effusion. The mediastinal contours are otherwise unremarkable.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Heart and mediastinum:", "Lungs:", "Pleura:", "Bones and soft tissues:"],
+    "inputConcepts": ["cardiac silhouette enlarged", "cardiothoracic ratio exceeding 0.5", "pulmonary vascularity mildly prominent", "no focal consolidation", "no pleural effusion"],
+    "complexity": "simple"
+  },
+  {
+    "id": "xray-chest-003",
+    "modality": "X-ray",
+    "bodyPart": "Chest",
+    "templateName": "Chest X-ray Standard",
+    "findings": "Airspace opacity in the right lower lobe consistent with consolidation. Blunting of the right costophrenic angle suggesting small right pleural effusion. The left lung is clear. Heart size is within normal limits. No pneumothorax.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Heart and mediastinum:", "Lungs:", "Pleura:", "Bones and soft tissues:"],
+    "inputConcepts": ["airspace opacity", "right lower lobe", "consolidation", "blunting right costophrenic angle", "small right pleural effusion", "left lung clear", "normal heart size", "no pneumothorax"],
+    "complexity": "moderate"
+  },
+  {
+    "id": "xray-chest-004",
+    "modality": "X-ray",
+    "bodyPart": "Chest",
+    "templateName": "Chest X-ray Standard",
+    "findings": "Fractures of the right 4th through 7th ribs along the posterior axillary line. Small right apical pneumothorax with visible visceral pleural line. Subcutaneous emphysema in the right lateral chest wall. Underlying lung parenchyma is otherwise clear. Heart size normal. No pleural effusion.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Heart and mediastinum:", "Lungs:", "Pleura:", "Bones and soft tissues:"],
+    "inputConcepts": ["fractures", "right 4th through 7th ribs", "posterior axillary line", "small right apical pneumothorax", "visceral pleural line", "subcutaneous emphysema", "right lateral chest wall", "lung parenchyma clear", "normal heart size", "no pleural effusion"],
+    "complexity": "complex"
+  },
+  {
+    "id": "xray-chest-005",
+    "modality": "X-ray",
+    "bodyPart": "Chest",
+    "templateName": "Chest X-ray Standard",
+    "findings": "Portable AP technique with limited inspiration. Endotracheal tube with tip approximately 4 cm above the carina in satisfactory position. Nasogastric tube tip projects over the stomach. Diffuse bilateral airspace opacities more prominent in the lower zones. Small bilateral pleural effusions cannot be excluded given supine positioning. Cardiac silhouette is difficult to assess on AP projection.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Heart and mediastinum:", "Lungs:", "Pleura:", "Lines and tubes:", "Bones and soft tissues:"],
+    "inputConcepts": ["portable AP technique", "limited inspiration", "endotracheal tube", "4 cm above carina", "nasogastric tube", "diffuse bilateral airspace opacities", "lower zones", "small bilateral pleural effusions", "supine positioning"],
+    "complexity": "complex"
+  }
+]

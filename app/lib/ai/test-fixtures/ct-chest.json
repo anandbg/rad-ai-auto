@@ -1,0 +1,57 @@
+[
+  {
+    "id": "ct-chest-001",
+    "modality": "CT",
+    "bodyPart": "Chest",
+    "templateName": "CT Chest Standard",
+    "findings": "The lungs are clear bilaterally without consolidation, mass, or nodule. No pleural effusion or pneumothorax. The mediastinal structures are normal. Heart size is within normal limits. No lymphadenopathy. The osseous structures are unremarkable.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Lungs and airways:", "Pleura:", "Mediastinum:", "Heart and great vessels:", "Lymph nodes:", "Bones and soft tissues:"],
+    "inputConcepts": ["lungs clear", "no consolidation", "no mass", "no nodule", "no pleural effusion", "no pneumothorax", "normal mediastinal structures", "normal heart size", "no lymphadenopathy", "osseous structures unremarkable"],
+    "complexity": "simple"
+  },
+  {
+    "id": "ct-chest-002",
+    "modality": "CT",
+    "bodyPart": "Chest",
+    "templateName": "CT Chest Standard",
+    "findings": "Solitary pulmonary nodule in the right upper lobe measuring 8 mm with smooth margins. No calcification within the nodule. Remainder of the lungs are clear. No pleural effusion. No mediastinal lymphadenopathy.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Lungs and airways:", "Pleura:", "Mediastinum:", "Heart and great vessels:", "Lymph nodes:", "Bones and soft tissues:"],
+    "inputConcepts": ["solitary pulmonary nodule", "right upper lobe", "8 mm", "smooth margins", "no calcification", "lungs clear", "no pleural effusion", "no mediastinal lymphadenopathy"],
+    "complexity": "simple"
+  },
+  {
+    "id": "ct-chest-003",
+    "modality": "CT",
+    "bodyPart": "Chest",
+    "templateName": "CT Chest Standard",
+    "findings": "Bilateral pleural effusions, moderate on the right and small on the left. Associated compressive atelectasis at both lung bases. Scattered ground-glass opacities in the dependent portions of the lower lobes bilaterally. No focal consolidation or mass. Heart size mildly enlarged.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Lungs and airways:", "Pleura:", "Mediastinum:", "Heart and great vessels:", "Lymph nodes:", "Bones and soft tissues:"],
+    "inputConcepts": ["bilateral pleural effusions", "moderate right", "small left", "compressive atelectasis", "both lung bases", "ground-glass opacities", "lower lobes", "no focal consolidation", "no mass", "heart mildly enlarged"],
+    "complexity": "moderate"
+  },
+  {
+    "id": "ct-chest-004",
+    "modality": "CT",
+    "bodyPart": "Chest",
+    "templateName": "CT Chest Standard",
+    "findings": "Filling defects within the right main pulmonary artery and bilateral lobar pulmonary arteries consistent with acute pulmonary embolism. Right ventricle appears dilated with RV/LV ratio greater than 1, suggesting right heart strain. Interventricular septum bowing toward the left ventricle. Small bilateral pleural effusions. No parenchymal infarct identified.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Lungs and airways:", "Pleura:", "Mediastinum:", "Heart and great vessels:", "Lymph nodes:", "Bones and soft tissues:"],
+    "inputConcepts": ["filling defects", "right main pulmonary artery", "bilateral lobar pulmonary arteries", "acute pulmonary embolism", "right ventricle dilated", "RV/LV ratio greater than 1", "right heart strain", "interventricular septum bowing", "small bilateral pleural effusions", "no parenchymal infarct"],
+    "complexity": "complex"
+  },
+  {
+    "id": "ct-chest-005",
+    "modality": "CT",
+    "bodyPart": "Chest",
+    "templateName": "CT Chest Standard",
+    "findings": "Extensive consolidation involving the right middle and right lower lobes with air bronchograms. Loculated right pleural effusion with enhancing pleural thickening consistent with empyema. Scattered consolidation in the left lower lobe. Mediastinal lymphadenopathy with subcarinal node measuring 15 mm in short axis. No pneumothorax. Endotracheal tube in satisfactory position.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Lungs and airways:", "Pleura:", "Mediastinum:", "Heart and great vessels:", "Lymph nodes:", "Bones and soft tissues:"],
+    "inputConcepts": ["extensive consolidation", "right middle lobe", "right lower lobe", "air bronchograms", "loculated right pleural effusion", "enhancing pleural thickening", "empyema", "scattered consolidation", "left lower lobe", "mediastinal lymphadenopathy", "subcarinal node", "15 mm", "no pneumothorax", "endotracheal tube"],
+    "complexity": "complex"
+  }
+]

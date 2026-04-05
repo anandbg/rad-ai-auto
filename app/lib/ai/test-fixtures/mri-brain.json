@@ -1,0 +1,57 @@
+[
+  {
+    "id": "mri-brain-001",
+    "modality": "MRI",
+    "bodyPart": "Brain",
+    "templateName": "MRI Brain Standard",
+    "findings": "No abnormal signal intensity within the brain parenchyma. The ventricles and sulci are normal in size and configuration. No midline shift. No extra-axial fluid collection. The major intracranial flow voids are preserved.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Brain parenchyma:", "Ventricles and CSF spaces:", "Extra-axial spaces:", "Midline structures:", "Vascular structures:"],
+    "inputConcepts": ["normal", "no abnormal signal", "ventricles normal", "no midline shift", "no extra-axial fluid", "flow voids preserved"],
+    "complexity": "simple"
+  },
+  {
+    "id": "mri-brain-002",
+    "modality": "MRI",
+    "bodyPart": "Brain",
+    "templateName": "MRI Brain Standard",
+    "findings": "Small T2 hyperintense lesion in the left frontal lobe white matter measuring approximately 5 mm. No surrounding edema. No restricted diffusion on DWI. Remainder of the brain parenchyma is unremarkable.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Brain parenchyma:", "Ventricles and CSF spaces:", "Extra-axial spaces:", "Midline structures:", "Vascular structures:"],
+    "inputConcepts": ["T2 hyperintense lesion", "left frontal lobe", "5 mm", "no edema", "no restricted diffusion"],
+    "complexity": "simple"
+  },
+  {
+    "id": "mri-brain-003",
+    "modality": "MRI",
+    "bodyPart": "Brain",
+    "templateName": "MRI Brain Standard",
+    "findings": "Multiple scattered T2/FLAIR hyperintense foci in the periventricular and subcortical white matter bilaterally, some with ovoid morphology and perpendicular orientation to the ventricles. A few lesions demonstrate incomplete ring enhancement. No restricted diffusion. Mild prominence of the lateral ventricles.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Brain parenchyma:", "Ventricles and CSF spaces:", "Extra-axial spaces:", "Midline structures:", "Vascular structures:"],
+    "inputConcepts": ["T2/FLAIR hyperintense foci", "periventricular", "subcortical white matter", "ovoid morphology", "perpendicular orientation", "incomplete ring enhancement", "no restricted diffusion", "mild prominence lateral ventricles"],
+    "complexity": "moderate"
+  },
+  {
+    "id": "mri-brain-004",
+    "modality": "MRI",
+    "bodyPart": "Brain",
+    "templateName": "MRI Brain Standard",
+    "findings": "Post-surgical changes in the right temporal lobe with resection cavity measuring approximately 3 x 2 cm. Residual enhancing nodular tissue along the medial margin of the cavity. Surrounding vasogenic edema extending into the right insular cortex and right basal ganglia. Mild mass effect with effacement of the right temporal horn. No midline shift. Left hemisphere unremarkable.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Brain parenchyma:", "Ventricles and CSF spaces:", "Extra-axial spaces:", "Midline structures:", "Vascular structures:"],
+    "inputConcepts": ["post-surgical changes", "right temporal lobe", "resection cavity", "3 x 2 cm", "residual enhancing nodular tissue", "medial margin", "vasogenic edema", "right insular cortex", "right basal ganglia", "mass effect", "effacement right temporal horn", "no midline shift"],
+    "complexity": "complex"
+  },
+  {
+    "id": "mri-brain-005",
+    "modality": "MRI",
+    "bodyPart": "Brain",
+    "templateName": "MRI Brain Standard",
+    "findings": "Acute infarct in the left MCA territory involving the left insular cortex, left temporal lobe, and left frontal operculum with restricted diffusion on DWI/ADC maps. Associated cortical swelling with effacement of the adjacent sulci. No hemorrhagic transformation. Left M1 segment shows reduced flow void suggesting occlusion. Remainder of the intracranial vasculature appears patent.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Brain parenchyma:", "Ventricles and CSF spaces:", "Extra-axial spaces:", "Midline structures:", "Vascular structures:"],
+    "inputConcepts": ["acute infarct", "left MCA territory", "left insular cortex", "left temporal lobe", "left frontal operculum", "restricted diffusion", "DWI/ADC", "cortical swelling", "effacement sulci", "no hemorrhagic transformation", "left M1 segment", "reduced flow void", "occlusion"],
+    "complexity": "complex"
+  }
+]

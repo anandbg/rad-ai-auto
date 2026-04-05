@@ -1,0 +1,57 @@
+[
+  {
+    "id": "us-abdomen-001",
+    "modality": "Ultrasound",
+    "bodyPart": "Abdomen",
+    "templateName": "Ultrasound Abdomen Standard",
+    "findings": "Liver is normal in size and echogenicity with smooth contour. No focal hepatic lesion. Gallbladder is normal without calculi or wall thickening. Common bile duct measures 4 mm. Pancreas is visualized and appears normal. Spleen is normal in size. Both kidneys are normal in size and echogenicity without hydronephrosis or calculi. Aorta is normal in caliber.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Liver:", "Gallbladder and biliary system:", "Pancreas:", "Spleen:", "Kidneys:", "Aorta:"],
+    "inputConcepts": ["liver normal", "no hepatic lesion", "gallbladder normal", "no calculi", "no wall thickening", "common bile duct 4 mm", "pancreas normal", "spleen normal", "kidneys normal", "no hydronephrosis", "aorta normal"],
+    "complexity": "simple"
+  },
+  {
+    "id": "us-abdomen-002",
+    "modality": "Ultrasound",
+    "bodyPart": "Abdomen",
+    "templateName": "Ultrasound Abdomen Standard",
+    "findings": "Liver is normal in size and echogenicity. Multiple echogenic foci within the gallbladder with posterior acoustic shadowing consistent with cholelithiasis. No gallbladder wall thickening or pericholecystic fluid. Common bile duct measures 5 mm. Sonographic Murphy sign is negative. Remainder of the abdomen is unremarkable.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Liver:", "Gallbladder and biliary system:", "Pancreas:", "Spleen:", "Kidneys:", "Aorta:"],
+    "inputConcepts": ["liver normal", "echogenic foci gallbladder", "posterior acoustic shadowing", "cholelithiasis", "no gallbladder wall thickening", "no pericholecystic fluid", "common bile duct 5 mm", "Murphy sign negative"],
+    "complexity": "simple"
+  },
+  {
+    "id": "us-abdomen-003",
+    "modality": "Ultrasound",
+    "bodyPart": "Abdomen",
+    "templateName": "Ultrasound Abdomen Standard",
+    "findings": "Liver demonstrates diffusely increased echogenicity compared to the renal cortex consistent with hepatic steatosis. Liver is mildly enlarged measuring 17 cm in craniocaudal dimension. No focal hepatic lesion identified. Gallbladder and biliary system are unremarkable. Portal vein is patent with hepatopetal flow. Remainder of the abdomen is unremarkable.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Liver:", "Gallbladder and biliary system:", "Pancreas:", "Spleen:", "Kidneys:", "Aorta:"],
+    "inputConcepts": ["diffusely increased echogenicity", "hepatic steatosis", "liver mildly enlarged", "17 cm", "no focal hepatic lesion", "gallbladder unremarkable", "portal vein patent", "hepatopetal flow"],
+    "complexity": "moderate"
+  },
+  {
+    "id": "us-abdomen-004",
+    "modality": "Ultrasound",
+    "bodyPart": "Abdomen",
+    "templateName": "Ultrasound Abdomen Standard",
+    "findings": "Complex heterogeneous mass in the right hepatic lobe measuring approximately 6 x 5 cm with irregular margins. Internal vascularity demonstrated on color Doppler. Tumor thrombus extending into the right portal vein branch. Remainder of the liver shows coarsened echotexture consistent with chronic liver disease. Moderate ascites noted in the perihepatic and perisplenic regions. Spleen is mildly enlarged at 14 cm.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Liver:", "Gallbladder and biliary system:", "Pancreas:", "Spleen:", "Kidneys:", "Aorta:"],
+    "inputConcepts": ["complex heterogeneous mass", "right hepatic lobe", "6 x 5 cm", "irregular margins", "internal vascularity", "color Doppler", "tumor thrombus", "right portal vein branch", "coarsened echotexture", "chronic liver disease", "moderate ascites", "perihepatic", "perisplenic", "spleen mildly enlarged", "14 cm"],
+    "complexity": "complex"
+  },
+  {
+    "id": "us-abdomen-005",
+    "modality": "Ultrasound",
+    "bodyPart": "Abdomen",
+    "templateName": "Ultrasound Abdomen Standard",
+    "findings": "Gallbladder is distended with diffuse wall thickening measuring up to 6 mm. Pericholecystic fluid present. Multiple gallstones within the gallbladder lumen. Sonographic Murphy sign is positive. Common bile duct measures 7 mm, mildly dilated. No intrahepatic biliary dilatation. Liver parenchyma is unremarkable. No ascites.",
+    "expectedSections": ["Clinical Information", "Technique", "Comparison", "Findings", "Impression"],
+    "expectedSubheadings": ["Liver:", "Gallbladder and biliary system:", "Pancreas:", "Spleen:", "Kidneys:", "Aorta:"],
+    "inputConcepts": ["gallbladder distended", "wall thickening", "6 mm", "pericholecystic fluid", "multiple gallstones", "Murphy sign positive", "common bile duct 7 mm", "mildly dilated", "no intrahepatic biliary dilatation", "liver unremarkable", "no ascites"],
+    "complexity": "complex"
+  }
+]
