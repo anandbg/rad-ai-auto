@@ -17,13 +17,13 @@ export interface AIProviderConfig {
 /**
  * Default model IDs per purpose.
  * Generate and template default to Groq Llama 4 Scout (~96% cost reduction).
- * Transcription remains OpenAI Whisper (Phase 33 handles audio migration).
+ * Transcription defaults to Groq Whisper v3 Turbo (~89% cost reduction).
  * Override any default by setting the corresponding env var (e.g. AI_GENERATE_MODEL=openai:gpt-4o).
  */
 export const AI_ENV_DEFAULTS: Record<AIPurpose, string> = {
   generate: 'groq:llama-4-scout-17b-16e-instruct',
   template: 'groq:llama-4-scout-17b-16e-instruct',
-  transcription: 'openai:whisper-1',
+  transcription: 'groq:whisper-large-v3-turbo',
 };
 
 /**

@@ -11,6 +11,7 @@ import { checkAbusePattern } from "@/lib/abuse/detector";
 import { logAbuseAlert } from "@/lib/abuse/alerts";
 import type { SubscriptionPlan } from "@/types/database";
 import { getTranscriptionConfig } from '@/lib/ai/config';
+import { RADIOLOGY_VOCABULARY_HINT } from '@/lib/ai/medical-vocabulary';
 
 // Node.js runtime required for FormData file parsing
 export const runtime = 'nodejs';
@@ -111,7 +112,7 @@ function isValidAudioFile(file: File): boolean {
 /**
  * POST /api/transcribe
  *
- * Transcribes audio files using OpenAI Whisper API via Vercel AI SDK.
+ * Transcribes audio files using Groq Whisper v3 Turbo (default) or OpenAI Whisper (fallback).
  * Accepts FormData with 'audio' field containing the audio file.
  *
  * Returns:
@@ -238,8 +239,11 @@ export async function POST(request: Request) {
     const transcriptionConfig = getTranscriptionConfig();
 
     // Validate required API key for the configured provider
-    if (transcriptionConfig.provider === 'openai' && !process.env.OPENAI_API_KEY) {
-      console.error('[Transcribe] OPENAI_API_KEY is not configured for OpenAI transcription');
+    const provider = transcriptionConfig.provider;
+    const requiredApiKey = provider === 'groq' ? 'GROQ_API_KEY' : 'OPENAI_API_KEY';
+
+    if (!process.env[requiredApiKey]) {
+      console.error(`[Transcribe] ${requiredApiKey} is not configured for ${provider} transcription`);
       return new Response(
         JSON.stringify({
           success: false,
@@ -304,27 +308,40 @@ export async function POST(request: Request) {
       );
     }
 
-    // Provider: OpenAI Whisper (default)
-    // Future: Phase 33 will add Groq Whisper v3 Turbo branch based on transcriptionConfig.provider
-    // Call OpenAI Whisper API with retry logic
+    // Call Whisper API with retry logic -- branch on configured provider
     try {
       const result = await withRetry(
         async () => {
-          const openaiFormData = new FormData();
-          openaiFormData.append('model', 'whisper-1');
-          openaiFormData.append('file', audioFile, audioFile.name);
+          const whisperFormData = new FormData();
+          whisperFormData.append('file', audioFile, audioFile.name);
+          whisperFormData.append('prompt', RADIOLOGY_VOCABULARY_HINT);
 
-          const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          let apiUrl: string;
+          let apiKey: string;
+
+          if (provider === 'groq') {
+            // Groq Whisper v3 Turbo (~89% cheaper than OpenAI Whisper)
+            whisperFormData.append('model', transcriptionConfig.model);
+            apiUrl = 'https://api.groq.com/openai/v1/audio/transcriptions';
+            apiKey = process.env.GROQ_API_KEY!;
+          } else {
+            // OpenAI Whisper (fallback)
+            whisperFormData.append('model', transcriptionConfig.model);
+            apiUrl = 'https://api.openai.com/v1/audio/transcriptions';
+            apiKey = process.env.OPENAI_API_KEY!;
+          }
+
+          const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+              'Authorization': `Bearer ${apiKey}`,
             },
-            body: openaiFormData,
+            body: whisperFormData,
           });
 
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            const error = new Error(errorData?.error?.message || `OpenAI API error: ${response.status}`);
+            const error = new Error(errorData?.error?.message || `${provider} API error: ${response.status}`);
             // Add status to error for retry detection
             (error as Error & { status: number }).status = response.status;
             throw error;
@@ -365,7 +382,7 @@ export async function POST(request: Request) {
         }
       );
     } catch (error) {
-      console.error("[Transcribe] OpenAI error after retries:", error);
+      console.error(`[Transcribe] ${provider} error after retries:`, error);
       const errorResponse = formatErrorResponse(error);
       return new Response(
         JSON.stringify({
