@@ -1,7 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { streamText } from 'ai';
-import { getModel } from '@/lib/ai/registry';
 import { z } from 'zod';
 import { checkRateLimit } from "@/lib/ratelimit/limiters";
 import { checkMonthlyUsage, formatUsageHeaders } from "@/lib/usage/limits";
@@ -10,6 +9,8 @@ import { withStreamRetry } from "@/lib/openai/retry";
 import { formatErrorResponse } from "@/lib/openai/errors";
 import { checkCostCeiling, formatCostCeilingResponse } from "@/lib/cost/ceiling";
 import { trackCost } from "@/lib/cost/tracker";
+import { withProviderFallback } from "@/lib/ai/fallback";
+import { getProviderFromModelId } from "@/lib/cost/pricing";
 import { checkAbusePattern } from "@/lib/abuse/detector";
 import { logAbuseAlert } from "@/lib/abuse/alerts";
 
@@ -301,18 +302,28 @@ ANTI-HALLUCINATION CHECKLIST (verify before output):
 
 Generate a professional radiology report in Markdown format now.`;
 
-    // Generate report using GPT-4o with streaming and retry
+    // Generate report with automatic Groq→OpenAI fallback and real-token cost tracking.
+    // Fallback wraps retry: each provider gets its own full retry budget before
+    // we give up on it and hand the call to the secondary provider (REL-01).
     try {
-      const result = await withStreamRetry(
-        async () => streamText({
-          model: getModel('generate'),
-          system: systemPrompt,
-          prompt: userPrompt,
-          temperature: 0.2, // Low temperature for deterministic, consistent medical reports
-          maxOutputTokens: 2000,
-        }),
-        { operationName: "generate-report" }
-      );
+      const fallbackWrapped = await withProviderFallback('generate', async (model, modelId) => {
+        return await withStreamRetry(
+          async () => streamText({
+            model,
+            system: systemPrompt,
+            prompt: userPrompt,
+            temperature: 0.2, // Low temperature for deterministic, consistent medical reports
+            maxOutputTokens: 2000,
+          }),
+          { operationName: `generate-report:${modelId}` }
+        );
+      });
+
+      const { result, modelId: usedModelId, fellBack } = fallbackWrapped;
+
+      if (fellBack) {
+        console.warn(`[Generate] Fell back to ${usedModelId} for user ${user.id}`);
+      }
 
       // Record successful usage (non-blocking)
       recordUsage(user.id, "report", {
@@ -320,10 +331,23 @@ Generate a professional radiology report in Markdown format now.`;
         modality: validation.data.modality,
       }).catch((err) => console.error("[Usage] Failed to record:", err));
 
-      // Track cost for global ceiling (non-blocking)
-      trackCost("report", user.id).catch((err) =>
-        console.error("[Cost] Failed to track:", err)
-      );
+      // Track cost using REAL token usage from the provider that actually
+      // served the request. `result.usage` is a Promise that resolves when
+      // the stream ends — the AI SDK keeps it alive alongside the response
+      // body we return below, so we don't need waitUntil. (COST-01)
+      const { provider, model } = getProviderFromModelId(usedModelId);
+      Promise.resolve(result.usage)
+        .then((usage) =>
+          trackCost("report", user.id, {
+            usage: {
+              provider,
+              model,
+              promptTokens: usage.inputTokens ?? 0,
+              completionTokens: usage.outputTokens ?? 0,
+            },
+          })
+        )
+        .catch((err: unknown) => console.error("[Cost] Failed to track:", err));
 
       // Return streaming response with rate limit info
       const response = result.toTextStreamResponse();
