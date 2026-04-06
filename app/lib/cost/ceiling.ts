@@ -5,9 +5,13 @@ import type { SubscriptionPlan } from "@/types/database";
 const logger = createLogger("CostCeiling");
 
 // Daily cost ceiling in dollars
-// Default $20/day = ~$600/month
-// Can be overridden with OPENAI_DAILY_COST_CEILING env var
-const DEFAULT_DAILY_CEILING = 20;
+// v3.0 (post-Groq migration): $5/day baseline
+//   - Groq text: ~$0.0007/report → ~7,000 reports/day before ceiling
+//   - OpenAI fallback: ~$0.02/report → ~250 reports/day (clear operator signal during outages)
+//   - Groq transcription: $0.04/hr → ~125 hours/day before ceiling
+// Can be overridden with AI_DAILY_COST_CEILING env var
+// (legacy OPENAI_DAILY_COST_CEILING still honored for backward compat)
+const DEFAULT_DAILY_CEILING = 5;
 
 export interface CostCeilingResult {
   /** Whether the request is allowed */
@@ -28,7 +32,11 @@ export interface CostCeilingResult {
  * Get the daily cost ceiling from environment or default
  */
 function getDailyCeiling(): number {
-  const envCeiling = process.env.OPENAI_DAILY_COST_CEILING;
+  // AI_DAILY_COST_CEILING is the canonical v3.0 env var.
+  // OPENAI_DAILY_COST_CEILING is retained as a legacy fallback for backward
+  // compatibility with pre-v3.0 deployments.
+  const envCeiling =
+    process.env.AI_DAILY_COST_CEILING ?? process.env.OPENAI_DAILY_COST_CEILING;
   if (envCeiling) {
     const parsed = parseFloat(envCeiling);
     if (!isNaN(parsed) && parsed > 0) {
