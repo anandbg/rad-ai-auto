@@ -13,6 +13,60 @@ import type { SubscriptionPlan } from "@/types/database";
 import { getTranscriptionConfig } from '@/lib/ai/config';
 import { RADIOLOGY_VOCABULARY_HINT } from '@/lib/ai/medical-vocabulary';
 
+// Hardcoded fallback: OpenAI Whisper-1 is the emergency failover when the
+// primary (Groq) transcription provider errors after retries are exhausted.
+const FALLBACK_PROVIDER = { provider: 'openai', model: 'whisper-1' } as const;
+
+/**
+ * Call a Whisper-compatible transcription API (Groq or OpenAI) with the
+ * given audio file. Requests verbose_json so the response includes the
+ * actual audio `duration` field (in seconds) used for accurate cost tracking.
+ *
+ * Throws an Error with a `.status` property on non-2xx responses so withRetry
+ * can classify retryable vs non-retryable failures.
+ */
+async function callWhisperAPI(
+  provider: string,
+  model: string,
+  audioFile: File
+): Promise<{ text: string; duration?: number }> {
+  const whisperFormData = new FormData();
+  whisperFormData.append('file', audioFile, audioFile.name);
+  whisperFormData.append('prompt', RADIOLOGY_VOCABULARY_HINT);
+  whisperFormData.append('model', model);
+  whisperFormData.append('response_format', 'verbose_json');
+
+  const { apiUrl, apiKey } =
+    provider === 'groq'
+      ? {
+          apiUrl: 'https://api.groq.com/openai/v1/audio/transcriptions',
+          apiKey: process.env.GROQ_API_KEY!,
+        }
+      : {
+          apiUrl: 'https://api.openai.com/v1/audio/transcriptions',
+          apiKey: process.env.OPENAI_API_KEY!,
+        };
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: whisperFormData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const error = new Error(
+      errorData?.error?.message || `${provider} transcription error: ${response.status}`
+    );
+    (error as Error & { status: number }).status = response.status;
+    throw error;
+  }
+
+  return response.json();
+}
+
 // Node.js runtime required for FormData file parsing
 export const runtime = 'nodejs';
 
@@ -237,13 +291,20 @@ export async function POST(request: Request) {
 
     // Get transcription provider configuration from environment
     const transcriptionConfig = getTranscriptionConfig();
-
-    // Validate required API key for the configured provider
     const provider = transcriptionConfig.provider;
-    const requiredApiKey = provider === 'groq' ? 'GROQ_API_KEY' : 'OPENAI_API_KEY';
 
-    if (!process.env[requiredApiKey]) {
-      console.error(`[Transcribe] ${requiredApiKey} is not configured for ${provider} transcription`);
+    // Validate API keys — require at least one usable provider so fallback works.
+    // If primary key is missing but fallback key is present, log warning and continue
+    // (the primary call will fail fast and we'll route to the fallback).
+    const primaryKey = provider === 'groq' ? 'GROQ_API_KEY' : 'OPENAI_API_KEY';
+    const fallbackKey = 'OPENAI_API_KEY';
+    const hasPrimary = Boolean(process.env[primaryKey]);
+    const hasFallback = Boolean(process.env[fallbackKey]);
+
+    if (!hasPrimary && !hasFallback) {
+      console.error(
+        `[Transcribe] Neither ${primaryKey} nor ${fallbackKey} is configured — transcription unavailable`
+      );
       return new Response(
         JSON.stringify({
           success: false,
@@ -251,6 +312,12 @@ export async function POST(request: Request) {
           message: 'AI transcription service is not configured. Please contact support.',
         }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!hasPrimary) {
+      console.warn(
+        `[Transcribe] Primary key ${primaryKey} missing; will route directly to OpenAI fallback`
       );
     }
 
@@ -308,51 +375,72 @@ export async function POST(request: Request) {
       );
     }
 
-    // Call Whisper API with retry logic -- branch on configured provider
+    // Call Whisper API with retry + automatic Groq→OpenAI fallback.
+    // Happy path: identical to pre-34-03 behavior — primary provider succeeds.
+    // Failure path: exhausts primary retries, logs warn, retries against OpenAI
+    // Whisper with an independent retry budget. Cost tracking uses the provider
+    // that actually served the request so fallback cost amplification (~9x) is
+    // accurately recorded against the daily ceiling.
+    const primary = { provider: transcriptionConfig.provider, model: transcriptionConfig.model };
+
+    let servedBy: { provider: string; model: string };
+    let result: { text: string; duration?: number };
+
     try {
-      const result = await withRetry(
-        async () => {
-          const whisperFormData = new FormData();
-          whisperFormData.append('file', audioFile, audioFile.name);
-          whisperFormData.append('prompt', RADIOLOGY_VOCABULARY_HINT);
-
-          let apiUrl: string;
-          let apiKey: string;
-
-          if (provider === 'groq') {
-            // Groq Whisper v3 Turbo (~89% cheaper than OpenAI Whisper)
-            whisperFormData.append('model', transcriptionConfig.model);
-            apiUrl = 'https://api.groq.com/openai/v1/audio/transcriptions';
-            apiKey = process.env.GROQ_API_KEY!;
-          } else {
-            // OpenAI Whisper (fallback)
-            whisperFormData.append('model', transcriptionConfig.model);
-            apiUrl = 'https://api.openai.com/v1/audio/transcriptions';
-            apiKey = process.env.OPENAI_API_KEY!;
-          }
-
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-            },
-            body: whisperFormData,
+      try {
+        if (!hasPrimary) {
+          // Primary key missing — skip straight to fallback (error path
+          // inside the inner try triggers the catch below).
+          throw new Error(`${primaryKey} not configured; routing to fallback`);
+        }
+        result = await withRetry(
+          () => callWhisperAPI(primary.provider, primary.model, audioFile),
+          { maxRetries: 3, operationName: `transcribe:${primary.provider}` }
+        );
+        servedBy = primary;
+      } catch (primaryError) {
+        // If primary IS OpenAI, there is no meaningful fallback — rethrow.
+        if (primary.provider === 'openai') {
+          throw primaryError;
+        }
+        if (!hasFallback) {
+          console.error('[Transcribe] Primary failed and fallback key missing, cannot fail over');
+          throw primaryError;
+        }
+        console.warn(
+          `[Transcribe] Primary ${primary.provider} failed, falling back to openai:whisper-1:`,
+          primaryError instanceof Error ? primaryError.message : primaryError
+        );
+        try {
+          result = await withRetry(
+            () =>
+              callWhisperAPI(
+                FALLBACK_PROVIDER.provider,
+                FALLBACK_PROVIDER.model,
+                audioFile
+              ),
+            { maxRetries: 2, operationName: 'transcribe:openai-fallback' }
+          );
+          servedBy = { provider: FALLBACK_PROVIDER.provider, model: FALLBACK_PROVIDER.model };
+        } catch (fallbackError) {
+          console.error('[Transcribe] Both providers failed', {
+            primaryError:
+              primaryError instanceof Error ? primaryError.message : String(primaryError),
+            fallbackError:
+              fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
           });
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            const error = new Error(errorData?.error?.message || `${provider} API error: ${response.status}`);
-            // Add status to error for retry detection
-            (error as Error & { status: number }).status = response.status;
-            throw error;
-          }
-
-          return response.json();
-        },
-        { maxRetries: 3, operationName: "transcribe" }
-      );
+          throw fallbackError;
+        }
+      }
 
       const processingTime = (Date.now() - startTime) / 1000;
+
+      // Prefer actual audio duration from verbose_json. Fall back to wall-clock
+      // processing time only if the provider did not return a duration field.
+      const audioDurationSeconds =
+        typeof result.duration === 'number' && result.duration > 0
+          ? result.duration
+          : processingTime;
 
       // Record successful usage (non-blocking)
       recordUsage(user.id, "transcription", {
@@ -361,10 +449,15 @@ export async function POST(request: Request) {
         fileName: audioFile.name,
       }).catch((err) => console.error("[Usage] Failed to record:", err));
 
-      // Track cost for global ceiling (non-blocking)
-      trackCost("transcription", user.id).catch((err) =>
-        console.error("[Cost] Failed to track:", err)
-      );
+      // Track cost for global ceiling (non-blocking) with real provider + duration.
+      // Fallback-served requests correctly record the higher OpenAI rate.
+      trackCost("transcription", user.id, {
+        transcription: {
+          provider: servedBy.provider,
+          model: servedBy.model,
+          durationSeconds: audioDurationSeconds,
+        },
+      }).catch((err) => console.error("[Cost] Failed to track:", err));
 
       return new Response(
         JSON.stringify({
@@ -382,7 +475,7 @@ export async function POST(request: Request) {
         }
       );
     } catch (error) {
-      console.error(`[Transcribe] ${provider} error after retries:`, error);
+      console.error(`[Transcribe] transcription error after retries + fallback:`, error);
       const errorResponse = formatErrorResponse(error);
       return new Response(
         JSON.stringify({
