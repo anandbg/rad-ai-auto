@@ -36,7 +36,7 @@ interface TranscriptionRate {
  */
 export const PROVIDER_PRICING = {
   text: {
-    'groq:llama-4-scout-17b-16e-instruct': { inputPerMillion: 0.11, outputPerMillion: 0.34 },
+    'groq:meta-llama/llama-4-scout-17b-16e-instruct': { inputPerMillion: 0.11, outputPerMillion: 0.34 },
     'openai:gpt-4o':                        { inputPerMillion: 2.5,  outputPerMillion: 10.0 },
     'openai:gpt-4o-mini':                   { inputPerMillion: 0.15, outputPerMillion: 0.6 },
   } satisfies Record<string, TextRate>,

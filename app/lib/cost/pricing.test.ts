@@ -8,7 +8,7 @@ import {
 
 describe('PROVIDER_PRICING table', () => {
   it('contains Groq Llama 4 Scout text pricing', () => {
-    expect(PROVIDER_PRICING.text['groq:llama-4-scout-17b-16e-instruct']).toEqual({
+    expect(PROVIDER_PRICING.text['groq:meta-llama/llama-4-scout-17b-16e-instruct']).toEqual({
       inputPerMillion: 0.11,
       outputPerMillion: 0.34,
     });
@@ -38,7 +38,7 @@ describe('computeCost', () => {
   it('computes Groq Llama 4 Scout cost for 1500 in + 500 out tokens (~$0.000335)', () => {
     const cost = computeCost({
       provider: 'groq',
-      model: 'llama-4-scout-17b-16e-instruct',
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       promptTokens: 1500,
       completionTokens: 500,
     });
@@ -60,7 +60,7 @@ describe('computeCost', () => {
   it('OpenAI GPT-4o costs ~26x more than Groq Llama 4 Scout for same tokens', () => {
     const groq = computeCost({
       provider: 'groq',
-      model: 'llama-4-scout-17b-16e-instruct',
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       promptTokens: 1500,
       completionTokens: 500,
     });
@@ -106,7 +106,7 @@ describe('computeCost', () => {
     expect(
       computeCost({
         provider: 'groq',
-        model: 'llama-4-scout-17b-16e-instruct',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         promptTokens: 0,
         completionTokens: 0,
       })
@@ -177,10 +177,10 @@ describe('computeTranscriptionCost', () => {
 });
 
 describe('getProviderFromModelId', () => {
-  it('parses groq:llama-4-scout-17b-16e-instruct', () => {
-    expect(getProviderFromModelId('groq:llama-4-scout-17b-16e-instruct')).toEqual({
+  it('parses groq:meta-llama/llama-4-scout-17b-16e-instruct', () => {
+    expect(getProviderFromModelId('groq:meta-llama/llama-4-scout-17b-16e-instruct')).toEqual({
       provider: 'groq',
-      model: 'llama-4-scout-17b-16e-instruct',
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     });
   });
 

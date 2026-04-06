@@ -76,7 +76,7 @@ describe('trackCost - new { usage } overload for text generation', () => {
     await trackCost('report', 'user-1', {
       usage: {
         provider: 'groq',
-        model: 'llama-4-scout-17b-16e-instruct',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         promptTokens: 15_000,
         completionTokens: 5_000,
       },
@@ -85,7 +85,7 @@ describe('trackCost - new { usage } overload for text generation', () => {
     // cents = Math.round(0.335) = 0
     const expected = computeCost({
       provider: 'groq',
-      model: 'llama-4-scout-17b-16e-instruct',
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       promptTokens: 15_000,
       completionTokens: 5_000,
     });
@@ -97,7 +97,7 @@ describe('trackCost - new { usage } overload for text generation', () => {
 
     incrbyMock.mockClear();
     await trackCost('report', 'groq-user', {
-      usage: { provider: 'groq', model: 'llama-4-scout-17b-16e-instruct', ...tokens },
+      usage: { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct', ...tokens },
     });
     const groqCents = incrbyMock.mock.calls[0][1] as number;
 
@@ -168,7 +168,7 @@ describe('trackCost - redis unavailable', () => {
     await expect(trackCost('report', 'user-1')).resolves.toBeUndefined();
     await expect(
       trackCost('report', 'user-1', {
-        usage: { provider: 'groq', model: 'llama-4-scout-17b-16e-instruct', promptTokens: 100, completionTokens: 100 },
+        usage: { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct', promptTokens: 100, completionTokens: 100 },
       })
     ).resolves.toBeUndefined();
   });

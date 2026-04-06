@@ -307,6 +307,7 @@ Generate a professional radiology report in Markdown format now.`;
     // we give up on it and hand the call to the secondary provider (REL-01).
     try {
       const fallbackWrapped = await withProviderFallback('generate', async (model, modelId) => {
+        const { provider, model: modelName } = getProviderFromModelId(modelId);
         return await withStreamRetry(
           async () => streamText({
             model,
@@ -314,6 +315,21 @@ Generate a professional radiology report in Markdown format now.`;
             prompt: userPrompt,
             temperature: 0.2, // Low temperature for deterministic, consistent medical reports
             maxOutputTokens: 2000,
+            // Capture real token usage via onFinish (AI SDK v6 idiomatic).
+            // Using the callback (vs awaiting result.usage) keeps streaming
+            // truly progressive — no buffering side-effects. (COST-01)
+            onFinish: ({ usage }) => {
+              trackCost("report", user.id, {
+                usage: {
+                  provider,
+                  model: modelName,
+                  promptTokens: usage.inputTokens ?? 0,
+                  completionTokens: usage.outputTokens ?? 0,
+                },
+              }).catch((err: unknown) =>
+                console.error("[Cost] Failed to track:", err)
+              );
+            },
           }),
           { operationName: `generate-report:${modelId}` }
         );
@@ -330,24 +346,6 @@ Generate a professional radiology report in Markdown format now.`;
         templateId: validation.data.templateId,
         modality: validation.data.modality,
       }).catch((err) => console.error("[Usage] Failed to record:", err));
-
-      // Track cost using REAL token usage from the provider that actually
-      // served the request. `result.usage` is a Promise that resolves when
-      // the stream ends — the AI SDK keeps it alive alongside the response
-      // body we return below, so we don't need waitUntil. (COST-01)
-      const { provider, model } = getProviderFromModelId(usedModelId);
-      Promise.resolve(result.usage)
-        .then((usage) =>
-          trackCost("report", user.id, {
-            usage: {
-              provider,
-              model,
-              promptTokens: usage.inputTokens ?? 0,
-              completionTokens: usage.outputTokens ?? 0,
-            },
-          })
-        )
-        .catch((err: unknown) => console.error("[Cost] Failed to track:", err));
 
       // Return streaming response with rate limit info
       const response = result.toTextStreamResponse();

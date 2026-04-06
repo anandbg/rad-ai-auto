@@ -51,7 +51,7 @@ describe('withProviderFallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: primary is Groq, distinct from fallback
-    getModelIdMock.mockReturnValue('groq:llama-4-scout-17b-16e-instruct');
+    getModelIdMock.mockReturnValue('groq:meta-llama/llama-4-scout-17b-16e-instruct');
     // languageModel returns a sentinel keyed by the id we pass in
     languageModelMock.mockImplementation((id: string) => ({ __sentinel: id }));
   });
@@ -62,8 +62,8 @@ describe('withProviderFallback', () => {
     const wrapped = await withProviderFallback('generate', operation);
 
     expect(wrapped.fellBack).toBe(false);
-    expect(wrapped.modelId).toBe('groq:llama-4-scout-17b-16e-instruct');
-    expect(wrapped.result).toBe('ok:groq:llama-4-scout-17b-16e-instruct');
+    expect(wrapped.modelId).toBe('groq:meta-llama/llama-4-scout-17b-16e-instruct');
+    expect(wrapped.result).toBe('ok:groq:meta-llama/llama-4-scout-17b-16e-instruct');
     expect(operation).toHaveBeenCalledTimes(1);
     expect(warnMock).not.toHaveBeenCalled();
   });
@@ -84,7 +84,7 @@ describe('withProviderFallback', () => {
     expect(operation).toHaveBeenCalledTimes(2);
     expect(warnMock).toHaveBeenCalledTimes(1);
     const warnMsg = String(warnMock.mock.calls[0][0]);
-    expect(warnMsg).toContain('groq:llama-4-scout-17b-16e-instruct');
+    expect(warnMsg).toContain('groq:meta-llama/llama-4-scout-17b-16e-instruct');
     expect(warnMsg).toContain('openai:gpt-4o');
     expect(warnMsg).toContain('groq boom');
   });

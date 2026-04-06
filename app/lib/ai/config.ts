@@ -21,8 +21,8 @@ export interface AIProviderConfig {
  * Override any default by setting the corresponding env var (e.g. AI_GENERATE_MODEL=openai:gpt-4o).
  */
 export const AI_ENV_DEFAULTS: Record<AIPurpose, string> = {
-  generate: 'groq:llama-4-scout-17b-16e-instruct',
-  template: 'groq:llama-4-scout-17b-16e-instruct',
+  generate: 'groq:meta-llama/llama-4-scout-17b-16e-instruct',
+  template: 'groq:meta-llama/llama-4-scout-17b-16e-instruct',
   transcription: 'groq:whisper-large-v3-turbo',
 };
 
