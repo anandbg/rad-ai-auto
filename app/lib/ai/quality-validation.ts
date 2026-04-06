@@ -110,7 +110,7 @@ function extractSections(report: string): string[] {
   const sections: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(report)) !== null) {
-    sections.push(match[1].trim());
+    if (match[1]) sections.push(match[1].trim());
   }
   return sections;
 }
@@ -126,7 +126,7 @@ function extractSectionContent(report: string, sectionName: string): string {
     'gm'
   );
   const match = pattern.exec(report);
-  return match ? match[1].trim() : '';
+  return match && match[1] ? match[1].trim() : '';
 }
 
 /**
@@ -137,7 +137,7 @@ function extractBoldSubheadings(text: string): string[] {
   const subheadings: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
-    subheadings.push(`${match[1].trim()}:`);
+    if (match[1]) subheadings.push(`${match[1].trim()}:`);
   }
   return subheadings;
 }
