@@ -155,7 +155,7 @@ Cost-optimized AI infrastructure. Replace OpenAI with Groq for ~93% cost reducti
 
 ### Reliability
 
-- [ ] **REL-01**: Fallback chain automatically routes to OpenAI GPT-4o when Groq is unavailable or returns errors, with no user action required
+- [x] **REL-01**: Fallback chain automatically routes to OpenAI GPT-4o when Groq is unavailable or returns errors, with no user action required
 
 ### Cost Management
 
@@ -286,7 +286,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 | GEN-02 | Phase 32 | Complete |
 | GEN-03 | Phase 32 | Complete |
 | TRANS-01 | Phase 33 | Complete |
-| REL-01 | Phase 34 | Pending |
+| REL-01 | Phase 34 | Complete |
 | COST-01 | Phase 34 | Complete |
 
 **Coverage:**
