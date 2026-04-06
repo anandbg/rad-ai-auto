@@ -1,12 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mocks must be declared before importing the module under test.
-const getModelIdMock = vi.fn();
-const languageModelMock = vi.fn();
-const warnMock = vi.fn();
-const errorMock = vi.fn();
-const debugMock = vi.fn();
-const infoMock = vi.fn();
+// vi.mock factories are hoisted above top-level imports, so any variables
+// they close over must be declared via vi.hoisted to preserve hoisting order.
+const {
+  getModelIdMock,
+  languageModelMock,
+  warnMock,
+  errorMock,
+  debugMock,
+  infoMock,
+} = vi.hoisted(() => ({
+  getModelIdMock: vi.fn(),
+  languageModelMock: vi.fn(),
+  warnMock: vi.fn(),
+  errorMock: vi.fn(),
+  debugMock: vi.fn(),
+  infoMock: vi.fn(),
+}));
 
 vi.mock('./config', () => ({
   getModelId: (...args: unknown[]) => getModelIdMock(...args),
