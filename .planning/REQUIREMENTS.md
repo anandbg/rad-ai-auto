@@ -159,7 +159,7 @@ Cost-optimized AI infrastructure. Replace OpenAI with Groq for ~93% cost reducti
 
 ### Cost Management
 
-- [ ] **COST-01**: Cost tracking uses actual token counts from provider responses instead of hardcoded estimates, with per-provider pricing
+- [x] **COST-01**: Cost tracking uses actual token counts from provider responses instead of hardcoded estimates, with per-provider pricing
 
 ## v2 Requirements
 
@@ -287,7 +287,7 @@ Which phases cover which requirements. Updated by create-roadmap.
 | GEN-03 | Phase 32 | Complete |
 | TRANS-01 | Phase 33 | Complete |
 | REL-01 | Phase 34 | Pending |
-| COST-01 | Phase 34 | Pending |
+| COST-01 | Phase 34 | Complete |
 
 **Coverage:**
 - v1 requirements: 30 total (all complete)
