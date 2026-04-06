@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Cost-Optimized AI Infrastructure
-status: executing
-stopped_at: Completed 34-03-PLAN.md
-last_updated: "2026-04-06T06:32:49.487Z"
+status: verifying
+stopped_at: Completed 34-02-PLAN.md
+last_updated: "2026-04-06T06:36:01.186Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 Milestone: v3.0 Cost-Optimized AI Infrastructure
 Phase: 34 (reliability-cost-tracking) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
 Progress: [░░░░░░░░░░] 0%
@@ -71,6 +71,7 @@ Recent decisions affecting current work:
 - [Phase 34-reliability-cost-tracking]: [Phase 34-01]: Provider-aware cost pricing module; fallback to openai:gpt-4o for unknown models (safe over-estimate); trackCost union overload preserves legacy callers
 - [Phase 34]: Daily cost ceiling lowered from $20 to $5 (AI_DAILY_COST_CEILING new canonical env var) to match Groq-baseline economics while absorbing OpenAI fallback amplification
 - [Phase 34]: Transcribe route uses hardcoded openai:whisper-1 fallback with verbose_json for real audio duration cost tracking
+- [Phase 34-reliability-cost-tracking]: [Phase 34-02]: Fallback wraps retry (outer orchestrator, inner per-provider retry); track cost only after knowing which provider actually served the request via fellBack+modelId; AI SDK v6 uses inputTokens/outputTokens, result.usage is PromiseLike
 
 ### Pending Todos
 
@@ -90,8 +91,8 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T06:32:49.484Z
-Stopped at: Completed 34-03-PLAN.md
+Last session: 2026-04-06T06:36:01.183Z
+Stopped at: Completed 34-02-PLAN.md
 Resume file: None
 
 **Previous milestones:** v1.0-v2.2 completed 54 plans across 30 phases. See MILESTONES.md for full history.
