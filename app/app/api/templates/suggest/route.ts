@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { streamText } from 'ai';
-import { getModel } from '@/lib/ai/registry';
+import { withProviderFallback } from '@/lib/ai/fallback';
 import { z } from 'zod';
 
 // Edge runtime for low-latency streaming
@@ -274,14 +274,23 @@ export async function POST(request: Request) {
       ? `Please analyze the existing template sections and suggest improvements for ${modality} ${bodyPart}.`
       : `Please provide standard normal findings text for a ${modality} examination of the ${bodyPart}.`;
 
-    // Generate suggestions using GPT-4o with streaming
-    const result = streamText({
-      model: getModel('template'),
-      system: systemPrompt,
-      prompt: userPrompt,
-      temperature: 0.3, // Slightly higher than reports for creativity in suggestions
-      maxOutputTokens: 2000,
+    // Generate suggestions with automatic Groq→OpenAI fallback (REL-01).
+    // Cost tracking is intentionally NOT added here — the existing route
+    // did not track suggest-path cost; that remains out of scope for 34-02.
+    const fallbackWrapped = await withProviderFallback('template', async (model) => {
+      return streamText({
+        model,
+        system: systemPrompt,
+        prompt: userPrompt,
+        temperature: 0.3, // Slightly higher than reports for creativity in suggestions
+        maxOutputTokens: 2000,
+      });
     });
+
+    const { result, fellBack, modelId: usedModelId } = fallbackWrapped;
+    if (fellBack) {
+      console.warn(`[Templates/Suggest] Fell back to ${usedModelId} for user ${user.id}`);
+    }
 
     // Return streaming response
     return result.toTextStreamResponse();

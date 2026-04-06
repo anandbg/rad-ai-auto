@@ -1,7 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { generateText, Output } from 'ai';
-import { getModel } from '@/lib/ai/registry';
+import { withProviderFallback } from '@/lib/ai/fallback';
+import { getProviderFromModelId } from '@/lib/cost/pricing';
 import { aiGeneratedTemplateSchema } from '@/lib/validation/template-schema';
 import { checkRateLimit } from '@/lib/ratelimit/limiters';
 import { checkMonthlyUsage, formatUsageHeaders } from '@/lib/usage/limits';
@@ -316,18 +317,27 @@ User requirements: ${description}
 Generate a professional template with appropriate sections for this exam type.`;
     }
 
-    // Generate template using GPT-4o with structured output and retry
+    // Generate template with automatic Groq→OpenAI fallback and real-token
+    // cost tracking. Fallback wraps retry, so each provider gets its full
+    // retry budget before we escalate to the secondary provider (REL-01).
     try {
-      const result = await withRetry(
-        async () => generateText({
-          model: getModel('template'),
-          system: systemPrompt,
-          prompt: userPrompt,
-          output: Output.object({ schema: aiGeneratedTemplateSchema }),
-          temperature: 0.3, // Deterministic output for consistency
-        }),
-        { maxRetries: 3, operationName: 'template-generate' }
-      );
+      const fallbackWrapped = await withProviderFallback('template', async (model, modelId) => {
+        return await withRetry(
+          async () => generateText({
+            model,
+            system: systemPrompt,
+            prompt: userPrompt,
+            output: Output.object({ schema: aiGeneratedTemplateSchema }),
+            temperature: 0.3, // Deterministic output for consistency
+          }),
+          { maxRetries: 3, operationName: `template-generate:${modelId}` }
+        );
+      });
+
+      const { result, modelId: usedModelId, fellBack } = fallbackWrapped;
+      if (fellBack) {
+        console.warn(`[Templates/Generate] Fell back to ${usedModelId} for user ${user.id}`);
+      }
 
       // Extract the validated output
       const output = result.output;
@@ -339,10 +349,18 @@ Generate a professional template with appropriate sections for this exam type.`;
         bodyPart: bodyPart || output?.bodyPart,
       }).catch((err) => console.error('[Usage] Failed to record:', err));
 
-      // Track cost for global ceiling (non-blocking)
-      trackCost('template', user.id).catch((err) =>
-        console.error('[Cost] Failed to track:', err)
-      );
+      // Track cost for global ceiling using real AI SDK token usage (COST-01).
+      // generateText returns a resolved result with `usage` already populated
+      // (not a promise), so we can read it synchronously here.
+      const { provider, model: modelName } = getProviderFromModelId(usedModelId);
+      trackCost('template', user.id, {
+        usage: {
+          provider,
+          model: modelName,
+          promptTokens: result.usage?.inputTokens ?? 0,
+          completionTokens: result.usage?.outputTokens ?? 0,
+        },
+      }).catch((err) => console.error('[Cost] Failed to track:', err));
 
       // Return the validated template with rate limit info
       return new Response(

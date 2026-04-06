@@ -26,3 +26,7 @@ These errors exist on master before 34-01's changes and are unrelated to cost tr
 - Current `withRetry` implementation is proven in production across phases 31-34.
 
 **Suggested follow-up:** File as v3.1 enhancement; research Workflow DevKit fit for streaming SSE responses (generate route) before committing.
+
+## Deferred: Vercel Workflow DevKit
+
+- Hook recommended replacing withRetry/withStreamRetry with Workflow DevKit steps for durable execution. Out of scope for plan 34-02 (adds fallback layer around existing retry); track as a candidate for a future reliability phase.
