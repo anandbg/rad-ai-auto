@@ -1,67 +1,32 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
-// Mock users for development
-const mockUsers = [
-  {
-    id: 'user-001',
-    name: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@hospital.com',
-    role: 'radiologist',
-    institution: 'City Medical Center',
-    plan: 'pro',
-    status: 'active',
-    lastActive: '2024-01-14T08:30:00Z',
-    createdAt: '2023-11-15T10:00:00Z',
-  },
-  {
-    id: 'user-002',
-    name: 'Dr. Michael Chen',
-    email: 'michael.chen@radiology.com',
-    role: 'radiologist',
-    institution: 'Metro Radiology Associates',
-    plan: 'plus',
-    status: 'active',
-    lastActive: '2024-01-13T16:45:00Z',
-    createdAt: '2023-12-01T14:30:00Z',
-  },
-  {
-    id: 'user-003',
-    name: 'Dr. Emily Williams',
-    email: 'emily.williams@healthcare.org',
-    role: 'radiologist',
-    institution: 'Regional Hospital Network',
-    plan: 'free',
-    status: 'active',
-    lastActive: '2024-01-12T09:15:00Z',
-    createdAt: '2024-01-02T11:00:00Z',
-  },
-  {
-    id: 'user-004',
-    name: 'Admin User',
-    email: 'admin@airad.com',
-    role: 'admin',
-    institution: 'AI Radiologist',
-    plan: 'pro',
-    status: 'active',
-    lastActive: '2024-01-14T10:00:00Z',
-    createdAt: '2023-10-01T09:00:00Z',
-  },
-  {
-    id: 'user-005',
-    name: 'Dr. Robert Davis',
-    email: 'robert.davis@clinic.com',
-    role: 'radiologist',
-    institution: 'Downtown Clinic',
-    plan: 'plus',
-    status: 'inactive',
-    lastActive: '2023-12-20T14:00:00Z',
-    createdAt: '2023-11-20T16:30:00Z',
-  },
-];
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  specialty?: string;
+  institution?: string;
+  createdAt: string;
+  lastActive: string;
+}
+
+interface Subscription {
+  user_id: string;
+  plan_type: string;
+  status: string;
+}
+
+interface UserWithPlan extends User {
+  plan: string;
+  status: string;
+}
 
 function getPlanBadgeClass(plan: string) {
   switch (plan) {
@@ -87,8 +52,85 @@ function formatDate(dateString: string) {
 }
 
 export default function AdminUsersPage() {
-  const activeUsers = mockUsers.filter(u => u.status === 'active');
-  const inactiveUsers = mockUsers.filter(u => u.status === 'inactive');
+  const [users, setUsers] = useState<UserWithPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const loadUsers = useCallback(async () => {
+    try {
+      // Fetch users from API
+      const response = await fetch('/api/admin/users');
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const result = await response.json();
+      const userData: User[] = result.data || [];
+
+      // Fetch subscriptions
+      const supabase = createSupabaseBrowserClient();
+      const { data: subscriptions } = await supabase
+        .from('subscriptions')
+        .select('user_id, plan_type, status');
+
+      // Merge users with subscription data
+      const subscriptionMap = new Map<string, Subscription>();
+      (subscriptions || []).forEach(sub => {
+        subscriptionMap.set(sub.user_id, sub);
+      });
+
+      const usersWithPlans: UserWithPlan[] = userData.map(user => {
+        const sub = subscriptionMap.get(user.id);
+        return {
+          ...user,
+          plan: sub?.plan_type || 'free',
+          status: sub?.status || 'active',
+        };
+      });
+
+      setUsers(usersWithPlans);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  const handleUpdateRole = async (userId: string, newRole: string) => {
+    if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
+
+    setActionLoading(userId);
+    const supabase = createSupabaseBrowserClient();
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error updating role:', error);
+    } else {
+      await loadUsers();
+    }
+    setActionLoading(null);
+  };
+
+  const activeUsers = users.filter(u => u.status === 'active');
+  const inactiveUsers = users.filter(u => u.status !== 'active');
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent mx-auto" />
+          <p className="text-text-secondary">Loading users...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl p-6">
@@ -112,9 +154,6 @@ export default function AdminUsersPage() {
           <Button variant="outline">
             Export Users
           </Button>
-          <Button>
-            + Invite User
-          </Button>
         </div>
       </div>
 
@@ -122,7 +161,7 @@ export default function AdminUsersPage() {
       <div className="mb-8 grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="py-4">
-            <div className="text-2xl font-bold text-text-primary">{mockUsers.length}</div>
+            <div className="text-2xl font-bold text-text-primary">{users.length}</div>
             <div className="text-sm text-text-secondary">Total Users</div>
           </CardContent>
         </Card>
@@ -135,7 +174,7 @@ export default function AdminUsersPage() {
         <Card>
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-brand">
-              {mockUsers.filter(u => u.plan === 'pro').length}
+              {users.filter(u => u.plan === 'pro').length}
             </div>
             <div className="text-sm text-text-secondary">Pro Users</div>
           </CardContent>
@@ -143,111 +182,147 @@ export default function AdminUsersPage() {
         <Card>
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-warning">
-              {mockUsers.filter(u => u.role === 'admin').length}
+              {users.filter(u => u.role === 'admin').length}
             </div>
             <div className="text-sm text-text-secondary">Admins</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* User List */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-text-primary">
-          Active Users ({activeUsers.length})
-        </h2>
-        <div className="overflow-x-auto rounded-xl border">
-          <table className="w-full min-w-[700px]">
-            <thead className="bg-surface-muted">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">User</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Institution</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Role</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Plan</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Last Active</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {activeUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-surface-muted/50">
-                  <td className="px-4 py-3">
-                    <div>
-                      <div className="font-medium text-text-primary">{user.name}</div>
-                      <div className="text-sm text-text-secondary">{user.email}</div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-text-secondary">{user.institution}</td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getRoleBadgeClass(user.role)}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getPlanBadgeClass(user.plan)}`}>
-                      {user.plan}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-text-secondary">
-                    {formatDate(user.lastActive)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Inactive Users */}
-      {inactiveUsers.length > 0 && (
-        <div>
-          <h2 className="mb-4 text-lg font-semibold text-text-secondary">
-            Inactive Users ({inactiveUsers.length})
-          </h2>
-          <div className="overflow-x-auto rounded-xl border opacity-60">
-            <table className="w-full min-w-[600px]">
-              <thead className="bg-surface-muted">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">User</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Institution</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Plan</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Last Active</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {inactiveUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-surface-muted/50">
-                    <td className="px-4 py-3">
-                      <div>
-                        <div className="font-medium text-text-primary">{user.name}</div>
-                        <div className="text-sm text-text-secondary">{user.email}</div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-text-secondary">{user.institution}</td>
-                    <td className="px-4 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getPlanBadgeClass(user.plan)}`}>
-                        {user.plan}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-text-secondary">
-                      {formatDate(user.lastActive)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Button variant="ghost" size="sm">
-                        Reactivate
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {users.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-text-secondary">No users found.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Active User List */}
+          <div className="mb-8">
+            <h2 className="mb-4 text-lg font-semibold text-text-primary">
+              Active Users ({activeUsers.length})
+            </h2>
+            {activeUsers.length === 0 ? (
+              <p className="text-sm text-text-muted">No active users</p>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border">
+                <table className="w-full min-w-[700px]">
+                  <thead className="bg-surface-muted">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">User</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Institution</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Role</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Plan</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Last Active</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {activeUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-surface-muted/50">
+                        <td className="px-4 py-3">
+                          <div>
+                            <div className="font-medium text-text-primary">{user.name || 'No name'}</div>
+                            <div className="text-sm text-text-secondary">{user.email}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-text-secondary">
+                          {user.institution || '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getRoleBadgeClass(user.role)}`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getPlanBadgeClass(user.plan)}`}>
+                            {user.plan}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-text-secondary">
+                          {user.lastActive ? formatDate(user.lastActive) : '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1">
+                            {user.role !== 'admin' ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleUpdateRole(user.id, 'admin')}
+                                disabled={actionLoading === user.id}
+                              >
+                                Make Admin
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleUpdateRole(user.id, 'radiologist')}
+                                disabled={actionLoading === user.id}
+                              >
+                                Remove Admin
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        </div>
+
+          {/* Inactive Users */}
+          {inactiveUsers.length > 0 && (
+            <div>
+              <h2 className="mb-4 text-lg font-semibold text-text-secondary">
+                Inactive Users ({inactiveUsers.length})
+              </h2>
+              <div className="overflow-x-auto rounded-xl border opacity-60">
+                <table className="w-full min-w-[600px]">
+                  <thead className="bg-surface-muted">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">User</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Institution</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Plan</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Last Active</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-text-secondary">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {inactiveUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-surface-muted/50">
+                        <td className="px-4 py-3">
+                          <div>
+                            <div className="font-medium text-text-primary">{user.name || 'No name'}</div>
+                            <div className="text-sm text-text-secondary">{user.email}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-text-secondary">
+                          {user.institution || '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getPlanBadgeClass(user.plan)}`}>
+                            {user.plan}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-text-secondary">
+                          {user.lastActive ? formatDate(user.lastActive) : '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-warning/10 text-warning">
+                            {user.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

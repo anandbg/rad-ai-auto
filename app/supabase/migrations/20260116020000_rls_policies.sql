@@ -23,9 +23,10 @@ ALTER TABLE transcribe_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
--- HELPER FUNCTION: Check if current user is admin
+-- HELPER FUNCTIONS (SECURITY DEFINER to bypass RLS and avoid recursion)
 -- ============================================================================
 
+-- Check if current user is admin (app-level admin role)
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -33,6 +34,33 @@ BEGIN
     SELECT 1 FROM profiles
     WHERE profiles.user_id = auth.uid()
     AND profiles.role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Check if current user is admin of a specific institution
+-- Uses SECURITY DEFINER to bypass RLS on institution_members (avoids infinite recursion)
+CREATE OR REPLACE FUNCTION is_institution_admin(inst_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM institution_members
+    WHERE institution_members.institution_id = inst_id
+    AND institution_members.user_id = auth.uid()
+    AND institution_members.role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Check if current user is a member of a specific institution
+-- Uses SECURITY DEFINER to bypass RLS on institution_members (avoids infinite recursion)
+CREATE OR REPLACE FUNCTION is_institution_member(inst_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM institution_members
+    WHERE institution_members.institution_id = inst_id
+    AND institution_members.user_id = auth.uid()
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -72,11 +100,7 @@ CREATE POLICY "Admins can view all profiles"
 CREATE POLICY "Members can view their institution"
   ON institutions FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM institution_members
-      WHERE institution_members.institution_id = institutions.id
-      AND institution_members.user_id = auth.uid()
-    )
+    is_institution_member(institutions.id)
     OR created_by = auth.uid()
   );
 
@@ -87,12 +111,7 @@ CREATE POLICY "Creator can insert institution"
 CREATE POLICY "Institution admin can update"
   ON institutions FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM institution_members
-      WHERE institution_members.institution_id = institutions.id
-      AND institution_members.user_id = auth.uid()
-      AND institution_members.role = 'admin'
-    )
+    is_institution_admin(institutions.id)
     OR created_by = auth.uid()
   );
 
@@ -112,23 +131,15 @@ CREATE POLICY "Members can view own membership"
 CREATE POLICY "Institution admin can view all members"
   ON institution_members FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM institution_members AS im
-      WHERE im.institution_id = institution_members.institution_id
-      AND im.user_id = auth.uid()
-      AND im.role = 'admin'
-    )
+    -- Use SECURITY DEFINER function to avoid infinite recursion
+    is_institution_admin(institution_members.institution_id)
   );
 
 CREATE POLICY "Institution admin can add members"
   ON institution_members FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM institution_members AS im
-      WHERE im.institution_id = institution_members.institution_id
-      AND im.user_id = auth.uid()
-      AND im.role = 'admin'
-    )
+    -- Use SECURITY DEFINER function to avoid infinite recursion
+    is_institution_admin(institution_members.institution_id)
     OR (
       -- Creator of institution can add first member
       EXISTS (
@@ -142,12 +153,8 @@ CREATE POLICY "Institution admin can add members"
 CREATE POLICY "Institution admin can remove members"
   ON institution_members FOR DELETE
   USING (
-    EXISTS (
-      SELECT 1 FROM institution_members AS im
-      WHERE im.institution_id = institution_members.institution_id
-      AND im.user_id = auth.uid()
-      AND im.role = 'admin'
-    )
+    -- Use SECURITY DEFINER function to avoid infinite recursion
+    is_institution_admin(institution_members.institution_id)
     OR user_id = auth.uid()  -- Users can leave
   );
 
@@ -192,11 +199,8 @@ CREATE POLICY "Users can view shared templates from their institution"
   USING (
     is_shared = true
     AND institution_id IS NOT NULL
-    AND EXISTS (
-      SELECT 1 FROM institution_members
-      WHERE institution_members.institution_id = templates_personal.institution_id
-      AND institution_members.user_id = auth.uid()
-    )
+    -- Use SECURITY DEFINER function to avoid infinite recursion on institution_members
+    AND is_institution_member(templates_personal.institution_id)
   );
 
 CREATE POLICY "Users can insert own personal templates"
@@ -474,5 +478,7 @@ CREATE POLICY "Users can delete own preferences"
 -- This is correct behavior - webhooks and server-side operations need full access
 -- ============================================================================
 
--- Add comment for documentation
-COMMENT ON FUNCTION is_admin() IS 'Helper function to check if current user has admin role. Used in RLS policies.';
+-- Add comments for documentation
+COMMENT ON FUNCTION is_admin() IS 'Helper function to check if current user has admin role. Uses SECURITY DEFINER to bypass RLS.';
+COMMENT ON FUNCTION is_institution_admin(UUID) IS 'Check if current user is admin of given institution. Uses SECURITY DEFINER to bypass RLS on institution_members and avoid infinite recursion.';
+COMMENT ON FUNCTION is_institution_member(UUID) IS 'Check if current user is member of given institution. Uses SECURITY DEFINER to bypass RLS on institution_members and avoid infinite recursion.';

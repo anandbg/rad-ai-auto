@@ -108,6 +108,7 @@ export default function TranscribePage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordedMimeTypeRef = useRef<string>('audio/webm');
 
   // Detect modality and body part when transcribed text changes
   useEffect(() => {
@@ -235,7 +236,22 @@ export default function TranscribePage() {
     // Try to get microphone access and start recording
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+
+      // Determine supported MIME type for recording
+      // Prefer webm for Chrome/Firefox, fall back to mp4 for Safari
+      const mimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/mpeg',
+        'audio/wav',
+      ];
+      const supportedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+
+      const mediaRecorder = supportedMimeType
+        ? new MediaRecorder(stream, { mimeType: supportedMimeType })
+        : new MediaRecorder(stream);
+
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -245,8 +261,12 @@ export default function TranscribePage() {
       };
 
       mediaRecorder.onstop = () => {
+        // Use the actual MIME type from the recorder
+        const actualMimeType = mediaRecorder.mimeType || 'audio/webm';
+        recordedMimeTypeRef.current = actualMimeType;
+
         // Create blob from recorded chunks
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(audioChunksRef.current, { type: actualMimeType });
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
@@ -346,8 +366,9 @@ export default function TranscribePage() {
 
     // Get the audio blob from chunks if not already set
     let blobToSend = audioBlob;
+    const mimeType = recordedMimeTypeRef.current;
     if (!blobToSend && audioChunksRef.current.length > 0) {
-      blobToSend = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      blobToSend = new Blob(audioChunksRef.current, { type: mimeType });
       setAudioBlob(blobToSend);
       const url = URL.createObjectURL(blobToSend);
       setAudioUrl(url);
@@ -362,10 +383,16 @@ export default function TranscribePage() {
       return;
     }
 
+    // Determine the correct file extension based on MIME type
+    const extension = mimeType.includes('mp4') ? 'mp4'
+      : mimeType.includes('mpeg') ? 'mp3'
+      : mimeType.includes('wav') ? 'wav'
+      : 'webm';
+
     try {
       // Call the transcription API
       const formData = new FormData();
-      formData.append('audio', blobToSend, 'recording.webm');
+      formData.append('audio', blobToSend, `recording.${extension}`);
 
       const response = await fetch('/api/transcribe', {
         method: 'POST',

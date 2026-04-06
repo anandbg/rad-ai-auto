@@ -8,5 +8,10 @@ export function createSupabaseBrowserClient() {
     throw new Error('Missing Supabase environment variables');
   }
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  // Use isSingleton: true to ensure only one client instance is created
+  // This prevents lock conflicts in @supabase/auth-js when multiple
+  // components/functions call createSupabaseBrowserClient()
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    isSingleton: true,
+  });
 }

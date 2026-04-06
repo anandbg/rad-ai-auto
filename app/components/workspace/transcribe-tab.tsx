@@ -78,7 +78,22 @@ export function TranscribeTab({
       // Start recording
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
+
+        // Determine supported MIME type for recording
+        // Prefer webm for Chrome/Firefox, fall back to mp4 for Safari
+        const mimeTypes = [
+          'audio/webm;codecs=opus',
+          'audio/webm',
+          'audio/mp4',
+          'audio/mpeg',
+          'audio/wav',
+        ];
+        const supportedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+
+        const mediaRecorder = supportedMimeType
+          ? new MediaRecorder(stream, { mimeType: supportedMimeType })
+          : new MediaRecorder(stream);
+
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
 
@@ -89,8 +104,18 @@ export function TranscribeTab({
         };
 
         mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          handleTranscribe(audioBlob);
+          // Use the actual MIME type from the recorder
+          const actualMimeType = mediaRecorder.mimeType || 'audio/webm';
+          const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+
+          // Create a File with proper extension for OpenAI
+          const extension = actualMimeType.includes('mp4') ? 'mp4'
+            : actualMimeType.includes('mpeg') ? 'mp3'
+            : actualMimeType.includes('wav') ? 'wav'
+            : 'webm';
+          const audioFile = new File([audioBlob], `recording.${extension}`, { type: actualMimeType });
+
+          handleTranscribe(audioFile);
           // Stop all tracks to release microphone
           stream.getTracks().forEach(track => track.stop());
         };

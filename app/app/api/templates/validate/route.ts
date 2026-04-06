@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { MOCK_AUTH_COOKIE, getMockUser } from '@/lib/auth/mock-auth';
-import { SESSION_TIMESTAMP_COOKIE, isSessionExpired, parseSessionTimestamp } from '@/lib/auth/session';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { templateFormSchema, formatZodErrors } from '@/lib/validation/template-schema';
 
 /**
@@ -16,33 +14,16 @@ import { templateFormSchema, formatZodErrors } from '@/lib/validation/template-s
  * 3. Returns validation errors in the same format as client-side
  */
 export async function POST(request: NextRequest) {
-  // Check authentication
-  const cookieStore = await cookies();
-  const authCookie = cookieStore.get(MOCK_AUTH_COOKIE);
-  const user = getMockUser(authCookie?.value);
+  // Check authentication using Supabase
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (authError || !user) {
     return NextResponse.json(
       {
         success: false,
         error: 'Unauthorized',
         message: 'Authentication required. Please sign in to access this resource.'
-      },
-      { status: 401 }
-    );
-  }
-
-  // Check session expiration
-  const sessionTimestampCookie = cookieStore.get(SESSION_TIMESTAMP_COOKIE);
-  const sessionTimestamp = parseSessionTimestamp(sessionTimestampCookie?.value);
-
-  if (isSessionExpired(sessionTimestamp)) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Session Expired',
-        message: 'Your session has expired due to inactivity. Please sign in again.',
-        code: 'SESSION_EXPIRED'
       },
       { status: 401 }
     );

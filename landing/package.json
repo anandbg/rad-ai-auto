@@ -1,0 +1,24 @@
+{
+  "name": "ai-radiologist-landing-page",
+  "version": "1.0.0",
+  "description": "Landing page package for AI-powered radiology reporting platform",
+  "private": true,
+  "dependencies": {
+    "lucide-react": "^0.263.1"
+  },
+  "peerDependencies": {
+    "next": ">=13.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0",
+    "tailwindcss": ">=3.0.0"
+  },
+  "keywords": [
+    "landing-page",
+    "radiology",
+    "ai",
+    "medical",
+    "nextjs",
+    "react",
+    "tailwindcss"
+  ]
+}
