@@ -237,6 +237,16 @@ vercel deploy --prebuilt      # uploads prebuilt output, skips remote build
 
 **Why `--prebuilt`?** Remote builds on this project have failed silently in the past with empty build-event logs from the Vercel API, making debugging impossible. Building locally with `vercel build` uses the same toolchain Vercel would use, produces `.vercel/output`, and `vercel deploy --prebuilt` just uploads that artifact. This has been the ONLY reliable path so far. Until Git integration is set up and remote builds are proven, always use `--prebuilt`.
 
+**⚠ Stale `.vercel/output` gotcha:** `vercel build` caches its output in `.vercel/output`. If you run `vercel env pull`, `vercel link`, or otherwise change project settings between the build and the deploy, the cached output can get out of sync and the uploaded deploy will fail at runtime with weird errors like `Cannot find module ...` on routes that used to work. **Always clean and rebuild between unrelated operations:**
+
+```bash
+rm -rf .vercel/output .next
+vercel build
+vercel deploy --prebuilt
+```
+
+One concrete repro: deploy A succeeded → run `vercel env pull --environment preview` to inspect env vars → run `vercel deploy --prebuilt` again → deploy B failed on `/api/auth/callback` with Cannot find module. Fresh build fixed it.
+
 ### Promoting to production
 
 After the preview passes manual smoke testing (auth, report generation, transcription, PDF export):
