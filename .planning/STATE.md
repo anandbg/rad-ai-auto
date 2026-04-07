@@ -29,7 +29,7 @@ Milestone: v3.0 Cost-Optimized AI Infrastructure
 Phase: 34
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-07 - Completed quick task 260407-7bd: Stripe sandbox hardening
+Last activity: 2026-04-07 - Completed quick task 260407-7vr: Stripe production wiring (deploy + env rotation, Supabase migrations blocked on DB password)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -90,6 +90,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260407-7bd | Stripe sandbox hardening: webhook idempotency fix, invoice.payment_succeeded handler, register persistent webhook, archive junk products | 2026-04-07 | 67dfa6d | [260407-7bd-stripe-sandbox-hardening-register-persis](./quick/260407-7bd-stripe-sandbox-hardening-register-persis/) |
+| 260407-7vr | Stripe production wiring: deploy webhook route to Vercel prod (HTTP 400, was 404), push rotated STRIPE_WEBHOOK_SECRET + price IDs to prod+preview env, force-retry 4 pending events. Supabase migrations BLOCKED on DB password. | 2026-04-07 | bc70ef7 | [260407-7vr-stripe-production-wiring-deploy-app-to-v](./quick/260407-7vr-stripe-production-wiring-deploy-app-to-v/) |
 
 ### Roadmap Evolution
 
