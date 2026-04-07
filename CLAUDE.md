@@ -167,3 +167,93 @@ You: Done! I've added "S3 Sync Integration" to your backlog. It's now visible on
 4. Search the codebase to find relevant information before answering
 5. When creating features, confirm what was created
 6. If you're unsure about details, ask for clarification
+
+## Vercel Deployment Playbook
+
+Lessons from the first successful v3.0 deployment (2026-04-07). Follow this exact order to avoid repeating the pitfalls below.
+
+### Project facts (don't re-discover these)
+
+- **Team:** `anands-projects-8d50deab` (ID `team_m2l3ZorMPkHW3iucNX6G72DI`)
+- **Project:** `ai-radiologist` (ID `prj_NAVCi0I1MQ4hXATa5YDCifoha1fi`), framework `nextjs`, Hobby tier
+- **Account email (must match git author):** `anandbg@gmail.com` — NOT `anandbg1978@gmail.com`
+- **Production domain:** `ai-radiologist-one.vercel.app`
+- **Repo layout is a monorepo:** the Next.js app lives in `app/`, not the repo root. Always `cd app` before running `vercel` commands, and always link/deploy from there so the upload root is `app/`.
+- **`.vercel/project.json` lives at `app/.vercel/project.json`** after linking. Check there first before re-linking.
+
+### Pre-flight checklist (do these BEFORE `vercel deploy`)
+
+1. **Verify git author matches Vercel account email.** Hobby tier rejects deploys whose HEAD commit author email is not verified on the Vercel account. Run:
+   ```bash
+   git config user.name
+   git config user.email
+   ```
+   Both should be clean ASCII strings with NO smart quotes (`"` `"`) and NO surrounding quote characters. If they look wrong, fix:
+   ```bash
+   git config user.name "Anand"
+   git config user.email "anandbg@gmail.com"
+   ```
+   Then make an empty commit (`git commit --allow-empty -m "chore: verified author"`) and push before deploying — Vercel checks the HEAD commit author, not the staged diff.
+
+2. **Run `pnpm build` locally first.** The build must pass locally before touching Vercel. Known build-time gotchas in this repo:
+   - `react-resizable-panels` must be a direct dep in `app/package.json` (transitive install is not enough — Next.js webpack needs it explicit).
+   - `lib/ai/quality-validation.ts` uses regex `match[1]` — always guard with `if (match[1])` for strict-null TypeScript.
+   - `app/next.config.mjs` does NOT disable ESLint — warnings are OK but errors will fail the build.
+
+3. **Ensure environment variables are in place.** Required for v3.0+:
+   - `GROQ_API_KEY` (primary text + transcription)
+   - `OPENAI_API_KEY` (fallback)
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+   - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+   - Optional: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` (rate limiting + cost tracking)
+   - Optional: `AI_DAILY_COST_CEILING` (defaults to $5)
+
+   Check what's already set on Vercel with `vercel env ls production`. Add missing vars by piping the value from stdin to avoid echoing secrets:
+   ```bash
+   grep "^GROQ_API_KEY=" .env.local | cut -d= -f2- | vercel env add GROQ_API_KEY production
+   ```
+   Never paste API key values into chat or write them into files that get committed.
+
+### Deploy procedure (use this exact sequence)
+
+From `app/`:
+```bash
+vercel link --yes --project=ai-radiologist --scope=anands-projects-8d50deab
+vercel pull --yes --environment preview
+vercel build                  # runs locally, uses .vercel/output
+vercel deploy --prebuilt      # uploads prebuilt output, skips remote build
+```
+
+**Why `--prebuilt`?** Remote builds on this project have failed silently in the past with empty build-event logs from the Vercel API, making debugging impossible. Building locally with `vercel build` uses the same toolchain Vercel would use, produces `.vercel/output`, and `vercel deploy --prebuilt` just uploads that artifact. This has been the ONLY reliable path so far. Until Git integration is set up and remote builds are proven, always use `--prebuilt`.
+
+### Promoting to production
+
+After the preview passes manual smoke testing (auth, report generation, transcription, PDF export):
+```bash
+vercel build --prod
+vercel deploy --prebuilt --prod
+```
+
+This replaces whatever is at `ai-radiologist-one.vercel.app`.
+
+### Debugging failed deploys
+
+- **Empty build events from `/v3/deployments/{id}/events` API:** Known issue with this project. Use `vercel build` locally to reproduce. Don't waste time trying to fetch remote logs — they won't come.
+- **`readyStateReason: "Git author X must have access to the team"`:** Author email mismatch. Check `git config user.email` against Vercel account email (currently `anandbg@gmail.com`). Fix, empty-commit, push, redeploy.
+- **`gitDirty: "1"` in deployment meta:** Expected when using `vercel deploy` (uploads local files). Not a problem. Will become `"0"` when Git integration is set up.
+- **`NEXT_DISABLE_ESLINT=1` works locally but fails on Vercel:** Vercel ignores that env var for Next.js builds. Fix the actual lint errors or add them to `.eslintignore`.
+
+### What NOT to do
+
+- Don't try to deploy by pushing to GitHub — Git integration is not set up on this project. Pushes do nothing for Vercel until someone connects the repo.
+- Don't run `vercel deploy` without `--prebuilt` — the remote build will fail with no logs.
+- Don't share API keys in chat. If one leaks, rotate it on the provider immediately before adding to Vercel env.
+- Don't run `vercel env add` with `NAME=value` as a positional arg — that's not how it works. Pipe the value from stdin or let it prompt interactively.
+- Don't deploy from the repo root — deploy from `app/`. The repo root has a `landing/` directory that is a separate standalone project (not used by production).
+
+### Known state as of 2026-04-07
+
+- First successful preview deploy: `https://ai-radiologist-lmhg4n4d8-anands-projects-8d50deab.vercel.app`
+- Production (`ai-radiologist-one.vercel.app`) is still on an old pre-v3.0 build from Dec 2025
+- No custom domain, no Git integration, no Stripe production webhook, no production Supabase — all deferred to the real Phase 28 production launch
+- Preview deploys on Hobby tier are SSO-protected — users need to authenticate through Vercel to view them
