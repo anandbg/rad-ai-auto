@@ -29,7 +29,7 @@ Milestone: v3.0 Cost-Optimized AI Infrastructure
 Phase: 34
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-06
+Last activity: 2026-04-07 - Completed quick task 260407-7bd: Stripe sandbox hardening
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -84,6 +84,12 @@ None yet.
 - Current system prompt ~2.5K tokens, needs reduction to ~2K for Llama models
 - Hardcoded cost tracking will be 71x wrong after switch if not updated
 - Pre-existing ESLint build issue (imports stripped during lint; build passes with NEXT_DISABLE_ESLINT=1)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260407-7bd | Stripe sandbox hardening: webhook idempotency fix, invoice.payment_succeeded handler, register persistent webhook, archive junk products | 2026-04-07 | 67dfa6d | [260407-7bd-stripe-sandbox-hardening-register-persis](./quick/260407-7bd-stripe-sandbox-hardening-register-persis/) |
 
 ### Roadmap Evolution
 
