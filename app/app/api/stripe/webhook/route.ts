@@ -96,25 +96,48 @@ export async function POST(request: NextRequest) {
   }
 
   // Check if event was already processed (idempotency)
-  // This prevents duplicate processing if Stripe retries delivery
-  const supabase = createSupabaseServiceClient();
+  // This prevents duplicate processing if Stripe retries delivery.
+  // Guard: only short-circuit when processed_at IS NOT NULL. A row with
+  // processed_at NULL indicates a previous delivery failed mid-processing;
+  // Stripe's retry should be allowed to re-run the handler.
+  const supabaseIdem = createSupabaseServiceClient();
+  let idempotencyTracked = false;
   try {
-    const { data: existingEvent } = await supabase
+    const { data: existingEvent, error: selectErr } = await supabaseIdem
       .from('stripe_webhook_events')
-      .select('id')
+      .select('id, processed_at')
       .eq('event_id', event.id)
-      .single();
+      .maybeSingle();
 
-    if (existingEvent) {
+    if (selectErr) {
+      log(`Idempotency select failed (non-fatal): ${selectErr.message}`);
+    }
+
+    if (existingEvent && existingEvent.processed_at) {
       log(`Event ${event.id} already processed, skipping`);
       return NextResponse.json({ received: true, duplicate: true });
     }
 
-    // Record the event before processing to prevent race conditions
-    await supabase.from('stripe_webhook_events').insert({
-      event_id: event.id,
-      event_type: event.type,
-    });
+    if (!existingEvent) {
+      // Record the event with NULL processed_at so Stripe can retry on failure.
+      const { error: insertErr } = await supabaseIdem
+        .from('stripe_webhook_events')
+        .insert({
+          event_id: event.id,
+          event_type: event.type,
+          processed_at: null,
+        });
+      if (insertErr) {
+        log(`Idempotency insert failed (non-fatal): ${insertErr.message}`);
+      } else {
+        idempotencyTracked = true;
+      }
+    } else {
+      // Row exists but processed_at is NULL — this is a Stripe retry of a
+      // previously failed processing attempt. Re-run handler.
+      log(`Retrying previously-failed event ${event.id}`);
+      idempotencyTracked = true;
+    }
   } catch (err) {
     // If we can't check/record idempotency, log but continue processing
     // This handles the case where the table doesn't exist yet (migration not run)
@@ -238,7 +261,83 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
         log(` Payment succeeded: ${invoice.id}`);
-        // TODO: Record payment, reset monthly credits
+
+        const customerId = invoice.customer as string;
+        // Stripe.Invoice.subscription is deprecated in newer API versions; check parent.
+        const subscriptionId =
+          (invoice as unknown as { subscription?: string }).subscription ??
+          (invoice as unknown as {
+            parent?: { subscription_details?: { subscription?: string } };
+          }).parent?.subscription_details?.subscription ??
+          null;
+
+        // Look up user_id from subscriptions table via customer id.
+        const supabase = createSupabaseServiceClient();
+        const { data: subRow, error: subLookupErr } = await supabase
+          .from('subscriptions')
+          .select('user_id')
+          .eq('stripe_customer_id', customerId)
+          .maybeSingle();
+
+        if (subLookupErr || !subRow?.user_id) {
+          logError(
+            'invoice.payment_succeeded: no subscription row for customer',
+            customerId,
+            subLookupErr
+          );
+          // Still record the invoice (without user_id) so we have an audit trail.
+        }
+
+        // 1. Persist the invoice (idempotent via stripe_invoice_id UNIQUE).
+        const periodStart = invoice.period_start
+          ? new Date(invoice.period_start * 1000).toISOString()
+          : null;
+        const periodEnd = invoice.period_end
+          ? new Date(invoice.period_end * 1000).toISOString()
+          : null;
+
+        const { error: invErr } = await supabase
+          .from('stripe_invoices')
+          .upsert(
+            {
+              stripe_invoice_id: invoice.id,
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscriptionId,
+              user_id: subRow?.user_id ?? null,
+              amount_paid: invoice.amount_paid,
+              currency: invoice.currency,
+              status: invoice.status ?? 'paid',
+              period_start: periodStart,
+              period_end: periodEnd,
+              hosted_invoice_url: invoice.hosted_invoice_url ?? null,
+              invoice_pdf: invoice.invoice_pdf ?? null,
+            },
+            { onConflict: 'stripe_invoice_id' }
+          );
+
+        if (invErr) {
+          logError('Error upserting stripe_invoices:', invErr);
+        }
+
+        // 2. Reset monthly credits — insert an `allocation` ledger row keyed by invoice.id.
+        //    The UNIQUE (user_id, idempotency_key) constraint guarantees idempotency.
+        //    Allocation amount: 100 credits per renewal (placeholder consistent with sandbox).
+        //    Skip if we could not resolve user_id.
+        if (subRow?.user_id) {
+          const { error: ledgerErr } = await supabase.from('credits_ledger').insert({
+            user_id: subRow.user_id,
+            delta: 100,
+            reason: 'allocation',
+            idempotency_key: invoice.id,
+            meta: { source: 'invoice.payment_succeeded', invoice_id: invoice.id },
+          });
+          // Unique violation (23505) means we already allocated for this invoice — fine.
+          if (ledgerErr && !ledgerErr.message?.includes('duplicate')) {
+            logError('Error inserting credit allocation:', ledgerErr);
+          } else if (!ledgerErr) {
+            log(` Allocated 100 credits for ${subRow.user_id} from invoice ${invoice.id}`);
+          }
+        }
         break;
       }
 
@@ -267,6 +366,18 @@ export async function POST(request: NextRequest) {
 
       default:
         log(` Unhandled event type: ${event.type}`);
+    }
+
+    // Mark event as successfully processed. If this update fails, the next
+    // Stripe retry will still find processed_at IS NULL and re-run the handler.
+    if (idempotencyTracked) {
+      const { error: markErr } = await supabaseIdem
+        .from('stripe_webhook_events')
+        .update({ processed_at: new Date().toISOString() })
+        .eq('event_id', event.id);
+      if (markErr) {
+        logError(`Failed to mark event ${event.id} processed:`, markErr);
+      }
     }
 
     return NextResponse.json({ received: true, event_type: event.type });
