@@ -251,9 +251,28 @@ This replaces whatever is at `ai-radiologist-one.vercel.app`.
 - Don't run `vercel env add` with `NAME=value` as a positional arg — that's not how it works. Pipe the value from stdin or let it prompt interactively.
 - Don't deploy from the repo root — deploy from `app/`. The repo root has a `landing/` directory that is a separate standalone project (not used by production).
 
+### Supabase Auth URL Configuration (MUST match Vercel)
+
+Supabase Auth has a "Site URL" + "Redirect URLs" allowlist that gates OAuth callbacks. If a `signInWithOAuth({ redirectTo: X })` URL isn't in the allowlist, Supabase silently falls back to the Site URL. Symptom: user logs in with Google but lands on `http://localhost:3000/dashboard` on production.
+
+**Required config** in Supabase dashboard → Authentication → URL Configuration:
+
+- **Site URL:** `https://ai-radiologist-one.vercel.app` (the stable production alias, NOT a rotating preview URL)
+- **Redirect URLs allowlist:**
+  ```
+  http://localhost:3000/**
+  https://ai-radiologist-one.vercel.app/**
+  https://ai-radiologist-*-anands-projects-8d50deab.vercel.app/**
+  https://ai-radiologist-*.vercel.app/**
+  ```
+  The wildcards are required — Vercel preview URLs change every deploy (`ai-radiologist-lmhg4n4d8-...`, `ai-radiologist-a6afhyn2x-...`, etc). Without the wildcard, every new preview deploy breaks Google login.
+
+**Google Cloud Console** — its "Authorized redirect URIs" should ONLY contain Supabase's callback URL (`https://<project-ref>.supabase.co/auth/v1/callback`). The app URL never goes in Google's config. Flow is: App → Supabase → Google → Supabase → App. Google only needs to know about Supabase.
+
 ### Known state as of 2026-04-07
 
 - First successful preview deploy: `https://ai-radiologist-lmhg4n4d8-anands-projects-8d50deab.vercel.app`
 - Production (`ai-radiologist-one.vercel.app`) is still on an old pre-v3.0 build from Dec 2025
 - No custom domain, no Git integration, no Stripe production webhook, no production Supabase — all deferred to the real Phase 28 production launch
 - Preview deploys on Hobby tier are SSO-protected — users need to authenticate through Vercel to view them
+- **Google OAuth redirect bug:** On first Vercel deploy, Supabase Site URL was still `http://localhost:3000`, so Google login worked but redirected users back to localhost. Fix documented in "Supabase Auth URL Configuration" above.
