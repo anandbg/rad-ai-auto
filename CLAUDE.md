@@ -269,6 +269,24 @@ Supabase Auth has a "Site URL" + "Redirect URLs" allowlist that gates OAuth call
 
 **Google Cloud Console** — its "Authorized redirect URIs" should ONLY contain Supabase's callback URL (`https://<project-ref>.supabase.co/auth/v1/callback`). The app URL never goes in Google's config. Flow is: App → Supabase → Google → Supabase → App. Google only needs to know about Supabase.
 
+**How to push this config via CLI (instead of the dashboard):**
+
+```bash
+SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=370409810617-52o6tj34nmhtk7hc5e8433eni2aogi8q.apps.googleusercontent.com \
+  supabase config push --project-ref rbritrrchdpzzollcfql --yes
+```
+
+The project ref is `rbritrrchdpzzollcfql` (the `ai-radiologist` Supabase project in the `dabrzlrlasjctebxfkib` org, eu-west-1). The local config lives at `app/supabase/config.toml` — edit `site_url` and `additional_redirect_urls` in the `[auth]` section.
+
+**⚠ Known gotcha — Google OAuth client_id env var:** `app/supabase/config.toml` stores the Google OAuth client as `client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"`. If you run `supabase config push` without that env var set in your shell, the CLI will push the literal unresolved string to the remote and BREAK Google login. Always export the env var before pushing:
+
+```bash
+export SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=370409810617-52o6tj34nmhtk7hc5e8433eni2aogi8q.apps.googleusercontent.com
+supabase config push --project-ref rbritrrchdpzzollcfql --yes
+```
+
+The OAuth **secret** is stored in Supabase's internal secret vault (not in config.toml), so the unset `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` warning is safe to ignore — config.toml `secret = ""` leaves the remote secret untouched.
+
 ### Known state as of 2026-04-07
 
 - First successful preview deploy: `https://ai-radiologist-lmhg4n4d8-anands-projects-8d50deab.vercel.app`
