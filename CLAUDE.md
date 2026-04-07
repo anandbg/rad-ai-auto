@@ -200,7 +200,18 @@ Lessons from the first successful v3.0 deployment (2026-04-07). Follow this exac
    - `lib/ai/quality-validation.ts` uses regex `match[1]` — always guard with `if (match[1])` for strict-null TypeScript.
    - `app/next.config.mjs` does NOT disable ESLint — warnings are OK but errors will fail the build.
 
-3. **Ensure environment variables are in place.** Required for v3.0+:
+3. **Ensure environment variables are in place for ALL SCOPES you care about.** ⚠ Vercel env vars are scoped per environment: `production`, `preview`, and `development`. Preview deploys do NOT inherit from production — a var set with `vercel env add NAME production` is invisible to preview deploys. When in doubt, add to all three. The CLI prompts per-scope interactively and the plugin agent mode refuses to auto-select, so use the Management API via curl to bulk-add:
+
+```bash
+TOKEN=$(python3 -c 'import json; print(json.load(open("/Users/anand/Library/Application Support/com.vercel.cli/auth.json"))["token"])')
+curl -s -X POST "https://api.vercel.com/v10/projects/prj_NAVCi0I1MQ4hXATa5YDCifoha1fi/env?teamId=team_m2l3ZorMPkHW3iucNX6G72DI" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"key":"MY_VAR","value":"the-value","type":"encrypted","target":["production","preview","development"]}'
+```
+
+Check current scopes with `vercel env ls` or the API (`GET /v10/projects/{id}/env`). Symptom of a missing preview-scope env var: API route returns 500 with HTML error page, and client code fails with `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`.
+
+Required env vars for v3.0+:
    - `GROQ_API_KEY` (primary text + transcription)
    - `OPENAI_API_KEY` (fallback)
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
