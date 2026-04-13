@@ -390,9 +390,12 @@ export default function TranscribePage() {
       : 'webm';
 
     try {
-      // Call the transcription API
+      // Call the transcription API with macro names as vocabulary hints
       const formData = new FormData();
       formData.append('audio', blobToSend, `recording.${extension}`);
+      if (macros.length > 0) {
+        formData.append('macroHints', macros.map(m => m.name).join(', '));
+      }
 
       const response = await fetch('/api/transcribe', {
         method: 'POST',
@@ -406,7 +409,9 @@ export default function TranscribePage() {
       }
 
       if (result.success && result.transcript) {
-        setTranscribedText(result.transcript);
+        // Auto-expand macros on the transcribed text
+        const expanded = applyMacros(result.transcript);
+        setTranscribedText(expanded);
         showToast('Transcription completed successfully!', 'success');
         // Add transcription minutes to usage stats
         addTranscriptionMinutes(minutes);
@@ -465,9 +470,12 @@ export default function TranscribePage() {
     setTranscriptionError(null);
 
     try {
-      // Call the transcription API
+      // Call the transcription API with macro names as vocabulary hints
       const formData = new FormData();
       formData.append('audio', file);
+      if (macros.length > 0) {
+        formData.append('macroHints', macros.map(m => m.name).join(', '));
+      }
 
       const response = await fetch('/api/transcribe', {
         method: 'POST',
@@ -481,7 +489,9 @@ export default function TranscribePage() {
       }
 
       if (result.success && result.transcript) {
-        setTranscribedText(result.transcript);
+        // Auto-expand macros on the transcribed text
+        const expanded = applyMacros(result.transcript);
+        setTranscribedText(expanded);
         showToast('Transcription completed successfully!', 'success');
         // Estimate transcription minutes based on processing time (assume 1 min minimum)
         const minutes = Math.max(1, Math.round(result.duration / 60 * 10) / 10);
@@ -506,9 +516,12 @@ export default function TranscribePage() {
     setIsProcessing(true);
 
     try {
-      // Retry the transcription API call
+      // Retry the transcription API call with macro vocabulary hints
       const formData = new FormData();
       formData.append('audio', lastUploadedFile);
+      if (macros.length > 0) {
+        formData.append('macroHints', macros.map(m => m.name).join(', '));
+      }
 
       const response = await fetch('/api/transcribe', {
         method: 'POST',
@@ -522,7 +535,9 @@ export default function TranscribePage() {
       }
 
       if (result.success && result.transcript) {
-        setTranscribedText(result.transcript);
+        // Auto-expand macros on the transcribed text
+        const expanded = applyMacros(result.transcript);
+        setTranscribedText(expanded);
         showToast('Transcription completed successfully!', 'success');
         // Estimate transcription minutes based on processing time (assume 1 min minimum)
         const minutes = Math.max(1, Math.round(result.duration / 60 * 10) / 10);

@@ -28,11 +28,17 @@ const FALLBACK_PROVIDER = { provider: 'openai', model: 'whisper-1' } as const;
 async function callWhisperAPI(
   provider: string,
   model: string,
-  audioFile: File
+  audioFile: File,
+  macroHints?: string
 ): Promise<{ text: string; duration?: number }> {
   const whisperFormData = new FormData();
   whisperFormData.append('file', audioFile, audioFile.name);
-  whisperFormData.append('prompt', RADIOLOGY_VOCABULARY_HINT);
+  // Append user's macro trigger words to the vocabulary hint so Whisper
+  // outputs them literally (e.g. "NEG") instead of expanding or mishearing.
+  const prompt = macroHints
+    ? `${RADIOLOGY_VOCABULARY_HINT}, ${macroHints}`
+    : RADIOLOGY_VOCABULARY_HINT;
+  whisperFormData.append('prompt', prompt);
   whisperFormData.append('model', model);
   whisperFormData.append('response_format', 'verbose_json');
 
@@ -336,8 +342,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get audio file from FormData
+    // Get audio file and optional macro hints from FormData
     const audioFile = formData.get('audio');
+    const macroHints = formData.get('macroHints') as string | null;
 
     if (!audioFile || !(audioFile instanceof File)) {
       return new Response(
@@ -394,7 +401,7 @@ export async function POST(request: Request) {
           throw new Error(`${primaryKey} not configured; routing to fallback`);
         }
         result = await withRetry(
-          () => callWhisperAPI(primary.provider, primary.model, audioFile),
+          () => callWhisperAPI(primary.provider, primary.model, audioFile, macroHints || undefined),
           { maxRetries: 3, operationName: `transcribe:${primary.provider}` }
         );
         servedBy = primary;
@@ -417,7 +424,8 @@ export async function POST(request: Request) {
               callWhisperAPI(
                 FALLBACK_PROVIDER.provider,
                 FALLBACK_PROVIDER.model,
-                audioFile
+                audioFile,
+                macroHints || undefined
               ),
             { maxRetries: 2, operationName: 'transcribe:openai-fallback' }
           );
